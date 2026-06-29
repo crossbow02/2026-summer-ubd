@@ -175,6 +175,34 @@ body {
     color: var(--color-rose);
 }
 
+@media (min-width: 901px) and (max-width: 1200px) {
+    .nav-container {
+        padding: 10px 15px;
+    }
+    .nav-menu {
+        gap: 4px;
+    }
+    .nav-item {
+        padding: 6px 10px;
+        font-size: 0.82rem;
+        gap: 5px;
+        border-radius: 8px;
+    }
+    .nav-logo {
+        font-size: 1.05rem;
+        gap: 5px;
+    }
+    .user-badge-nav {
+        gap: 8px;
+        margin-left: 5px;
+        padding-left: 8px;
+    }
+    .user-name-tag {
+        font-size: 0.78rem;
+        padding: 3px 8px;
+    }
+}
+
 .menu-toggle {
     display: none;
     background: none;
