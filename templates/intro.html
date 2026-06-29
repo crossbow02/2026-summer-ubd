@@ -1,0 +1,637 @@
+{% extends 'base.html' %}
+
+{% block title %}사역 소개 PT | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="presentation-container">
+    <!-- View Switch Tab Panel -->
+    <div class="view-toggle-panel glass">
+        <button id="viewScrollBtn" class="view-toggle-btn active" onclick="switchView('scroll')">
+            <i class="fa-solid fa-scroll"></i> <span>세로 스크롤 웹페이지</span>
+        </button>
+        <button id="viewSlideBtn" class="view-toggle-btn" onclick="switchView('slide')">
+            <i class="fa-solid fa-desktop"></i> <span>오리지널 슬라이드 쇼</span>
+        </button>
+    </div>
+
+    <!-- VIEW 1: SCROLLABLE ARTICLE PAGE (Default) -->
+    <div id="scrollPageView" class="scroll-page-view active">
+        <div class="pt-layout-wrapper">
+            <!-- Sidebar Table of Contents -->
+            <aside class="pt-sidebar">
+                <nav class="pt-toc" id="ptToc">
+                    <a href="#section-1" class="pt-toc-item active"><i class="fa-solid fa-circle-info"></i> 사역 개요</a>
+                    <a href="#section-2" class="pt-toc-item"><i class="fa-solid fa-map-location-dot"></i> 사역 장소 안내</a>
+                    <a href="#section-3" class="pt-toc-item"><i class="fa-solid fa-calendar-week"></i> 주요 사역 일정</a>
+                    <a href="#section-4" class="pt-toc-item"><i class="fa-solid fa-chart-simple"></i> 사역지 현황</a>
+                    <a href="#section-5" class="pt-toc-item"><i class="fa-solid fa-circle-check"></i> 참여 및 회비 안내</a>
+                </nav>
+            </aside>
+
+            <!-- Scrollable Content Body -->
+            <div class="pt-content-body">
+                <!-- Section 1: 사역 개요 -->
+                <section id="section-1" class="pt-section">
+                    <h2><i class="fa-solid fa-circle-info"></i> 1. 사역 개요</h2>
+                    <div class="pt-grid-cards">
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>2026 여름 가족 선교</h3>
+                                    <p class="lead">"함께 떠나는 1박 2일, 다음 세대를 섬기는 가족들의 발걸음"</p>
+                                    <div class="highlight-pill-row">
+                                        <div class="highlight-pill"><i class="fa-regular fa-calendar-check"></i> 8월 15일(토) ~ 16일(주일)</div>
+                                        <div class="highlight-pill pink"><i class="fa-solid fa-people-roof"></i> 총 16가정 동참</div>
+                                        <div class="highlight-pill amber"><i class="fa-solid fa-church"></i> 수원성교회 유바디교구 2마을</div>
+                                    </div>
+                                    <p>이번 2026년 여름, 둔포성결교회의 러시아계 고려인 아이들과 가족초청 예배를 위한 여름 선교 사역을 시작합니다. 총 16가정(임원 4가정 포함)이 동참하여 예수님의 뜨거운 사랑을 전하고자 합니다.</p>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 0 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[0]) }}" alt="가족선교 표지">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: 사역 장소 안내 -->
+                <section id="section-2" class="pt-section">
+                    <h2><i class="fa-solid fa-map-location-dot"></i> 2. 사역 장소 안내</h2>
+                    
+                    <div class="pt-grid-cards">
+                        <!-- Venue Overview -->
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>선교 사역지 및 숙소 개요</h3>
+                                    <p><strong>사역지 (Base Camp):</strong> 둔포 성결교회 (예배 및 여름성경학교 사역 진행)</p>
+                                    <p><strong>숙소:</strong> 평택 온누리 M센터 (선교 기간 숙박 진행)</p>
+                                    <p class="text-muted"><i class="fa-solid fa-car"></i> 두 장소는 자가용 이용 시 약 20분 거리입니다.</p>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 2 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[2]) }}" alt="장소 개요">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Venue Details: Dunpo Church -->
+                        <div class="pt-card glass">
+                            <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-church"></i> 베이스 캠프: 둔포 성결교회 (충남 아산시 둔포면)</h3>
+                            <div class="pt-grid-cards">
+                                <!-- Base cover -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>둔포 성결교회 전경</h4>
+                                        <p>예배와 여름성경학교가 진행되는 이번 선교 사역의 핵심 중심 공간입니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 5 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[5]) }}" alt="둔포 성결교회">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Sanctuary -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>본당 예배실</h4>
+                                        <p>주일연합예배와 여름성경학교 집회, 찬양 프로그램이 뜨겁게 열리는 본당 공간입니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 6 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[6]) }}" alt="예배실">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Dining Room -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>식당 및 교제실</h4>
+                                        <p>맛있는 점심, 저녁 식사와 온 성도가 풍성하게 다과를 나누며 교제하는 소통의 장소입니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 7 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[7]) }}" alt="식당 및 교제실">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Classrooms -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>교육실 & 도서방</h4>
+                                        <p>어린이 분반 활동과 소그룹 공과 공부, 그리고 다양한 보드게임과 그림책이 준비된 아동 친화적 학습실입니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 9 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[9]) }}" alt="도서방">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Playground & Parking -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>초등학교 운동장 및 주차장</h4>
+                                        <p>교회 바로 앞에 위치한 둔포초등학교 운동장(야외 활동 및 체육대회)과 캐노피가 설치된 주차장을 주말 동안 개방하여 사용할 예정입니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 11 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[11]) }}" alt="초등학교 주차장">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Venue Details: Onnuri M Center -->
+                        <div class="pt-card glass">
+                            <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-hotel"></i> 숙소: 평택 온누리 M센터</h3>
+                            <div class="pt-grid-cards">
+                                <!-- M Center cover -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>숙소 전경 및 대표 모임 공간</h4>
+                                        <p>선교 기간 동안 가정이 안락하게 머물 숙소이며, 저녁 모임과 하루 사역을 돌아보는 나눔이 이루어지는 다목적 홀입니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 14 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[14]) }}" alt="M센터 모임공간">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Rooms -->
+                                <div class="pt-card-row">
+                                    <div class="pt-card-text">
+                                        <h4>소모임방 및 다목적실</h4>
+                                        <p>가정별 휴식 공간 및 소그룹으로 흩어져 대화할 수 있는 마룻바닥과 테이블이 설치된 쾌적한 방들로 구성되어 있습니다.</p>
+                                    </div>
+                                    <div class="pt-card-img">
+                                        {% if slides|length > 16 %}
+                                        <img src="{{ url_for('serve_slide', filename=slides[16]) }}" alt="다목적실">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 3: 주요 사역 일정 -->
+                <section id="section-3" class="pt-section">
+                    <h2><i class="fa-solid fa-calendar-week"></i> 3. 주요 사역 일정</h2>
+                    <div class="pt-grid-cards">
+                        <!-- Day 1 Schedule -->
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>📅 DAY 1: 8월 15일 (토요일)</h3>
+                                    <h4 style="margin-top: 5px;"><i class="fa-solid fa-clock"></i> 10:00 ~ 18:00 (여름성경학교 & 물놀이)</h4>
+                                    <div class="timeline-list">
+                                        <div class="timeline-item-inner">
+                                            <span class="time-badge">오전</span>
+                                            <div class="timeline-desc">
+                                                <h4>여름성경학교 진행</h4>
+                                                <p>러시아계 고려인 아이들을 위한 찬양, 말씀, 레크리에이션 및 조별 분반 활동</p>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item-inner">
+                                            <span class="time-badge">오후</span>
+                                            <div class="timeline-desc">
+                                                <h4>신나는 야외 물놀이</h4>
+                                                <p>아이들과 팀원들이 교회 버스로 이동하여 시원한 물놀이 활동 진행</p>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item-inner">
+                                            <span class="time-badge">저녁</span>
+                                            <div class="timeline-desc">
+                                                <h4>식사 대접 및 나눔</h4>
+                                                <p>아이들의 점심 및 저녁 식사를 손수 준비하며 온 가족이 함께 참여하고 섬기는 하루</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 19 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[19]) }}" alt="토요일 일정">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Day 2 Schedule -->
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>📅 DAY 2: 8월 16일 (주일)</h3>
+                                    <h4 style="margin-top: 5px;"><i class="fa-solid fa-clock"></i> 10:00 ~ 18:00 (초청예배 & 교제)</h4>
+                                    <div class="timeline-list">
+                                        <div class="timeline-item-inner">
+                                            <span class="time-badge">10:00</span>
+                                            <div class="timeline-desc">
+                                                <h4>부모 초청 주일 예배</h4>
+                                                <p>고려인 어린이의 부모님을 초청하는 온 세대 예배. 선교팀의 특별 찬양 인도 및 특송 연주</p>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item-inner">
+                                            <span class="time-badge">12:30</span>
+                                            <div class="timeline-desc">
+                                                <h4>풍성한 한식 + 러시아식 연합 식탁</h4>
+                                                <p>예배 후 정성껏 준비한 음식(한식 및 현지 러시아식)을 대접하며 친밀하게 마음을 나누는 교제의 식사</p>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item-inner">
+                                            <span class="time-badge">15:00</span>
+                                            <div class="timeline-desc">
+                                                <h4>교회 정돈 및 대청소</h4>
+                                                <p>사역을 기쁘게 마친 후 둔포 교회의 예배 공간을 깨끗하게 정리정돈 및 대청소로 봉사</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 20 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[20]) }}" alt="주일 일정">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4: 사역지 현황 -->
+                <section id="section-4" class="pt-section">
+                    <h2><i class="fa-solid fa-chart-simple"></i> 4. 사역지 현황 및 특징</h2>
+                    <div class="pt-grid-cards">
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>둔포 고려인 사역지의 영적 현황</h3>
+                                    <div class="highlight-pill-row">
+                                        <div class="highlight-pill"><i class="fa-solid fa-graduation-cap"></i> 초등학교 재학생 약 300명</div>
+                                        <div class="highlight-pill pink"><i class="fa-solid fa-earth-asia"></i> 80%가 중앙러시아계 다문화 가정</div>
+                                    </div>
+                                    <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem;">
+                                        <li><strong>사역의 연계성:</strong> 수원성교회에서 그동안 진행해 왔던 다문화 사역의 인프라와 경험을 바탕으로 지속적인 다음 세대 선교의 시발점이 될 것입니다.</li>
+                                        <li><strong>교인 구성:</strong> 둔포성결교회 성도는 부모 약 20명, 유·초·중학생 약 30명으로 대부분 다문화인 위주로 구성되어 있습니다.</li>
+                                        <li><strong>종교적 상황:</strong> 부모님 대다수가 무슬림 배경이지만 교회에 대한 정서적 거부감은 적은 편입니다. 특히 어린이들의 출석률이 높고 예배와 하나님 말씀에 갈급함이 가득합니다.</li>
+                                        <li><strong>언어와 문화:</strong> 자녀들은 어릴 때 입국했거나 한국에서 나고 자라 한국 생활과 한국어 소통에 완전히 적응되어 있어 선교팀 자녀들과도 친밀하게 어울릴 수 있습니다.</li>
+                                    </ul>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 22 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[22]) }}" alt="사역지 현황">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 5: 참여 및 회비 안내 -->
+                <section id="section-5" class="pt-section">
+                    <h2><i class="fa-solid fa-circle-check"></i> 5. 참여 지침 및 신청 안내</h2>
+                    <div class="pt-grid-cards">
+                        <!-- Instructions -->
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>💡 참가 안내 & 교통편</h3>
+                                    <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 10px;">
+                                        <li><strong>차량 지원:</strong> 사역 물품은 교회 봉고 1대로 수송하며, 각 가정은 개인 자가용으로 이동합니다. (주차비 지원). 단, 토요일 물놀이 이동 시에는 교회 버스를 탑승하여 통제합니다.</li>
+                                        <li><strong>온전한 헌신:</strong> 1박 2일 사역의 흐름을 놓치지 않기 위해 긴급 상황을 제외하고는 도중에 귀가하지 않고 끝까지 성실하게 동참합니다.</li>
+                                        <li><strong>사전 교감 및 심방:</strong> 아이들과 선교 당일 빠르게 친숙해질 수 있도록 선교 전, 각 팀별로 1회 정도 토요일에 선교지를 사전 방문하여 안면을 트는 시간을 갖습니다.</li>
+                                        <li><strong>숙소 및 교제:</strong> 평택 온누리 M센터에 짐을 풀고, 저녁에는 인근 목욕탕을 이용합니다. 일정이 끝난 후 숙소로 복귀하여 풍성한 야식과 함께 은혜 가득한 교제의 시간을 나눕니다.</li>
+                                    </ul>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 24 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[24]) }}" alt="참여 안내">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meeting Schedules -->
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>🗓️ 선교 준비 모임 일정 (총 5회)</h3>
+                                    <p>매주 주일 낮 **13:30 ~ 16:00**에 모여 기도로 기획하고 연습합니다. (사정에 따라 유동성 존재)</p>
+                                    <div class="timeline-list">
+                                        <div class="timeline-item-inner"><span class="time-badge">7. 5 (주일)</span> <div class="timeline-desc"><h4>1차 준비 모임 (오리엔테이션 및 역할 분담)</h4></div></div>
+                                        <div class="timeline-item-inner"><span class="time-badge">7. 12 (주일)</span> <div class="timeline-desc"><h4>2차 준비 모임 (프로그램 세부 기획 및 찬양 연습)</h4></div></div>
+                                        <div class="timeline-item-inner"><span class="time-badge">7. 19 (주일)</span> <div class="timeline-desc"><h4>3차 준비 모임 (레크리에이션 시뮬레이션 및 교재 강독)</h4></div></div>
+                                        <div class="timeline-item-inner"><span class="time-badge">7. 26 (주일)</span> <div class="timeline-desc"><h4>4차 준비 모임 (물놀이 안전 수칙 및 최종 동선 조율)</h4></div></div>
+                                        <div class="timeline-item-inner"><span class="time-badge">8. 9 (주일)</span> <div class="timeline-desc"><h4>5차 준비 모임 (파송 예배 및 전체 리허설)</h4></div></div>
+                                    </div>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 25 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[25]) }}" alt="준비 모임 일정">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registration & Cost -->
+                        <div class="pt-card glass">
+                            <div class="pt-card-row">
+                                <div class="pt-card-text">
+                                    <h3>💰 선교 참가 회비 및 신청</h3>
+                                    <div class="highlight-pill-row">
+                                        <div class="highlight-pill amber" style="font-size: 1.1rem; padding: 10px 20px;"><i class="fa-solid fa-credit-card"></i> 1인당 50,000원</div>
+                                    </div>
+                                    <p>어른과 자녀 구분 없이 동일하며, 최소한의 실비 수준으로 책정하였습니다. (부족분은 미리 확보된 선교 예산 재정에서 전액 지원)</p>
+                                    <ul style="margin-left: 20px; font-size: 0.9rem; color: var(--text-secondary);">
+                                        <li><strong>회비 포함 내역:</strong> 토요일 물놀이 입장권, 1박 2일 사역 중 식사 및 야식 5~6회 비용, 주말 목욕비 및 차량 주차비 지원 등.</li>
+                                        <li><strong>신청 기간:</strong> 6. 22 (월) ~ 6. 25 (목) (신청 세대 수 추이에 맞춰 선발 가정 최종 조율 및 발표)</li>
+                                    </ul>
+                                    <p style="margin-top: 10px; font-weight: 700; color: var(--color-indigo);">기쁨과 감사, 주님의 은혜가 듬뿍 넘치는 고려인 선교가 되도록 적극적인 참여와 깊은 중보 기도를 부탁드립니다. ❤️</p>
+                                </div>
+                                <div class="pt-card-img">
+                                    {% if slides|length > 28 %}
+                                    <img src="{{ url_for('serve_slide', filename=slides[28]) }}" alt="초청 엔딩">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: ORIGINAL SLIDESHOW CAROUSEL (Hidden by default) -->
+    <div id="slideshowView" class="slideshow-view">
+        <div class="presentation-header glass">
+            <h1>🖥️ 오리지널 슬라이드 플레이어</h1>
+            <div class="pt-controls">
+                <button id="btnPrev" class="pt-control-btn" title="이전 슬라이드 (← 키)"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="slideIndicator" class="slide-indicator">1 / {{ slides|length }}</span>
+                <button id="btnNext" class="pt-control-btn" title="다음 슬라이드 (→ 키)"><i class="fa-solid fa-chevron-right"></i></button>
+                <span class="divider"></span>
+                <button id="btnPlay" class="pt-control-btn" title="자동 재생"><i class="fa-solid fa-play"></i></button>
+                <button id="btnFullscreen" class="pt-control-btn" title="전체화면"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </div>
+
+        <!-- Main Slide Display Area -->
+        <div class="slide-viewer glass" id="slideViewer">
+            <div class="slide-image-container" id="slideImageContainer">
+                {% if slides %}
+                    {% for slide in slides %}
+                    <img src="{{ url_for('serve_slide', filename=slide) }}" 
+                         class="slide-img {% if loop.first %}active{% endif %}" 
+                         data-index="{{ loop.index0 }}" 
+                         alt="슬라이드 {{ loop.index }}">
+                    {% endfor %}
+                {% else %}
+                    <div class="no-slides-error">
+                        <i class="fa-solid fa-images"></i>
+                        <p>사역소개 PT 폴더에 이미지 파일이 없습니다.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Hover side buttons -->
+            <button class="slide-nav-arrow prev" onclick="navigateSlide(-1)" aria-label="Previous Slide"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="slide-nav-arrow next" onclick="navigateSlide(1)" aria-label="Next Slide"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Thumbnail Strip -->
+        <div class="thumbnail-strip-wrapper glass">
+            <h3>💡 슬라이드 전체 보기</h3>
+            <div class="thumbnail-strip" id="thumbnailStrip">
+                {% for slide in slides %}
+                <div class="thumbnail-item {% if loop.first %}active{% endif %}" 
+                     data-index="{{ loop.index0 }}" 
+                     onclick="goToSlide({{ loop.index0 }})">
+                    <img src="{{ url_for('serve_slide', filename=slide) }}" alt="썸네일 {{ loop.index }}">
+                    <span class="thumb-number">{{ loop.index }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dual View Switching Logic
+    function switchView(mode) {
+        const scrollBtn = document.getElementById('viewScrollBtn');
+        const slideBtn = document.getElementById('viewSlideBtn');
+        const scrollView = document.getElementById('scrollPageView');
+        const slideView = document.getElementById('slideshowView');
+        
+        if (mode === 'scroll') {
+            scrollBtn.classList.add('active');
+            slideBtn.classList.remove('active');
+            scrollView.classList.add('active');
+            slideView.classList.remove('active');
+            localStorage.setItem('pt_view_mode', 'scroll');
+            // Stop slideshow interval if active
+            if (isPlaying) togglePlay();
+        } else {
+            scrollBtn.classList.remove('active');
+            slideBtn.classList.add('active');
+            scrollView.classList.remove('active');
+            slideView.classList.add('active');
+            localStorage.setItem('pt_view_mode', 'slide');
+            // Refresh thumbnail strip position
+            goToSlide(currentIndex);
+        }
+    }
+
+    // Set initial view mode based on saved localStorage preference
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedViewMode = localStorage.getItem('pt_view_mode') || 'scroll';
+        switchView(savedViewMode);
+    });
+
+    // SCROLL-SPY LOGIC FOR SIDEBAR TOC
+    const sections = document.querySelectorAll('.pt-section');
+    const tocItems = document.querySelectorAll('.pt-toc-item');
+    const ptToc = document.getElementById('ptToc');
+
+    if (sections.length > 0 && tocItems.length > 0) {
+        window.addEventListener('scroll', () => {
+            let currentSectionId = '';
+            const scrollPos = window.scrollY + 120; // offset navbar height
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    currentSectionId = section.getAttribute('id');
+                }
+            });
+
+            if (currentSectionId) {
+                tocItems.forEach(item => {
+                    if (item.getAttribute('href') === `#${currentSectionId}`) {
+                        item.classList.add('active');
+                        // Horizontal scroll on mobile sidebar
+                        if (window.innerWidth <= 900) {
+                            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+        });
+    }
+
+
+    // ORIGINAL CAROUSEL LOGIC
+    const slides = document.querySelectorAll('.slide-img');
+    const thumbnails = document.querySelectorAll('.thumbnail-item');
+    const slideIndicator = document.getElementById('slideIndicator');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const slideViewer = document.getElementById('slideViewer');
+
+    let currentIndex = 0;
+    let playInterval = null;
+    let isPlaying = false;
+
+    function updateViewer() {
+        slides.forEach((slide, idx) => {
+            if (idx === currentIndex) {
+                slide.classList.add('active');
+            } else {
+                slide.classList.remove('active');
+            }
+        });
+
+        thumbnails.forEach((thumb, idx) => {
+            if (idx === currentIndex) {
+                thumb.classList.add('active');
+                thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+
+        if (slideIndicator) {
+            slideIndicator.textContent = `${currentIndex + 1} / ${slides.length}`;
+        }
+    }
+
+    function navigateSlide(direction) {
+        currentIndex += direction;
+        if (currentIndex < 0) {
+            currentIndex = slides.length - 1;
+        } else if (currentIndex >= slides.length) {
+            currentIndex = 0;
+        }
+        updateViewer();
+    }
+
+    function goToSlide(index) {
+        currentIndex = index;
+        updateViewer();
+        if (isPlaying) {
+            resetAutoplay();
+        }
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            clearInterval(playInterval);
+            btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+            btnPlay.classList.remove('playing');
+            isPlaying = false;
+        } else {
+            btnPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            btnPlay.classList.add('playing');
+            isPlaying = true;
+            playInterval = setInterval(() => {
+                navigateSlide(1);
+            }, 3000);
+        }
+    }
+
+    function resetAutoplay() {
+        clearInterval(playInterval);
+        playInterval = setInterval(() => {
+            navigateSlide(1);
+        }, 3000);
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            slideViewer.requestFullscreen().catch(err => {
+                alert(`전체화면 모드를 활성화할 수 없습니다: ${err.message}`);
+            });
+            btnFullscreen.innerHTML = '<i class="fa-solid fa-compress"></i>';
+        } else {
+            document.exitFullscreen();
+            btnFullscreen.innerHTML = '<i class="fa-solid fa-expand"></i>';
+        }
+    }
+
+    if (btnPrev) btnPrev.addEventListener('click', () => { navigateSlide(-1); if (isPlaying) resetAutoplay(); });
+    if (btnNext) btnNext.addEventListener('click', () => { navigateSlide(1); if (isPlaying) resetAutoplay(); });
+    if (btnPlay) btnPlay.addEventListener('click', togglePlay);
+    if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
+
+    // Keyboard controls (only fire when slideshow view is active)
+    document.addEventListener('keydown', (e) => {
+        const slideViewActive = document.getElementById('slideshowView').classList.contains('active');
+        if (!slideViewActive) return;
+
+        if (e.key === 'ArrowLeft') {
+            navigateSlide(-1);
+            if (isPlaying) resetAutoplay();
+        } else if (e.key === 'ArrowRight') {
+            navigateSlide(1);
+            if (isPlaying) resetAutoplay();
+        } else if (e.key === 'f' || e.key === 'F') {
+            toggleFullscreen();
+        } else if (e.key === 'Space') {
+            e.preventDefault();
+            togglePlay();
+        }
+    });
+
+    // Touch Swipe gestures for mobile slide view
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    slideViewer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, false);
+    
+    slideViewer.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        if (document.getElementById('slideshowView').classList.contains('active')) {
+            handleSwipe();
+        }
+    }, false);
+    
+    function handleSwipe() {
+        const threshold = 50;
+        if (touchEndX < touchStartX - threshold) {
+            navigateSlide(1);
+            if (isPlaying) resetAutoplay();
+        }
+        if (touchEndX > touchStartX + threshold) {
+            navigateSlide(-1);
+            if (isPlaying) resetAutoplay();
+        }
+    }
+    
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            btnFullscreen.innerHTML = '<i class="fa-solid fa-expand"></i>';
+        }
+    });
+</script>
+{% endblock %}

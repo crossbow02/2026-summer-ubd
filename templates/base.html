@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}유바디 2마을 여름 선교 소통방{% endblock %}</title>
+    <!-- Google Fonts: Outfit & Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Inline Theme Checker Script -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.add('light-theme');
+            }
+        })();
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="stars-bg"></div>
+    <div class="glowing-orb orb-1"></div>
+    <div class="glowing-orb orb-2"></div>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('dashboard') }}" class="nav-logo">
+                <span class="emoji-spin">🌟</span> <span>유바디 2마을 선교방</span>
+            </a>
+            
+            <div class="nav-right-actions">
+                <button class="theme-toggle-btn" id="themeToggle" title="테마 변경 (다크/라이트)" aria-label="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                
+                {% if session.get('user_id') %}
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation Menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if session.get('user_id') %}
+            <nav class="nav-menu" id="navMenu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-users-viewfinder"></i> <span>가정 명단</span>
+                </a>
+                <a href="{{ url_for('intro') }}" class="nav-item {% if request.endpoint == 'intro' %}active{% endif %}">
+                    <i class="fa-solid fa-photo-film"></i> <span>사역 소개 PT</span>
+                </a>
+                <a href="{{ url_for('gallery') }}" class="nav-item {% if request.endpoint == 'gallery' %}active{% endif %}">
+                    <i class="fa-solid fa-images"></i> <span>가족 소개 피드</span>
+                </a>
+                <a href="{{ url_for('family_edit') }}" class="nav-item {% if request.endpoint == 'family_edit' %}active{% endif %}">
+                    <i class="fa-solid fa-house-chimney-user"></i> <span>우리 가족 등록</span>
+                </a>
+                <div class="user-badge-nav">
+                    <span class="user-name-tag">
+                        {% if session.get('role') == 'admin' %}
+                        <span class="admin-shield"><i class="fa-solid fa-shield-halved"></i> 관리자</span>
+                        {% endif %}
+                        {{ session.get('name') }}님
+                    </span>
+                    <a href="{{ url_for('logout') }}" class="btn-logout" title="로그아웃">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
+                </div>
+            </nav>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2026 유바디 2마을 러시아계 고려인 여름 선교 사역팀. All rights reserved.</p>
+            <p class="church-info">둔포성결교회 아웃리치 (2026.08.15 - 08.16)</p>
+        </div>
+    </footer>
+
+    <script>
+        // Responsive Menu Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const navMenu = document.getElementById('navMenu');
+        if (menuToggle && navMenu) {
+            menuToggle.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
+                menuToggle.classList.toggle('active');
+            });
+        }
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const themeIcon = themeToggle.querySelector('i');
+            
+            // Set initial icon based on theme class
+            if (document.documentElement.classList.contains('light-theme')) {
+                themeIcon.className = 'fa-solid fa-sun';
+            } else {
+                themeIcon.className = 'fa-solid fa-moon';
+            }
+
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('light-theme');
+                const isLight = document.documentElement.classList.contains('light-theme');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                
+                // Animate toggle click
+                themeToggle.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    themeToggle.style.transform = '';
+                    themeIcon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+                }, 150);
+            });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

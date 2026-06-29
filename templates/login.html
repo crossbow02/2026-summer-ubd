@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}로그인 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card glass">
+        <div class="login-header">
+            <div class="login-logo">
+                <i class="fa-solid fa-cross-sun"></i>
+            </div>
+            <h1>선교 소통방 로그인</h1>
+            <p>2026 유바디 2마을 여름 선교 사역</p>
+            <span class="mission-dates"><i class="fa-regular fa-calendar-days"></i> 8월 15일 ~ 16일</span>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">
+            <i class="fa-solid fa-triangle-exclamation"></i> <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('login') }}" method="POST" class="login-form">
+            <div class="form-group">
+                <label for="username"><i class="fa-solid fa-user"></i> 이름 (가장/참가자)</label>
+                <input type="text" id="username" name="username" placeholder="이름을 입력하세요 (예: 정다운)" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fa-solid fa-lock"></i> 비밀번호 (전화번호 뒤 4자리)</label>
+                <input type="password" id="password" name="password" placeholder="전화번호 뒤 4자리를 입력하세요 (예: 8953)" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <span>로그인하기</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p class="login-hint">
+                <i class="fa-solid fa-circle-info"></i> 아빠(가장) 이름과 전화번호 뒤 4자리로 로그인해 주세요.
+            </p>
+            <p class="login-hint-sub">
+                * 성인 1인 가정(예: 권경숙 성도님)은 등록된 본인 이름과 전화번호 뒤 4자리로 로그인하실 수 있습니다.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

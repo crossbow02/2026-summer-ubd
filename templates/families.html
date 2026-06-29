@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}가정 명단 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header Roster Intro -->
+    <div class="dashboard-header glass">
+        <div class="welcome-section">
+            <h1>📋 유바디 2마을 선교 참가 가정 명단</h1>
+            <p>이번 8월 15~16일 둔포성결교회 러시아계 고려인 사역을 함께 준비하는 믿음의 가정들입니다.</p>
+        </div>
+        <div class="stats-row">
+            <div class="stat-box">
+                <span class="stat-value">{{ total_families }}</span>
+                <span class="stat-label">참가 가정</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value">{{ completed_intros }}</span>
+                <span class="stat-label">소개 완료</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value">{{ total_adults }}명 / {{ total_kids }}명</span>
+                <span class="stat-label">총원 (성인 / 자녀)</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value highlight">{{ total_adults + total_kids }}명</span>
+                <span class="stat-label">총 참여 인원</span>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>우리가정 소개 완성도</span>
+                <span class="progress-percentage">{{ completion_rate }}%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: {{ completion_rate }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Roster Search & Filter Panel -->
+    <div class="filter-panel glass">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="아빠 이름, 엄마 이름 또는 자녀 이름으로 검색..." onkeyup="filterRoster()">
+        </div>
+        <div class="filter-controls">
+            <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">전체</button>
+            <button class="filter-btn" data-filter="completed" onclick="setFilter('completed', this)">소개 완료</button>
+            <button class="filter-btn" data-filter="pending" onclick="setFilter('pending', this)">소개 미작성</button>
+            
+            <select id="districtFilter" class="filter-select" onchange="filterRoster()">
+                <option value="">모든 구역</option>
+                {% for g in range(1, 20) %}
+                <option value="{{ g }}">{{ g }}구역</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Families Grid -->
+    <div class="families-grid" id="familiesGrid">
+        {% for user in users %}
+        <div class="family-card glass {% if user.has_intro %}has-intro{% else %}no-intro{% endif %}" 
+             data-name="{{ user.adult1_name or '' }} {{ user.adult2_name or '' }} {{ user.children or '' }}" 
+             data-district="{{ user.group_num }}" 
+             data-status="{% if user.has_intro %}completed{% else %}pending{% endif %}">
+            
+            <!-- Group Badge -->
+            <div class="family-badge">
+                <span class="district-badge">{{ user.group_num }}구역</span>
+                {% if user.has_intro %}
+                <span class="status-badge status-completed"><i class="fa-solid fa-circle-check"></i> 소개 완료</span>
+                {% else %}
+                <span class="status-badge status-pending"><i class="fa-solid fa-circle-exclamation"></i> 미작성</span>
+                {% endif %}
+            </div>
+
+            <!-- Family Content -->
+            <div class="family-body">
+                <div class="family-members">
+                    <!-- Adult 1 -->
+                    <div class="member-row parent">
+                        <span class="member-role"><i class="fa-solid fa-user-tie"></i> 성인 1 (가장)</span>
+                        <div class="member-info">
+                            <span class="member-name">{{ user.adult1_name }}</span>
+                            <span class="member-phone">{{ user.adult1_phone }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Adult 2 (optional) -->
+                    {% if user.adult2_name %}
+                    <div class="member-row parent">
+                        <span class="member-role"><i class="fa-solid fa-user-group"></i> 성인 2</span>
+                        <div class="member-info">
+                            <span class="member-name">{{ user.adult2_name }}</span>
+                            <span class="member-phone">{{ user.adult2_phone }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Children -->
+                    <div class="member-row children-row">
+                        <span class="member-role"><i class="fa-solid fa-children"></i> 참여 자녀</span>
+                        <div class="kids-list">
+                            {% set kids = user.children|list_from_json %}
+                            {% if kids %}
+                                {% for kid in kids %}
+                                <span class="kid-badge">{{ kid }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="no-kids-text">자녀 없음</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="family-actions">
+                {% if user.id == current_user_id %}
+                <a href="{{ url_for('family_edit') }}" class="btn btn-accent btn-sm">
+                    <i class="fa-solid fa-pen-to-square"></i> 우리 가족 소개 등록/수정
+                </a>
+                {% elif user.has_intro %}
+                <a href="{{ url_for('gallery') }}#family-{{ user.id }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-address-card"></i> 소개 글 보기
+                </a>
+                {% else %}
+                <button class="btn btn-disabled btn-sm" disabled>
+                    <i class="fa-solid fa-hourglass-start"></i> 소개 대기 중
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if session.get('role') == 'admin' and user.adult1_name == '정다운' %}
+            <div class="admin-indicator">
+                <i class="fa-solid fa-shield-halved"></i> 관리자 패밀리
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentFilter = 'all';
+
+    function setFilter(filterType, element) {
+        // Toggle active button class
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        currentFilter = filterType;
+        filterRoster();
+    }
+
+    function filterRoster() {
+        const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+        const districtVal = document.getElementById('districtFilter').value;
+        const cards = document.querySelectorAll('.family-card');
+
+        cards.forEach(card => {
+            const nameData = card.getAttribute('data-name').toLowerCase();
+            const districtData = card.getAttribute('data-district');
+            const statusData = card.getAttribute('data-status');
+
+            // Check Search Match
+            const matchesSearch = nameData.includes(searchVal);
+
+            // Check District Match
+            const matchesDistrict = !districtVal || districtData === districtVal;
+
+            // Check Status Match
+            let matchesStatus = true;
+            if (currentFilter === 'completed') {
+                matchesStatus = statusData === 'completed';
+            } else if (currentFilter === 'pending') {
+                matchesStatus = statusData === 'pending';
+            }
+
+            if (matchesSearch && matchesDistrict && matchesStatus) {
+                card.style.display = 'flex';
+                card.classList.add('animate-fade-in');
+            } else {
+                card.style.display = 'none';
+                card.classList.remove('animate-fade-in');
+            }
+        });
+    }
+</script>
+{% endblock %}

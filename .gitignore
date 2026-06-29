@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+database.db
+
+# User Uploads (Photos)
+static/uploads/family_*
+
+# macOS files
+.DS_Store
+
+# Local IDE folders
+.vscode/
+.idea/
+venv/
+.env

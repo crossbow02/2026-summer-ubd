@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}우리 가족 소개 등록 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <div class="edit-card glass">
+        <!-- Form Header -->
+        <div class="edit-header">
+            <div class="icon-wrap">
+                <i class="fa-solid fa-house-chimney-medical"></i>
+            </div>
+            <h1>✨ 우리 가족 소개 페이지 만들기</h1>
+            <p><strong>{{ user.adult1_name }}님 가정</strong>의 이야기를 올려주세요. 다른 선교팀 가정들과 나누고 함께 기도하기 위함입니다.</p>
+        </div>
+
+        <form id="familyForm" action="{{ url_for('family_edit') }}" method="POST" enctype="multipart/form-data" class="edit-form">
+            <!-- Step 1: Photo Upload -->
+            <div class="form-section">
+                <h3 class="section-title"><span class="section-num">1</span> 📸 가족 사진 올리기</h3>
+                <div class="photo-upload-container">
+                    <div class="photo-preview-box" id="photoPreview">
+                        {% if profile and profile.photo_path %}
+                            <img src="{{ profile.photo_path }}" alt="현재 등록된 가족 사진">
+                        {% else %}
+                            <div class="upload-placeholder">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>가족 사진을 선택해 주세요 (JPG, PNG)</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="upload-controls">
+                        <label for="family_photo" class="btn btn-secondary btn-sm">
+                            <i class="fa-solid fa-image"></i> 사진 파일 선택
+                        </label>
+                        <input type="file" id="family_photo" name="family_photo" accept="image/*" onchange="previewImage(this)">
+                        <p class="file-info">사역 소통방에 보여질 예쁜 가족 사진을 올려주세요. (최대 10MB)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Questionnaire -->
+            <div class="form-section">
+                <h3 class="section-title"><span class="section-num">2</span> ✍️ 우리가족 질문 답하기</h3>
+                
+                <div class="form-group">
+                    <label for="one_liner">🌟 우리 가족을 한 마디로 표현한다면?</label>
+                    <input type="text" id="one_liner" name="one_liner" value="{{ profile.one_liner if profile else '' }}" 
+                           placeholder="예: 주님의 사랑을 나누는 기쁨 넘치는 가정" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="motivation">💖 이번 사역에 참여하게 된 계기와 기대감은 무엇인가요?</label>
+                    <textarea id="motivation" name="motivation" rows="4" 
+                              placeholder="예: 러시아계 고려인 자녀들에게 성경학교를 통해 복음이 전해지길 사모하는 마음에 신청했습니다. 온 가족이 한마음으로 헌신하고 아이들과 마음껏 사랑을 나누는 시간이 되길 기대합니다." required>{{ profile.motivation if profile else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="specialties">🎨 선교팀원들과 나누고 싶은 우리 가족의 매력/특기는 무엇인가요?</label>
+                    <textarea id="specialties" name="specialties" rows="3" 
+                              placeholder="예: 아빠는 활달한 성격으로 레크리에이션 진행을 돕고, 엄마는 손재주가 좋아 풍선 아트나 꾸미기에 은사가 있습니다. 아이들은 찬양 율동을 기쁘게 배웁니다." required>{{ profile.specialties if profile else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="prayers">🙏 우리 가족의 이번 사역 기도제목은 무엇인가요?</label>
+                    <textarea id="prayers" name="prayers" rows="4" 
+                              placeholder="예: 1. 사역 기간 동안 날씨와 건강을 지켜주시고, 2. 고려인 가정 아이들이 닫혔던 마음을 열어 예수님을 깊이 만나게 하소서." required>{{ profile.prayers if profile else '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Step 3: AI Text generation -->
+            <div class="form-section">
+                <h3 class="section-title"><span class="section-num">3</span> 🤖 AI 스토리 만들기</h3>
+                <p class="section-desc">질문에 답변하신 내용을 기반으로, AI가 은혜로운 소개 편지를 다듬고 작성해 줍니다.</p>
+                
+                <button type="button" class="btn btn-accent btn-block" onclick="generateAIPage()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>AI로 소개글 자동 생성하기</span>
+                </button>
+
+                <div class="form-group ai-result-group">
+                    <label for="ai_intro_text">📝 AI 생성 소개글 미리보기 (수정 가능)</label>
+                    <textarea id="ai_intro_text" name="ai_intro_text" rows="12" 
+                              placeholder="위 'AI로 소개글 자동 생성하기' 버튼을 누르면 이 곳에 내용이 완성됩니다. 직접 수정하여 저장할 수도 있습니다." required>{{ profile.ai_intro_text if profile else '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Form Submit -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                    <i class="fa-solid fa-circle-check"></i> 최종 저장 및 등록하기
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg btn-block text-center">
+                    취소하고 돌아가기
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- AI Loading Modal -->
+<div class="modal-overlay" id="loadingModal">
+    <div class="loading-modal glass">
+        <div class="loader-spinner"></div>
+        <h2 id="modalStatusTitle">AI가 소개글을 작성하는 중...</h2>
+        <div class="status-steps">
+            <p id="step1" class="step"><i class="fa-solid fa-spinner fa-spin"></i> 입력하신 답변 내용 분석 중...</p>
+            <p id="step2" class="step pending"><i class="fa-regular fa-circle"></i> 은혜로운 문체로 소개글 정제 중...</p>
+            <p id="step3" class="step pending"><i class="fa-regular fa-circle"></i> 기도제목 구조화 및 최종 편집 중...</p>
+        </div>
+        <p class="loading-notice">잠시만 기다려 주세요. 멋진 소개글이 곧 완성됩니다.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function previewImage(input) {
+        const preview = document.getElementById('photoPreview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" alt="가족 사진 미리보기">`;
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function generateAIPage() {
+        const one_liner = document.getElementById('one_liner').value.trim();
+        const motivation = document.getElementById('motivation').value.trim();
+        const prayers = document.getElementById('prayers').value.trim();
+        const specialties = document.getElementById('specialties').value.trim();
+
+        if (!one_liner || !motivation || !prayers || !specialties) {
+            alert('모든 질문에 답한 후 AI 생성을 실행해 주세요!');
+            return;
+        }
+
+        // Show Modal
+        const modal = document.getElementById('loadingModal');
+        modal.classList.add('active');
+
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+
+        // Reset step classes
+        step1.className = 'step active';
+        step2.className = 'step pending';
+        step3.className = 'step pending';
+        step1.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 입력하신 답변 내용 분석 중...';
+        step2.innerHTML = '<i class="fa-regular fa-circle"></i> 은혜로운 문체로 소개글 정제 중...';
+        step3.innerHTML = '<i class="fa-regular fa-circle"></i> 기도제목 구조화 및 최종 편집 중...';
+
+        try {
+            // Fake animation timing for step 1
+            await new Promise(r => setTimeout(r, 1000));
+            step1.className = 'step success';
+            step1.innerHTML = '<i class="fa-solid fa-circle-check"></i> 입력 답변 분석 완료';
+            
+            step2.className = 'step active';
+            step2.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 은혜로운 문체로 소개글 정제 중...';
+
+            // Start API Request
+            const response = await fetch('/family/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    one_liner,
+                    motivation,
+                    prayers,
+                    specialties
+                })
+            });
+
+            if (!response.ok) throw new Error('API Request Failed');
+            
+            const data = await response.json();
+
+            // Fake animation timing for step 2
+            await new Promise(r => setTimeout(r, 800));
+            step2.className = 'step success';
+            step2.innerHTML = '<i class="fa-solid fa-circle-check"></i> 은혜로운 소개글 정제 완료';
+
+            step3.className = 'step active';
+            step3.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 기도제목 구조화 및 최종 편집 중...';
+
+            await new Promise(r => setTimeout(r, 800));
+            step3.className = 'step success';
+            step3.innerHTML = '<i class="fa-solid fa-circle-check"></i> 최종 편집 완료';
+
+            // Populate textarea
+            document.getElementById('ai_intro_text').value = data.ai_text;
+            
+            // Close Modal
+            setTimeout(() => {
+                modal.classList.remove('active');
+            }, 500);
+
+        } catch (error) {
+            console.error(error);
+            alert('AI 생성 중 오류가 발생했습니다. 다시 시도해 주세요.');
+            modal.classList.remove('active');
+        }
+    }
+</script>
+{% endblock %}

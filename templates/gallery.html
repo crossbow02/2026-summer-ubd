@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block title %}가족 소개 피드 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="gallery-container">
+    <div class="gallery-header glass">
+        <h1>📸 우리 가족 소개 피드</h1>
+        <p>선교를 함께하는 동역자들의 가족 소개입니다. 따뜻한 격려의 댓글과 응원의 하트로 마음을 나눠주세요!</p>
+    </div>
+
+    {% if not profiles %}
+    <div class="empty-gallery glass">
+        <i class="fa-solid fa-people-roof empty-icon"></i>
+        <h2>아직 등록된 우리 가족 소개글이 없습니다.</h2>
+        <p>우리 가족의 첫 번째 소개 카드를 등록하여 소통방을 빛내주세요!</p>
+        <a href="{{ url_for('family_edit') }}" class="btn btn-accent btn-lg mt-3">
+            <i class="fa-solid fa-plus"></i> 첫 번째로 우리 가족 등록하기
+        </a>
+    </div>
+    {% else %}
+    <div class="gallery-feed">
+        {% for profile in profiles %}
+        <div class="profile-card glass" id="family-{{ profile.user_id }}">
+            <!-- Card Header -->
+            <div class="profile-card-header">
+                <div class="family-title-info">
+                    <span class="group-tag">{{ profile.group_num }}구역</span>
+                    <h2>{{ profile.adult1_name }} 성도님 가정</h2>
+                </div>
+                <div class="family-members-sub">
+                    <span class="parents-sub">
+                        <i class="fa-solid fa-users"></i> 부모: {{ profile.adult1_name }}{% if profile.adult2_name %}, {{ profile.adult2_name }}{% endif %}
+                    </span>
+                    {% if profile.kids %}
+                    <span class="divider-sub">|</span>
+                    <span class="kids-sub">
+                        <i class="fa-solid fa-child"></i> 자녀: 
+                        {% for kid in profile.kids %}
+                        <span class="kid-text-badge">{{ kid }}</span>
+                        {% endfor %}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card Content (2 Columns on Desktop) -->
+            <div class="profile-card-body">
+                <!-- Left: Photo -->
+                <div class="profile-photo-col">
+                    <div class="family-image-wrapper">
+                        {% if profile.photo_path %}
+                        <img src="{{ profile.photo_path }}" alt="{{ profile.adult1_name }} 성도님 가족 사진">
+                        {% else %}
+                        <div class="no-photo-placeholder">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>등록된 사진이 없습니다</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right: AI Text Story -->
+                <div class="profile-story-col">
+                    <div class="one-liner-quote">
+                        <i class="fa-solid fa-quote-left"></i>
+                        <span class="quote-text">{{ profile.one_liner }}</span>
+                        <i class="fa-solid fa-quote-right"></i>
+                    </div>
+                    <!-- Raw text rendered as rich markdown via javascript -->
+                    <div class="ai-story-rendered" data-raw-text="{{ profile.ai_intro_text }}">
+                        <!-- JS will inject converted HTML here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Actions (Likes) -->
+            <div class="profile-card-actions">
+                <button class="btn-like {% if profile.has_liked %}liked{% endif %}" 
+                        onclick="toggleLike({{ profile.user_id }}, this)" 
+                        title="우리 가정이 응원합니다!">
+                    <i class="{% if profile.has_liked %}fa-solid{% else %}fa-regular{% endif %} fa-heart"></i>
+                    <span class="like-label">응원해요</span>
+                    <span class="like-count" id="like-count-{{ profile.user_id }}">{{ profile.likes_count }}</span>
+                </button>
+            </div>
+
+            <!-- Comment Section -->
+            <div class="profile-comments-section">
+                <h3>💬 격려와 소통의 한 마디</h3>
+                
+                <!-- Comment List -->
+                <div class="comments-list" id="comments-list-{{ profile.user_id }}">
+                    {% if profile.comments_list %}
+                        {% for comment in profile.comments_list %}
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-author">{{ comment.author_name }}</span>
+                                <span class="comment-date">{{ comment.created_at }}</span>
+                            </div>
+                            <div class="comment-body">
+                                <p class="comment-content">{{ comment.content }}</p>
+                                
+                                <!-- Delete Comment Option -->
+                                {% if comment.author_name == current_name or profile.user_id == current_user_id or session.get('role') == 'admin' %}
+                                <form action="{{ url_for('delete_comment', id=profile.user_id, comment_id=comment.id) }}" method="POST" class="delete-comment-form">
+                                    <button type="submit" class="btn-delete-comment" title="댓글 삭제" onclick="return confirm('이 댓글을 삭제하시겠습니까?')">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-comments-text" id="no-comments-{{ profile.user_id }}">첫 번째 따뜻한 응원의 댓글을 남겨보세요!</p>
+                    {% endif %}
+                </div>
+
+                <!-- Comment Input Form -->
+                <form action="{{ url_for('family_comment', id=profile.user_id) }}" method="POST" class="comment-form">
+                    <input type="text" name="content" class="comment-input" placeholder="성도님 가정에 격려와 축복의 댓글을 달아주세요..." required>
+                    <button type="submit" class="btn btn-primary btn-comment-submit">
+                        <i class="fa-solid fa-paper-plane"></i> <span>등록</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Client-side markdown-like text formatter
+    function formatStoryText(text) {
+        if (!text) return '';
+        
+        let html = text;
+        
+        // Escape HTML tags to prevent XSS
+        html = html
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+            
+        // Process Headers
+        html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+        
+        // Process Bold (**text**)
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Process Bullet lists (- item)
+        // Match lines starting with - and replace them
+        html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+        
+        // Process Number lists (1. item)
+        html = html.replace(/^\d+\.\s(.*$)/gim, '<li>$1</li>');
+        
+        // Convert double line breaks into paragraphs, single line breaks to <br>
+        // But ignore line breaks inside list items
+        let lines = html.split('\n');
+        let processedLines = [];
+        let inList = false;
+        
+        for (let line of lines) {
+            let trimmed = line.trim();
+            if (trimmed.startsWith('<li>') || trimmed.endsWith('</li>')) {
+                if (!inList) {
+                    processedLines.push('<ul class="story-list">');
+                    inList = true;
+                }
+                processedLines.push(line);
+            } else {
+                if (inList) {
+                    processedLines.push('</ul>');
+                    inList = false;
+                }
+                processedLines.push(line);
+            }
+        }
+        if (inList) {
+            processedLines.push('</ul>');
+        }
+        
+        html = processedLines.join('\n');
+        
+        // Convert any leftover loose line breaks to <br>
+        html = html.replace(/\n/g, '<br>');
+        // Clean up empty br tags around lists and headers
+        html = html.replace(/<br><ul/g, '<ul');
+        html = html.replace(/<\/ul><br>/g, '</ul>');
+        html = html.replace(/<br><h/g, '<h');
+        html = html.replace(/<\/h4><br>/g, '</h4>');
+        html = html.replace(/<\/h3><br>/g, '</h3>');
+        html = html.replace(/<\/h2><br>/g, '</h2>');
+        
+        return html;
+    }
+
+    // Render all stories on load
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.ai-story-rendered').forEach(container => {
+            const rawText = container.getAttribute('data-raw-text');
+            container.innerHTML = formatStoryText(rawText);
+        });
+    });
+
+    // AJAX Like Toggle
+    async function toggleLike(profileId, button) {
+        try {
+            const response = await fetch(`/family/${profileId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) throw new Error('Like Request Failed');
+            
+            const data = await response.json();
+            
+            // Update UI
+            const heartIcon = button.querySelector('i');
+            const countSpan = document.getElementById(`like-count-${profileId}`);
+            
+            countSpan.textContent = data.likes_count;
+            
+            if (data.liked) {
+                button.classList.add('liked');
+                heartIcon.className = 'fa-solid fa-heart';
+                // Trigger tiny animation pop
+                button.classList.add('pulse-anim');
+                setTimeout(() => button.classList.remove('pulse-anim'), 300);
+            } else {
+                button.classList.remove('liked');
+                heartIcon.className = 'fa-regular fa-heart';
+            }
+        } catch (error) {
+            console.error('Error toggling like:', error);
+        }
+    }
+</script>
+{% endblock %}
