@@ -124,17 +124,85 @@
 
 {% block scripts %}
 <script>
-    function previewImage(input) {
+    async function previewImage(input) {
         const preview = document.getElementById('photoPreview');
         if (input.files && input.files[0]) {
-            const reader = new FileReader();
+            let file = input.files[0];
             
+            // Only compress if it is an image and larger than 200KB
+            if (file.type.startsWith('image/') && file.size > 200 * 1024) {
+                // Show temporary compression state
+                preview.innerHTML = `
+                    <div class="upload-placeholder">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span>사진 용량 최적화 중...</span>
+                    </div>
+                `;
+                try {
+                    const compressed = await compressImage(file, 1200, 1200, 0.75);
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressed);
+                    input.files = dataTransfer.files;
+                    file = compressed;
+                } catch (e) {
+                    console.error('Image compression failed:', e);
+                }
+            }
+
+            const reader = new FileReader();
             reader.onload = function(e) {
                 preview.innerHTML = `<img src="${e.target.result}" alt="가족 사진 미리보기">`;
             }
-            
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
         }
+    }
+
+    function compressImage(file, maxWidth, maxHeight, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(blob => {
+                        if (blob) {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            reject(new Error('Canvas conversion failed'));
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = err => reject(err);
+            };
+            reader.onerror = err => reject(err);
+        });
     }
 
     async function generateAIPage() {
