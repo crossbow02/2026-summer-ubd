@@ -138,6 +138,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         due_date TEXT,
+        end_date TEXT,
         is_completed INTEGER DEFAULT 0,
         created_by TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -68,11 +68,19 @@ def migrate_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             due_date TEXT,
+            end_date TEXT,
             is_completed INTEGER DEFAULT 0,
             created_by TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+        
+        # 5. Add end_date column to shared_schedules if not exists
+        cursor.execute("PRAGMA table_info(shared_schedules)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'end_date' not in columns:
+            cursor.execute("ALTER TABLE shared_schedules ADD COLUMN end_date TEXT")
+            print("Added 'end_date' column to 'shared_schedules' table.")
             
         conn.commit()
         conn.close()
@@ -667,13 +675,14 @@ def shared_schedule():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         due_date = request.form.get('due_date', '').strip()
+        end_date = request.form.get('end_date', '').strip()
         
         if title:
             created_by = session.get('name')
             execute_db("""
-                INSERT INTO shared_schedules (title, due_date, created_by)
-                VALUES (?, ?, ?)
-            """, (title, due_date or None, created_by))
+                INSERT INTO shared_schedules (title, due_date, end_date, created_by)
+                VALUES (?, ?, ?, ?)
+            """, (title, due_date or None, end_date or None, created_by))
             
         return redirect(url_for('shared_schedule'))
         

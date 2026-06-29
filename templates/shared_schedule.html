@@ -38,18 +38,27 @@
             <i class="fa-solid fa-calendar-plus"></i> <span>새로운 준비 일정/체크 항목 등록하기</span>
         </h3>
         <form action="{{ url_for('shared_schedule') }}" method="POST" style="margin: 0;">
-            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
                 <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
                     <label for="task_title" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">준비할 일 / 점검 항목</label>
                     <input type="text" id="task_title" name="title" required placeholder="예: 물놀이용 물총 30개 구매">
                 </div>
                 <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                    <label for="task_due_date" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">목표 예정일</label>
+                    <label for="task_due_date" id="date_label" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">목표 예정일</label>
                     <input type="date" id="task_due_date" name="due_date" style="padding: 10px 14px;">
+                </div>
+                <div class="form-group" id="end_date_group" style="flex: 1; min-width: 150px; margin-bottom: 0; display: none;">
+                    <label for="task_end_date" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">종료일</label>
+                    <input type="date" id="task_end_date" name="end_date" style="padding: 10px 14px;">
                 </div>
                 <button type="submit" class="btn btn-primary" style="padding: 11px 24px; font-weight: 700; height: fit-content; display: inline-flex; align-items: center; gap: 6px;">
                     <i class="fa-solid fa-plus"></i> 등록
                 </button>
+            </div>
+            <!-- Checkbox toggle for Range -->
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-secondary); padding-left: 2px;">
+                <input type="checkbox" id="is_range" onchange="toggleDateRange(this)" style="width: auto; cursor: pointer; margin: 0;">
+                <label for="is_range" style="cursor: pointer; margin: 0; user-select: none;">기간(시작일~종료일)으로 일정 입력하기</label>
             </div>
         </form>
     </div>
@@ -90,7 +99,12 @@
                                 <!-- Due Date Badge -->
                                 {% if task.due_date %}
                                 <span style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                    <i class="fa-regular fa-clock"></i> {{ task.due_date }} 까지
+                                    <i class="fa-regular fa-clock"></i> 
+                                    {% if task.end_date %}
+                                        {{ task.due_date }} ~ {{ task.end_date }}
+                                    {% else %}
+                                        {{ task.due_date }} 까지
+                                    {% endif %}
                                 </span>
                                 {% endif %}
                                 <!-- Creator Badge -->
@@ -125,6 +139,23 @@
 
 {% block scripts %}
 <script>
+    function toggleDateRange(checkbox) {
+        const endDateGroup = document.getElementById('end_date_group');
+        const dateLabel = document.getElementById('date_label');
+        const endDateInput = document.getElementById('task_end_date');
+        
+        if (checkbox.checked) {
+            endDateGroup.style.display = 'block';
+            dateLabel.textContent = '시작일';
+            endDateInput.setAttribute('required', 'required');
+        } else {
+            endDateGroup.style.display = 'none';
+            dateLabel.textContent = '목표 예정일';
+            endDateInput.removeAttribute('required');
+            endDateInput.value = '';
+        }
+    }
+
     // Map schedules to FullCalendar events
     const events = [
         {% for task in schedules %}
@@ -133,6 +164,14 @@
                 id: "{{ task.id }}",
                 title: "{{ task.title }}",
                 start: "{{ task.due_date }}",
+                {% if task.end_date %}
+                // Add 1 day to make the allDay range event inclusive in FullCalendar
+                end: (() => {
+                    let d = new Date("{{ task.end_date }}");
+                    d.setDate(d.getDate() + 1);
+                    return d.toISOString().split('T')[0];
+                })(),
+                {% endif %}
                 color: {% if task.is_completed %}'#10b981'{% else %}'#6366f1'{% endif %},
                 allDay: true
             },
