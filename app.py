@@ -218,7 +218,14 @@ def generate_local_ai_text(name, one_liner, motivation, prayers, specialties, ch
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'user_id' in session:
-        return redirect(url_for('dashboard'))
+        if session.get('role') == 'admin':
+            return redirect(url_for('dashboard'))
+        else:
+            profile = query_db(
+                "SELECT id FROM family_profiles WHERE user_id = ?",
+                (session['user_id'],), one=True
+            )
+            return redirect(url_for('gallery') if profile else url_for('family_edit'))
         
     error = None
     if request.method == 'POST':
@@ -243,7 +250,21 @@ def login():
                 session['phone'] = user['adult2_phone']
             session['role'] = user['role']
             session['group_num'] = user['group_num']
-            return redirect(url_for('dashboard'))
+
+            # 리다이렉트 결정:
+            # 관리자 → 참가 가정 명단(대시보드)
+            # 일반 사용자 → 소개 미완료면 우리가족 소개하기, 완료면 가족 갤러리
+            if user['role'] == 'admin':
+                return redirect(url_for('dashboard'))
+            else:
+                profile = query_db(
+                    "SELECT id FROM family_profiles WHERE user_id = ?",
+                    (user['id'],), one=True
+                )
+                if profile:
+                    return redirect(url_for('gallery'))
+                else:
+                    return redirect(url_for('family_edit'))
         else:
             error = "이름 또는 비밀번호(전화번호 뒤 4자리)가 일치하지 않습니다."
             
