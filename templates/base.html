@@ -52,19 +52,22 @@
                     <i class="fa-solid fa-moon"></i>
                 </button>
                 
+                {% if session.get('user_id') %}
                 <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
                     <span class="bar"></span>
                     <span class="bar"></span>
                     <span class="bar"></span>
                 </button>
+                {% endif %}
             </div>
         </div>
         
-        <!-- Bottom Row: Navigation Tabs -->
+        <!-- Bottom Row: Navigation Tabs (로그인 후에만 표시) -->
+        {% if session.get('user_id') %}
         <div class="nav-bottom-row" id="navMenu">
             <nav class="nav-menu-tabs">
                 <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
-                    <i class="fa-solid fa-users-viewfinder"></i> <span>가정 명단</span>
+                    <i class="fa-solid fa-users-viewfinder"></i> <span>참가 가정 명단</span>
                 </a>
                 <a href="{{ url_for('family_edit') }}" class="nav-item {% if request.endpoint == 'family_edit' %}active{% endif %}">
                     <i class="fa-solid fa-house-chimney-user"></i> <span>우리가족 소개하기</span>
@@ -73,19 +76,18 @@
                     <i class="fa-solid fa-images"></i> <span>가족 갤러리</span>
                 </a>
                 <a href="{{ url_for('intro') }}" class="nav-item {% if request.endpoint == 'intro' %}active{% endif %}">
-                    <i class="fa-solid fa-photo-film"></i> <span>사역 소개</span>
+                    <i class="fa-solid fa-photo-film"></i> <span>사역지 소개</span>
                 </a>
                 <a href="{{ url_for('shared_schedule') }}" class="nav-item {% if request.endpoint == 'shared_schedule' %}active{% endif %}">
-                    <i class="fa-solid fa-calendar-check"></i> <span>준비 일정</span>
+                    <i class="fa-solid fa-calendar-check"></i> <span>준비 일정표</span>
                 </a>
                 <a href="{{ url_for('target_children') }}" class="nav-item {% if request.endpoint == 'target_children' %}active{% endif %}">
                     <i class="fa-solid fa-children"></i> <span>만날 아이들</span>
                 </a>
                 <a href="{{ url_for('team_boards') }}" class="nav-item {% if request.endpoint == 'team_boards' %}active{% endif %}">
-                    <i class="fa-solid fa-comments"></i> <span>팀별 소통</span>
+                    <i class="fa-solid fa-comments"></i> <span>팀별 소통방</span>
                 </a>
             </nav>
-            {% if session.get('user_id') %}
             <div class="user-badge-nav mobile-only">
                 <span class="user-name-tag">
                     {% if session.get('role') == 'admin' %}
@@ -95,8 +97,8 @@
                 </span>
                 <a href="{{ url_for('logout') }}" class="btn-logout" title="로그아웃"><i class="fa-solid fa-right-from-bracket"></i></a>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
     </header>
 
     <main class="main-content">
