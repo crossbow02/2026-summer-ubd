@@ -29,25 +29,40 @@
     <div class="glowing-orb orb-2"></div>
 
     <header class="navbar">
-        <div class="nav-container">
+        <!-- Top Row: Logo & Profile Actions -->
+        <div class="nav-top-row">
             <a href="{{ url_for('dashboard') }}" class="nav-logo">
                 <span class="emoji-spin">💖</span> <span>사랑이 두근둔포</span>
             </a>
             
             <div class="nav-right-actions">
+                {% if session.get('user_id') %}
+                <div class="user-badge-nav desktop-only">
+                    <span class="user-name-tag">
+                        {% if session.get('role') == 'admin' %}
+                        <span class="admin-shield" title="관리자 권한"><i class="fa-solid fa-shield-halved"></i></span>
+                        {% endif %}
+                        {{ session.get('name') }}
+                    </span>
+                    <a href="{{ url_for('logout') }}" class="btn-logout" title="로그아웃"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+                {% endif %}
+
                 <button class="theme-toggle-btn" id="themeToggle" title="테마 변경 (다크/라이트)" aria-label="Toggle Theme">
                     <i class="fa-solid fa-moon"></i>
                 </button>
                 
-                {% if session.get('user_id') %}
-                <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation Menu">
-                    <i class="fa-solid fa-bars"></i>
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
                 </button>
-                {% endif %}
             </div>
-            
-            {% if session.get('user_id') %}
-            <nav class="nav-menu" id="navMenu">
+        </div>
+        
+        <!-- Bottom Row: Navigation Tabs -->
+        <div class="nav-bottom-row" id="navMenu">
+            <nav class="nav-menu-tabs">
                 <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <i class="fa-solid fa-users-viewfinder"></i> <span>가정 명단</span>
                 </a>
@@ -69,18 +84,17 @@
                 <a href="{{ url_for('family_edit') }}" class="nav-item {% if request.endpoint == 'family_edit' %}active{% endif %}">
                     <i class="fa-solid fa-house-chimney-user"></i> <span>가족 등록</span>
                 </a>
-                <div class="user-badge-nav">
-                    <span class="user-name-tag">
-                        {% if session.get('role') == 'admin' %}
-                        <span class="admin-shield"><i class="fa-solid fa-shield-halved"></i> 관리자</span>
-                        {% endif %}
-                        {{ session.get('name') }}님
-                    </span>
-                    <a href="{{ url_for('logout') }}" class="btn-logout" title="로그아웃">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    </a>
-                </div>
             </nav>
+            {% if session.get('user_id') %}
+            <div class="user-badge-nav mobile-only">
+                <span class="user-name-tag">
+                    {% if session.get('role') == 'admin' %}
+                    <span class="admin-shield" title="관리자 권한"><i class="fa-solid fa-shield-halved"></i></span>
+                    {% endif %}
+                    {{ session.get('name') }}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn-logout" title="로그아웃"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
             {% endif %}
         </div>
     </header>
