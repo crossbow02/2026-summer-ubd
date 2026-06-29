@@ -96,6 +96,14 @@
                 <option value="{{ g }}">{{ g }}구역</option>
                 {% endfor %}
             </select>
+
+            <select id="teamFilter" class="filter-select" onchange="filterRoster()">
+                <option value="">모든 팀</option>
+                <option value="미지정">미지정</option>
+                <option value="성경학교팀">성경학교팀</option>
+                <option value="식사준비팀">식사준비팀</option>
+                <option value="예배팀">예배팀</option>
+            </select>
         </div>
     </div>
 
@@ -105,11 +113,16 @@
         <div class="family-card glass {% if user.has_intro %}has-intro{% else %}no-intro{% endif %}" 
              data-name="{{ user.adult1_name or '' }} {{ user.adult2_name or '' }} {{ user.children or '' }}" 
              data-district="{{ user.group_num }}" 
-             data-status="{% if user.has_intro %}completed{% else %}pending{% endif %}">
+             data-status="{% if user.has_intro %}completed{% else %}pending{% endif %}"
+             data-team="{{ user.team or '미지정' }}"
+             id="family-card-{{ user.id }}">
             
             <!-- Group Badge -->
             <div class="family-badge">
                 <span class="district-badge">{{ user.group_num }}구역</span>
+                <span class="team-badge team-{{ 'school' if user.team == '성경학교팀' else 'meal' if user.team == '식사준비팀' else 'worship' if user.team == '예배팀' else 'unassigned' }}">
+                    <i class="fa-solid fa-people-group"></i> {{ user.team or '미지정' }}
+                </span>
                 {% if user.has_intro %}
                 <span class="status-badge status-completed"><i class="fa-solid fa-circle-check"></i> 소개 완료</span>
                 {% else %}
@@ -174,11 +187,40 @@
                 {% endif %}
             </div>
             
-            {% if session.get('role') == 'admin' and user.adult1_name == '정다운' %}
-            <div class="admin-indicator">
-                <i class="fa-solid fa-shield-halved"></i> 관리자 패밀리
+            {% if session.get('role') == 'admin' %}
+            <div class="admin-edit-panel" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%;">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-indigo);"><i class="fa-solid fa-wrench"></i> 권한 및 팀 설정</span>
+                    
+                    <!-- Admin Toggle -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">관리자 권한</span>
+                        <label class="switch-mini" style="position: relative; display: inline-block; width: 34px; height: 20px; margin: 0;">
+                            <input type="checkbox" {% if user.role == 'admin' %}checked{% endif %} 
+                                   {% if user.id == current_user_id %}disabled title="본인 권한은 변경할 수 없습니다."{% endif %}
+                                   onchange="toggleAdminRole({{ user.id }}, this.checked)"
+                                   style="opacity: 0; width: 0; height: 0;">
+                            <span class="slider-mini" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border: 1px solid var(--border-color); transition: .3s; border-radius: 20px;"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Team Select -->
+                <div style="display: flex; align-items: center; gap: 8px; justify-content: space-between; width: 100%;">
+                    <span style="font-size: 0.78rem; color: var(--text-secondary);">소속 팀</span>
+                    <select onchange="updateUserTeam({{ user.id }}, this.value)" class="filter-select" style="margin: 0; padding: 6px 10px; font-size: 0.82rem; width: 140px; background: rgba(0,0,0,0.25);">
+                        <option value="미지정" {% if user.team == '미지정' or not user.team %}selected{% endif %}>미지정</option>
+                        <option value="성경학교팀" {% if user.team == '성경학교팀' %}selected{% endif %}>성경학교팀</option>
+                        <option value="식사준비팀" {% if user.team == '식사준비팀' %}selected{% endif %}>식사준비팀</option>
+                        <option value="예배팀" {% if user.team == '예배팀' %}selected{% endif %}>예배팀</option>
+                    </select>
+                </div>
             </div>
             {% endif %}
+            
+            <div class="admin-indicator" id="admin-indicator-{{ user.id }}" style="display: {% if user.role == 'admin' %}flex{% else %}none{% endif %};">
+                <i class="fa-solid fa-shield-halved"></i> 관리자 패밀리
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -200,18 +242,23 @@
     function filterRoster() {
         const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
         const districtVal = document.getElementById('districtFilter').value;
+        const teamVal = document.getElementById('teamFilter').value;
         const cards = document.querySelectorAll('.family-card');
 
         cards.forEach(card => {
             const nameData = card.getAttribute('data-name').toLowerCase();
             const districtData = card.getAttribute('data-district');
             const statusData = card.getAttribute('data-status');
+            const teamData = card.getAttribute('data-team');
 
             // Check Search Match
             const matchesSearch = nameData.includes(searchVal);
 
             // Check District Match
             const matchesDistrict = !districtVal || districtData === districtVal;
+
+            // Check Team Match
+            const matchesTeam = !teamVal || teamData === teamVal;
 
             // Check Status Match
             let matchesStatus = true;
@@ -221,7 +268,7 @@
                 matchesStatus = statusData === 'pending';
             }
 
-            if (matchesSearch && matchesDistrict && matchesStatus) {
+            if (matchesSearch && matchesDistrict && matchesTeam && matchesStatus) {
                 card.style.display = 'flex';
                 card.classList.add('animate-fade-in');
             } else {
@@ -229,6 +276,69 @@
                 card.classList.remove('animate-fade-in');
             }
         });
+    }
+
+    async function toggleAdminRole(userId, isChecked) {
+        const role = isChecked ? 'admin' : 'user';
+        try {
+            const response = await fetch('/admin/update-family-role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ family_id: userId, role: role })
+            });
+            
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update role');
+            }
+            
+            // Dynamically show/hide the admin-indicator without page reload
+            const indicator = document.getElementById(`admin-indicator-${userId}`);
+            if (indicator) {
+                indicator.style.display = isChecked ? 'flex' : 'none';
+            }
+        } catch (error) {
+            console.error(error);
+            alert('권한 변경에 실패했습니다: ' + error.message);
+            // Revert checkbox state
+            window.location.reload();
+        }
+    }
+
+    async function updateUserTeam(userId, teamValue) {
+        try {
+            const response = await fetch('/admin/update-family-team', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ family_id: userId, team: teamValue })
+            });
+            
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update team');
+            }
+            
+            // Update data-team attribute on the card
+            const card = document.getElementById(`family-card-${userId}`);
+            if (card) {
+                card.setAttribute('data-team', teamValue);
+                
+                // Update the team badge text & class inside the card
+                const badge = card.querySelector('.team-badge');
+                if (badge) {
+                    badge.className = `team-badge team-${teamValue === '성경학교팀' ? 'school' : teamValue === '식사준비팀' ? 'meal' : teamValue === '예배팀' ? 'worship' : 'unassigned'}`;
+                    badge.innerHTML = `<i class="fa-solid fa-people-group"></i> ${teamValue}`;
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert('팀 변경에 실패했습니다: ' + error.message);
+            window.location.reload();
+        }
     }
 </script>
 {% endblock %}

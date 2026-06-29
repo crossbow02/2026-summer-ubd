@@ -2399,5 +2399,77 @@ body {
     box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
 }
 
+/* Team Badge Styling */
+.team-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 6px;
+    border: 1px solid transparent;
+}
+.team-unassigned {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+}
+.team-school {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.25);
+    color: #818cf8;
+}
+.team-meal {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+}
+.team-worship {
+    background: rgba(236, 72, 153, 0.15);
+    border-color: rgba(236, 72, 153, 0.25);
+    color: #f472b6;
+}
+
+.light-theme .team-unassigned {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: var(--text-secondary);
+}
+.light-theme .team-school {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: rgba(79, 70, 229, 0.18);
+    color: #4f46e5;
+}
+.light-theme .team-meal {
+    background: rgba(217, 119, 6, 0.08);
+    border-color: rgba(217, 119, 6, 0.18);
+    color: #d97706;
+}
+.light-theme .team-worship {
+    background: rgba(219, 39, 119, 0.08);
+    border-color: rgba(219, 39, 119, 0.18);
+    color: #db267f;
+}
+
+/* Mini Switch styles */
+.switch-mini input:checked + .slider-mini {
+    background-color: var(--color-indigo) !important;
+}
+.switch-mini input:checked + .slider-mini:before {
+    transform: translateX(14px);
+}
+.slider-mini:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
 
 

@@ -734,6 +734,46 @@ def delete_schedule(id):
         
     return redirect(url_for('shared_schedule'))
 
+# Admin-only operations for family list page
+@app.route('/admin/update-family-team', methods=['POST'])
+def admin_update_family_team():
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    data = request.get_json() or {}
+    family_id = data.get('family_id')
+    team = data.get('team')
+    
+    if not family_id or not team:
+        return jsonify({'success': False, 'error': 'Invalid request'}), 400
+        
+    if team not in ['미지정', '성경학교팀', '식사준비팀', '예배팀']:
+        return jsonify({'success': False, 'error': 'Invalid team name'}), 400
+        
+    execute_db("UPDATE users SET team = ? WHERE id = ?", (team, family_id))
+    return jsonify({'success': True})
+
+@app.route('/admin/update-family-role', methods=['POST'])
+def admin_update_family_role():
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    data = request.get_json() or {}
+    family_id = data.get('family_id')
+    role = data.get('role')
+    
+    if not family_id or not role:
+        return jsonify({'success': False, 'error': 'Invalid request'}), 400
+        
+    if int(family_id) == int(session.get('user_id')):
+        return jsonify({'success': False, 'error': '자신의 관리자 권한은 스스로 변경할 수 없습니다.'}), 400
+        
+    if role not in ['admin', 'user']:
+        return jsonify({'success': False, 'error': 'Invalid role'}), 400
+        
+    execute_db("UPDATE users SET role = ? WHERE id = ?", (role, family_id))
+    return jsonify({'success': True})
+
 # Continuous Deployment Webhook from GitHub
 @app.route('/github-webhook', methods=['POST'])
 def github_webhook():
