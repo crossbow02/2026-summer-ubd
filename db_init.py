@@ -104,6 +104,20 @@ def init_db():
     )
     """)
     
+    # Create target_children table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS target_children (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        age INTEGER,
+        gender TEXT,
+        photo_path TEXT,
+        parents_church TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
     conn.commit()
     print("Database tables created successfully.")
     

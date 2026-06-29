@@ -54,6 +54,9 @@
                 <a href="{{ url_for('intro') }}" class="nav-item {% if request.endpoint == 'intro' %}active{% endif %}">
                     <i class="fa-solid fa-photo-film"></i> <span>사역 소개 PT</span>
                 </a>
+                <a href="{{ url_for('target_children') }}" class="nav-item {% if request.endpoint == 'target_children' %}active{% endif %}">
+                    <i class="fa-solid fa-children"></i> <span>만날 아이들</span>
+                </a>
                 <a href="{{ url_for('gallery') }}" class="nav-item {% if request.endpoint == 'gallery' %}active{% endif %}">
                     <i class="fa-solid fa-images"></i> <span>가족 소개 피드</span>
                 </a>

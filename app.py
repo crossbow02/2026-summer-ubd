@@ -22,6 +22,31 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 # Create upload folder if not exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Database Self-Migration helper for Target Children
+def migrate_db():
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS target_children (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            age INTEGER,
+            gender TEXT,
+            photo_path TEXT,
+            parents_church TEXT,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        conn.commit()
+        conn.close()
+        print("Database migrated successfully (target_children table checked).")
+    except Exception as e:
+        print("Database migration failed:", e)
+
+migrate_db()
+
 # Database helpers
 @app.template_filter('list_from_json')
 def list_from_json(json_str):
@@ -395,6 +420,81 @@ def delete_comment(id, comment_id):
         execute_db("DELETE FROM comments WHERE id = ?", (comment_id,))
         
     return redirect(url_for('gallery'))
+
+# Target Children routes
+@app.route('/target-children')
+def target_children():
+    rows = query_db("SELECT * FROM target_children ORDER BY name")
+    children = [dict(row) for row in rows]
+    is_admin = (session.get('role') == 'admin')
+    return render_template('target_children.html', children=children, is_admin=is_admin)
+
+@app.route('/target-children/add', methods=['POST'])
+def target_children_add():
+    if session.get('role') != 'admin':
+        return redirect(url_for('target_children'))
+        
+    name = request.form.get('name', '').strip()
+    age = request.form.get('age', '').strip()
+    age = int(age) if age.isdigit() else None
+    gender = request.form.get('gender', '').strip()
+    parents_church = request.form.get('parents_church', '모름').strip()
+    notes = request.form.get('notes', '').strip()
+    
+    photo_path = None
+    file = request.files.get('photo')
+    if file and file.filename != '':
+        filename = secure_filename(f"child_{int(datetime.now().timestamp())}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        photo_path = f"/static/uploads/{filename}"
+        
+    execute_db("""
+        INSERT INTO target_children (name, age, gender, photo_path, parents_church, notes)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (name, age, gender, photo_path, parents_church, notes))
+    
+    return redirect(url_for('target_children'))
+
+@app.route('/target-children/edit/<int:id>', methods=['POST'])
+def target_children_edit(id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('target_children'))
+        
+    child = query_db("SELECT * FROM target_children WHERE id = ?", (id,), one=True)
+    if not child:
+        return redirect(url_for('target_children'))
+        
+    name = request.form.get('name', '').strip()
+    age = request.form.get('age', '').strip()
+    age = int(age) if age.isdigit() else None
+    gender = request.form.get('gender', '').strip()
+    parents_church = request.form.get('parents_church', '모름').strip()
+    notes = request.form.get('notes', '').strip()
+    
+    photo_path = child['photo_path']
+    file = request.files.get('photo')
+    if file and file.filename != '':
+        filename = secure_filename(f"child_{id}_{int(datetime.now().timestamp())}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        photo_path = f"/static/uploads/{filename}"
+        
+    execute_db("""
+        UPDATE target_children 
+        SET name = ?, age = ?, gender = ?, photo_path = ?, parents_church = ?, notes = ?
+        WHERE id = ?
+    """, (name, age, gender, photo_path, parents_church, notes, id))
+    
+    return redirect(url_for('target_children'))
+
+@app.route('/target-children/delete/<int:id>', methods=['POST'])
+def target_children_delete(id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('target_children'))
+        
+    execute_db("DELETE FROM target_children WHERE id = ?", (id,))
+    return redirect(url_for('target_children'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050, debug=True)

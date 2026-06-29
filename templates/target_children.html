@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}우리가 만날 아이들 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="kids-page-container">
+    <div class="kids-header glass">
+        <div class="kids-header-text">
+            <h1>👶 우리가 만날 아이들</h1>
+            <p>둔포 성결교회의 소중한 러시아계 고려인 다문화 아이들의 정보방입니다. 기도로 준비하며 마음을 나누어 주세요.</p>
+        </div>
+        {% if is_admin %}
+        <button class="btn btn-primary" onclick="openAddModal()">
+            <i class="fa-solid fa-user-plus"></i> 아이 정보 추가
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Kids Card Grid -->
+    <div class="kids-grid">
+        {% if children %}
+            {% for child in children %}
+            <div class="child-card glass">
+                <div class="child-image-wrapper">
+                    {% if child.photo_path %}
+                        <img src="{{ child.photo_path }}" alt="{{ child.name }} 사진">
+                    {% else %}
+                        <div class="default-child-avatar">
+                            <i class="fa-solid fa-face-smile"></i>
+                        </div>
+                    {% endif %}
+                    <div class="child-gender-badge {% if child.gender == '남' %}male{% else %}female{% endif %}">
+                        {{ child.gender }}
+                    </div>
+                </div>
+
+                <div class="child-info">
+                    <div class="child-meta-header">
+                        <span class="child-name">{{ child.name }}</span>
+                        {% if child.age %}
+                        <span class="child-age-badge">{{ child.age }}세</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Parents Church Status -->
+                    <div class="parents-church-row">
+                        <span class="church-label">부모님 신앙:</span>
+                        {% if child.parents_church == '다니심' %}
+                        <span class="church-badge active"><i class="fa-solid fa-circle-check"></i> 다니심</span>
+                        {% elif child.parents_church == '안 다니심' %}
+                        <span class="church-badge inactive"><i class="fa-solid fa-circle-xmark"></i> 안 다니심</span>
+                        {% else %}
+                        <span class="church-badge unknown"><i class="fa-solid fa-circle-question"></i> 모름</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Remarks Notes -->
+                    {% if child.notes %}
+                    <div class="child-notes">
+                        <p>{{ child.notes }}</p>
+                    </div>
+                    {% else %}
+                    <div class="child-notes empty">
+                        <p>등록된 상세 특이사항이나 기도제목이 없습니다.</p>
+                    </div>
+                    {% endif %}
+
+                    {% if is_admin %}
+                    <div class="child-actions">
+                        <button class="btn-action-edit" onclick="openEditModal({{ child|tojson }})" title="정보 수정">
+                            <i class="fa-solid fa-user-pen"></i> 수정
+                        </button>
+                        <form action="{{ url_for('target_children_delete', id=child.id) }}" method="POST" onsubmit="return confirm('정말 이 아이 정보를 삭제하시겠습니까?');" style="display:inline;">
+                            <button type="submit" class="btn-action-delete" title="정보 삭제">
+                                <i class="fa-solid fa-user-minus"></i> 삭제
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-kids-card glass">
+                <i class="fa-solid fa-children"></i>
+                <h3>등록된 아이들의 정보가 없습니다</h3>
+                <p>선교 준비팀에서 교감하며 섬길 아이들의 프로필을 기록할 예정입니다.</p>
+                {% if is_admin %}
+                <button class="btn btn-primary" onclick="openAddModal()" style="margin-top: 15px;">
+                    첫 번째 아이 등록하기
+                </button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ================= ADMIN MODALS ================= -->
+{% if is_admin %}
+<!-- ADD MODAL -->
+<div id="addChildModal" class="modal-overlay">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-plus"></i> 새 아이 정보 추가</h3>
+            <button class="modal-close" onclick="closeAddModal()">&times;</button>
+        </div>
+        <form action="{{ url_for('target_children_add') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="add_name"><i class="fa-solid fa-signature"></i> 이름 (필수)</label>
+                <input type="text" id="add_name" name="name" required placeholder="이름을 입력하세요">
+            </div>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label for="add_age"><i class="fa-solid fa-cake-candles"></i> 나이 (선택)</label>
+                    <input type="number" id="add_age" name="age" min="1" max="25" placeholder="예: 9">
+                </div>
+                <div class="form-group">
+                    <label for="add_gender"><i class="fa-solid fa-venus-mars"></i> 성별</label>
+                    <select id="add_gender" name="gender">
+                        <option value="남">남 (남아)</option>
+                        <option value="여">여 (여아)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="add_parents_church"><i class="fa-solid fa-cross"></i> 부모님 신앙 상태</label>
+                <select id="add_parents_church" name="parents_church">
+                    <option value="모름" selected>모름 / 무슬림 등</option>
+                    <option value="다니심">교회 다니심 (신앙생활 함)</option>
+                    <option value="안 다니심">교회 안 다니심</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="add_photo"><i class="fa-solid fa-image"></i> 아이 사진</label>
+                <input type="file" id="add_photo" name="photo" accept="image/*">
+                <span class="file-help-text">가급적 1:1 비율 또는 정사각형에 가까운 밝은 전신/얼굴 사진을 올려주세요.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="add_notes"><i class="fa-solid fa-circle-info"></i> 기타사항 및 기도제목</label>
+                <textarea id="add_notes" name="notes" rows="4" placeholder="한국어 소통 능력, 성격, 좋아하는 놀이, 기도제목 등을 상세히 남겨주세요."></textarea>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="closeAddModal()">취소</button>
+                <button type="submit" class="btn btn-primary">등록하기</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editChildModal" class="modal-overlay">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-pen"></i> 아이 정보 수정</h3>
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form id="editForm" action="" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="edit_name"><i class="fa-solid fa-signature"></i> 이름 (필수)</label>
+                <input type="text" id="edit_name" name="name" required placeholder="이름을 입력하세요">
+            </div>
+
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label for="edit_age"><i class="fa-solid fa-cake-candles"></i> 나이 (선택)</label>
+                    <input type="number" id="edit_age" name="age" min="1" max="25" placeholder="예: 9">
+                </div>
+                <div class="form-group">
+                    <label for="edit_gender"><i class="fa-solid fa-venus-mars"></i> 성별</label>
+                    <select id="edit_gender" name="gender">
+                        <option value="남">남 (남아)</option>
+                        <option value="여">여 (여아)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_parents_church"><i class="fa-solid fa-cross"></i> 부모님 신앙 상태</label>
+                <select id="edit_parents_church" name="parents_church">
+                    <option value="모름">모름 / 무슬림 등</option>
+                    <option value="다니심">교회 다니심 (신앙생활 함)</option>
+                    <option value="안 다니심">교회 안 다니심</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_photo"><i class="fa-solid fa-image"></i> 아이 사진 교체 (새로 올릴 때만 선택)</label>
+                <input type="file" id="edit_photo" name="photo" accept="image/*">
+                <span class="file-help-text">새 사진을 올리면 기존 사진이 변경됩니다.</span>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_notes"><i class="fa-solid fa-circle-info"></i> 기타사항 및 기도제목</label>
+                <textarea id="edit_notes" name="notes" rows="4" placeholder="한국어 소통 능력, 성격, 좋아하는 놀이, 기도제목 등을 상세히 남겨주세요."></textarea>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+                <button type="submit" class="btn btn-primary">수정 완료</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if is_admin %}
+<script>
+    const addModal = document.getElementById('addChildModal');
+    const editModal = document.getElementById('editChildModal');
+    const editForm = document.getElementById('editForm');
+
+    function openAddModal() {
+        addModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // prevent bg scroll
+    }
+
+    function closeAddModal() {
+        addModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function openEditModal(child) {
+        // Set action route dynamically
+        editForm.action = `/target-children/edit/${child.id}`;
+        
+        // Fill values
+        document.getElementById('edit_name').value = child.name;
+        document.getElementById('edit_age').value = child.age || '';
+        document.getElementById('edit_gender').value = child.gender;
+        document.getElementById('edit_parents_church').value = child.parents_church;
+        document.getElementById('edit_notes').value = child.notes || '';
+        
+        editModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditModal() {
+        editModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close modals on clicking backdrop
+    window.addEventListener('click', (e) => {
+        if (e.target === addModal) closeAddModal();
+        if (e.target === editModal) closeEditModal();
+    });
+</script>
+{% endif %}
+{% endblock %}
