@@ -292,6 +292,8 @@ body {
 }
 .form-group input[type="text"],
 .form-group input[type="password"],
+.form-group input[type="number"],
+.form-group select,
 .form-group textarea,
 .filter-select {
     width: 100%;
@@ -305,6 +307,7 @@ body {
     transition: all 0.2s ease;
 }
 .form-group input:focus,
+.form-group select:focus,
 .form-group textarea:focus,
 .filter-select:focus {
     outline: none;
@@ -1596,6 +1599,8 @@ body {
 }
 .light-theme .form-group input[type="text"],
 .light-theme .form-group input[type="password"],
+.light-theme .form-group input[type="number"],
+.light-theme .form-group select,
 .light-theme .form-group textarea,
 .light-theme .filter-select,
 .light-theme .search-box input {
@@ -1604,6 +1609,7 @@ body {
     color: var(--text-primary);
 }
 .light-theme .form-group input:focus,
+.light-theme .form-group select:focus,
 .light-theme .form-group textarea:focus,
 .light-theme .filter-select:focus,
 .light-theme .search-box input:focus {
