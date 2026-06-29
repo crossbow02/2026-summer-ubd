@@ -50,6 +50,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="team"><i class="fa-solid fa-people-group"></i> 사역 참가 팀 선택 (가안)</label>
+                    <select id="team" name="team" required class="filter-select" style="width: 100%;">
+                        <option value="미지정" {% if user.team == '미지정' or not user.team %}selected{% endif %}>미지정 (소속 팀 없음)</option>
+                        <option value="성경학교팀" {% if user.team == '성경학교팀' %}selected{% endif %}>성경학교팀 (어린이 성경학교 사역)</option>
+                        <option value="식사준비팀" {% if user.team == '식사준비팀' %}selected{% endif %}>식사준비팀 (식사 및 교제 섬김)</option>
+                        <option value="예배팀" {% if user.team == '예배팀' %}selected{% endif %}>예배팀 (예배 찬양 및 특송 지원)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label for="motivation">💖 이번 사역에 참여하게 된 계기와 기대감은 무엇인가요?</label>
                     <textarea id="motivation" name="motivation" rows="4" 
                               placeholder="예: 러시아계 고려인 자녀들에게 성경학교를 통해 복음이 전해지길 사모하는 마음에 신청했습니다. 온 가족이 한마음으로 헌신하고 아이들과 마음껏 사랑을 나누는 시간이 되길 기대합니다." required>{{ profile.motivation if profile else '' }}</textarea>

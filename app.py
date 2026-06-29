@@ -22,11 +22,13 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 # Create upload folder if not exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Database Self-Migration helper for Target Children
+# Database Self-Migration helper for Target Children and Teams
 def migrate_db():
     try:
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
+        
+        # 1. Target children table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS target_children (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,9 +41,30 @@ def migrate_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+        
+        # 2. Team posts table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS team_posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_name TEXT NOT NULL,
+            author_name TEXT NOT NULL,
+            content TEXT NOT NULL,
+            file_path TEXT,
+            file_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        
+        # 3. Add team column to users table if not exists
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'team' not in columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN team TEXT DEFAULT '미지정'")
+            print("Added 'team' column to 'users' table.")
+            
         conn.commit()
         conn.close()
-        print("Database migrated successfully (target_children table checked).")
+        print("Database migrated successfully (target_children, team_posts, and users team column checked).")
     except Exception as e:
         print("Database migration failed:", e)
 
@@ -229,11 +252,42 @@ def dashboard():
     # Count adult & kids totals
     total_adults = 0
     total_kids = 0
+    
+    # Sex ratios calculation
+    male_adult_names = ['김민웅', '조성필', '김종대', '허슬기', '신호상', '이재한', '김정휘', '이준구', '최중근', '박우성', '서재영', '허무길', '염태한', '정다운', '김진석', '이현민']
+    male_kids = ['조민율', '류지우', '허윤', '허겸', '신하선', '이세온', '최온유', '허이안', '정유호', '김우주']
+    
+    male_adults = 0
+    female_adults = 0
+    male_kids_count = 0
+    female_kids_count = 0
+    
+    import re
     for u in users:
         total_adults += 1 if u['adult1_name'] else 0
         total_adults += 1 if u['adult2_name'] else 0
+        
+        # Gender counts
+        if u['adult1_name']:
+            if u['adult1_name'] in male_adult_names:
+                male_adults += 1
+            else:
+                female_adults += 1
+        if u['adult2_name']:
+            if u['adult2_name'] in male_adult_names:
+                male_adults += 1
+            else:
+                female_adults += 1
+                
         kids = json.loads(u['children']) if u['children'] else []
         total_kids += len(kids)
+        
+        for kid in kids:
+            k_name = re.sub(r'\(.*?\)', '', kid).strip()
+            if k_name in male_kids:
+                male_kids_count += 1
+            else:
+                female_kids_count += 1
         
     return render_template('families.html', 
                            users=users, 
@@ -242,6 +296,10 @@ def dashboard():
                            completion_rate=completion_rate,
                            total_adults=total_adults,
                            total_kids=total_kids,
+                           male_adults=male_adults,
+                           female_adults=female_adults,
+                           male_kids=male_kids_count,
+                           female_kids=female_kids_count,
                            current_user_id=session.get('user_id'),
                            current_name=session.get('name'))
 
@@ -270,6 +328,10 @@ def family_edit():
         motivation = request.form.get('motivation', '').strip()
         prayers = request.form.get('prayers', '').strip()
         specialties = request.form.get('specialties', '').strip()
+        team = request.form.get('team', '미지정').strip()
+        
+        # Save team selection to users table
+        execute_db("UPDATE users SET team = ? WHERE id = ?", (team, user_id))
         
         # Photo handling
         photo_path = profile['photo_path'] if profile else None
@@ -495,6 +557,97 @@ def target_children_delete(id):
         
     execute_db("DELETE FROM target_children WHERE id = ?", (id,))
     return redirect(url_for('target_children'))
+
+# Team Board routes
+@app.route('/team-boards', methods=['GET', 'POST'])
+def team_boards():
+    current_user_id = session['user_id']
+    user = query_db("SELECT * FROM users WHERE id = ?", (current_user_id,), one=True)
+    
+    # Default to user's assigned team if valid, else default to '성경학교팀'
+    user_team = user['team'] if user['team'] in ['성경학교팀', '식사준비팀', '예배팀'] else '성경학교팀'
+    selected_team = request.args.get('team', user_team)
+    if selected_team not in ['성경학교팀', '식사준비팀', '예배팀']:
+        selected_team = '성경학교팀'
+        
+    if request.method == 'POST':
+        content = request.form.get('content', '').strip()
+        file = request.files.get('file')
+        
+        file_path = None
+        file_name = None
+        if file and file.filename != '':
+            file_name = secure_filename(file.filename)
+            saved_filename = f"team_{selected_team}_{int(datetime.now().timestamp())}_{file_name}"
+            file_path_full = os.path.join(app.config['UPLOAD_FOLDER'], saved_filename)
+            file.save(file_path_full)
+            file_path = f"/static/uploads/{saved_filename}"
+            
+        if content or file_path:
+            author_name = session['name']
+            execute_db("""
+                INSERT INTO team_posts (team_name, author_name, content, file_path, file_name)
+                VALUES (?, ?, ?, ?, ?)
+            """, (selected_team, author_name, content, file_path, file_name))
+            
+        return redirect(url_for('team_boards', team=selected_team))
+        
+    # Fetch posts for this team
+    posts = query_db("""
+        SELECT * FROM team_posts 
+        WHERE team_name = ? 
+        ORDER BY created_at DESC
+    """, (selected_team,))
+    
+    posts_list = [dict(p) for p in posts]
+    
+    # Fetch all members of this team
+    team_members = query_db("""
+        SELECT group_num, adult1_name, adult2_name, children 
+        FROM users 
+        WHERE team = ?
+        ORDER BY group_num, adult1_name
+    """, (selected_team,))
+    
+    formatted_members = []
+    for m in team_members:
+        m_dict = dict(m)
+        m_dict['kids'] = json.loads(m['children']) if m['children'] else []
+        formatted_members.append(m_dict)
+        
+    return render_template('team_boards.html',
+                           posts=posts_list,
+                           selected_team=selected_team,
+                           team_members=formatted_members,
+                           user_team=user['team'],
+                           is_admin=(session.get('role') == 'admin'),
+                           current_name=session['name'])
+
+@app.route('/team-boards/delete/<int:post_id>', methods=['POST'])
+def delete_team_post(post_id):
+    post = query_db("SELECT * FROM team_posts WHERE id = ?", (post_id,), one=True)
+    if not post:
+        return redirect(url_for('team_boards'))
+        
+    user_id = session['user_id']
+    user = query_db("SELECT * FROM users WHERE id = ?", (user_id,), one=True)
+    authorized_names = [user['adult1_name'], user['adult2_name']] if user else []
+    
+    is_author = (post['author_name'] in authorized_names)
+    is_admin = (session.get('role') == 'admin')
+    
+    if is_author or is_admin:
+        if post['file_path']:
+            try:
+                full_path = os.path.join(BASE_DIR, post['file_path'].lstrip('/'))
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+            except Exception as e:
+                print("Failed to delete team post file:", e)
+                
+        execute_db("DELETE FROM team_posts WHERE id = ?", (post_id,))
+        
+    return redirect(url_for('team_boards', team=post['team_name']))
 
 # Continuous Deployment Webhook from GitHub
 @app.route('/github-webhook', methods=['POST'])

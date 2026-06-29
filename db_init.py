@@ -63,7 +63,8 @@ def init_db():
         adult2_phone TEXT,
         adult2_last4 TEXT,
         children TEXT, -- JSON string array
-        role TEXT DEFAULT 'user'
+        role TEXT DEFAULT 'user',
+        team TEXT DEFAULT '미지정'
     )
     """)
     
@@ -114,6 +115,19 @@ def init_db():
         photo_path TEXT,
         parents_church TEXT,
         notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # Create team_posts table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS team_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        team_name TEXT NOT NULL,
+        author_name TEXT NOT NULL,
+        content TEXT NOT NULL,
+        file_path TEXT,
+        file_name TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)

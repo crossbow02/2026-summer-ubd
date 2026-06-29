@@ -2353,5 +2353,27 @@ body {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%234f46e5' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E") !important;
 }
 
+/* Team Board Custom Styles */
+.user-team-badge {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+}
+.user-team-value {
+    color: var(--color-pink);
+}
+.light-theme .user-team-badge {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: rgba(79, 70, 229, 0.18);
+    color: #4f46e5;
+}
+.light-theme .user-team-value {
+    color: #db2777;
+}
+
 
 

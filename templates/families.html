@@ -39,6 +39,44 @@
                 <div class="progress-bar-fill" style="width: {{ completion_rate }}%"></div>
             </div>
         </div>
+
+        {% if session.get('role') == 'admin' %}
+        <!-- Admin-Only Gender & Age Stats -->
+        <div class="admin-stats-panel" style="margin-top: 25px; padding: 20px; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; background: rgba(99, 102, 241, 0.05); animation: fadeIn 0.4s ease;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 15px; color: var(--color-indigo); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-chart-pie"></i> <span>[관리자 전용] 선교팀 성비 및 세부 구성 통계</span>
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">성인 성비 (남 / 여)</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; margin-top: 5px; color: var(--text-primary);">
+                        남 {{ male_adults }}명 / 여 {{ female_adults }}명
+                    </div>
+                    {% if total_adults > 0 %}
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">비율: {{ (male_adults / total_adults * 100)|round|int }}% / {{ (female_adults / total_adults * 100)|round|int }}%</div>
+                    {% endif %}
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">자녀 성비 (남아 / 여아)</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; margin-top: 5px; color: var(--text-primary);">
+                        남 {{ male_kids }}명 / 여 {{ female_kids }}명
+                    </div>
+                    {% if total_kids > 0 %}
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">비율: {{ (male_kids / total_kids * 100)|round|int }}% / {{ (female_kids / total_kids * 100)|round|int }}%</div>
+                    {% else %}
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">등록된 자녀 없음</div>
+                    {% endif %}
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">전체 인원 성비</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; margin-top: 5px; color: var(--color-pink);">
+                        남 {{ male_adults + male_kids }}명 / 여 {{ female_adults + female_kids }}명
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">총 참여: {{ total_adults + total_kids }}명</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Roster Search & Filter Panel -->

@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}팀별 소통방 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="kids-page-container">
+    <!-- Header -->
+    <div class="kids-header glass">
+        <div class="kids-header-text">
+            <h1>👥 팀별 소통 및 자료실</h1>
+            <p>팀별로 나뉘어 여름 성경학교 사역, 식사 준비, 예배 콘티 등 준비 자료를 올리고 소통하는 공간입니다.</p>
+        </div>
+        <div class="user-team-badge">
+            나의 소속: <span class="user-team-value">{{ user_team if user_team and user_team != '미지정' else '미지정 (소개 수정에서 등록)' }}</span>
+        </div>
+    </div>
+
+    <!-- Team Navigation Tabs -->
+    <div class="filter-panel glass" style="margin-bottom: 25px; justify-content: center; gap: 15px; flex-wrap: wrap; padding: 15px;">
+        <a href="{{ url_for('team_boards', team='성경학교팀') }}" class="filter-btn {% if selected_team == '성경학교팀' %}active{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center;">
+            <i class="fa-solid fa-child-reaching"></i> <span>성경학교팀</span>
+        </a>
+        <a href="{{ url_for('team_boards', team='식사준비팀' ) }}" class="filter-btn {% if selected_team == '식사준비팀' %}active{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center;">
+            <i class="fa-solid fa-kitchen-set"></i> <span>식사준비팀</span>
+        </a>
+        <a href="{{ url_for('team_boards', team='예배팀') }}" class="filter-btn {% if selected_team == '예배팀' %}active{% endif %}" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center;">
+            <i class="fa-solid fa-music"></i> <span>예배팀</span>
+        </a>
+    </div>
+
+    <!-- Main Grid: Left Members / Right Board -->
+    <div class="pt-layout-wrapper" style="grid-template-columns: 300px 1fr;">
+        <!-- Left Panel: Members -->
+        <aside class="pt-sidebar" style="height: auto; position: static;">
+            <div class="glass" style="padding: 20px;">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; color: var(--color-indigo); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    <i class="fa-solid fa-people-line"></i> <span>{{ selected_team }} 팀원 ({{ team_members|length }}가정)</span>
+                </h3>
+                {% if team_members %}
+                    <div style="display: flex; flex-direction: column; gap: 15px; max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                        {% for member in team_members %}
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">
+                                    {{ member.adult1_name }}{% if member.adult2_name %}, {{ member.adult2_name }}{% endif %}
+                                </span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 6px;">
+                                    {{ member.group_num }}구역
+                                </span>
+                            </div>
+                            <!-- Kids list -->
+                            {% if member.kids %}
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                                {% for kid in member.kids %}
+                                <span style="font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.15); color: var(--text-secondary);">
+                                    {{ kid }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="font-size: 0.88rem; color: var(--text-muted); text-align: center; margin-top: 20px; font-style: italic;">아직 소속된 팀원이 없습니다.</p>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Right Panel: Discussion Feed -->
+        <div class="pt-content-body" style="gap: 30px;">
+            <!-- Write Post Form -->
+            <div class="pt-card glass">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-regular fa-paper-plane"></i> <span>{{ selected_team }} 게시판에 글/자료 남기기</span>
+                </h3>
+                <form action="{{ url_for('team_boards', team=selected_team) }}" method="POST" enctype="multipart/form-data">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <textarea name="content" rows="3" required placeholder="준비 일정, 역할 조율, 준비물 공유 등 자유롭게 글을 남겨주세요." style="font-size:0.92rem;"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; max-width: 400px;">
+                            <label for="file_upload" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">
+                                <i class="fa-solid fa-paperclip"></i> 첨부 파일 (예배 콘티, 성경학교 기획서, 레시피 등)
+                            </label>
+                            <input type="file" id="file_upload" name="file" style="font-size:0.8rem; padding: 6px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                            <i class="fa-solid fa-share-from-square"></i> 올리기
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Feed List -->
+            <div class="pt-grid-cards">
+                {% if posts %}
+                    {% for post in posts %}
+                    <div class="pt-card glass" style="animation: fadeIn 0.4s ease forwards;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                            <div>
+                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-primary);"><i class="fa-regular fa-user"></i> {{ post.author_name }}</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 10px;">
+                                    {{ post.created_at }}
+                                </span>
+                            </div>
+                            
+                            {% if post.author_name == current_name or is_admin %}
+                            <form action="{{ url_for('delete_team_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('이 글을 삭제하시겠습니까?');" style="margin:0;">
+                                <button type="submit" class="btn-action-delete" style="padding: 4px 8px; font-size:0.8rem;" title="게시물 삭제">
+                                    <i class="fa-solid fa-trash-can"></i> 삭제
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        <!-- Post Content -->
+                        <div style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 15px;">{{ post.content }}</div>
+
+                        <!-- File Attachment -->
+                        {% if post.file_path %}
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                                <i class="fa-solid fa-file-arrow-down" style="font-size: 1.5rem; color: var(--color-indigo);"></i>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                        {{ post.file_name or '첨부 자료' }}
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">클릭하여 다운로드</span>
+                                </div>
+                            </div>
+                            <a href="{{ post.file_path }}" download="{{ post.file_name or 'attachment' }}" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size:0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-download"></i> 다운로드
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-gallery glass" style="padding: 60px 40px; text-align: center; border-radius: 20px;">
+                        <i class="fa-regular fa-comments" style="font-size: 4rem; color: var(--color-indigo); margin-bottom: 20px; opacity: 0.7;"></i>
+                        <h3 style="font-size: 1.3rem; margin-bottom: 8px; color: var(--text-primary);">게시글이 비어있습니다</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin:0;">{{ selected_team }}의 첫 번째 의견이나 파일 자료를 등록해 주세요!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
