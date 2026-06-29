@@ -62,9 +62,21 @@ def migrate_db():
             cursor.execute("ALTER TABLE users ADD COLUMN team TEXT DEFAULT '미지정'")
             print("Added 'team' column to 'users' table.")
             
+        # 4. Create shared_schedules table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS shared_schedules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            due_date TEXT,
+            is_completed INTEGER DEFAULT 0,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+            
         conn.commit()
         conn.close()
-        print("Database migrated successfully (target_children, team_posts, and users team column checked).")
+        print("Database migrated successfully (target_children, team_posts, shared_schedules, and users team column checked).")
     except Exception as e:
         print("Database migration failed:", e)
 
@@ -648,6 +660,70 @@ def delete_team_post(post_id):
         execute_db("DELETE FROM team_posts WHERE id = ?", (post_id,))
         
     return redirect(url_for('team_boards', team=post['team_name']))
+
+# Shared Schedule routes
+@app.route('/shared-schedule', methods=['GET', 'POST'])
+def shared_schedule():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        due_date = request.form.get('due_date', '').strip()
+        
+        if title:
+            created_by = session.get('name')
+            execute_db("""
+                INSERT INTO shared_schedules (title, due_date, created_by)
+                VALUES (?, ?, ?)
+            """, (title, due_date or None, created_by))
+            
+        return redirect(url_for('shared_schedule'))
+        
+    schedules = query_db("""
+        SELECT * FROM shared_schedules 
+        ORDER BY due_date IS NULL, due_date ASC, created_at ASC
+    """)
+    schedules_list = [dict(s) for s in schedules]
+    
+    # Calculate progress metrics
+    total_tasks = len(schedules_list)
+    completed_tasks = sum(1 for s in schedules_list if s['is_completed'])
+    progress_percentage = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+    
+    return render_template('shared_schedule.html',
+                           schedules=schedules_list,
+                           total_tasks=total_tasks,
+                           completed_tasks=completed_tasks,
+                           progress_percentage=progress_percentage,
+                           is_admin=(session.get('role') == 'admin'),
+                           current_name=session.get('name'))
+
+@app.route('/shared-schedule/toggle/<int:id>', methods=['POST'])
+def toggle_schedule(id):
+    schedule = query_db("SELECT * FROM shared_schedules WHERE id = ?", (id,), one=True)
+    if not schedule:
+        return jsonify({'success': False, 'error': 'Not found'}), 404
+        
+    new_completed = 1 - schedule['is_completed']
+    execute_db("UPDATE shared_schedules SET is_completed = ? WHERE id = ?", (new_completed, id))
+    
+    return jsonify({'success': True, 'is_completed': new_completed})
+
+@app.route('/shared-schedule/delete/<int:id>', methods=['POST'])
+def delete_schedule(id):
+    schedule = query_db("SELECT * FROM shared_schedules WHERE id = ?", (id,), one=True)
+    if not schedule:
+        return redirect(url_for('shared_schedule'))
+        
+    user_id = session['user_id']
+    user = query_db("SELECT * FROM users WHERE id = ?", (user_id,), one=True)
+    authorized_names = [user['adult1_name'], user['adult2_name']] if user else []
+    
+    is_author = (schedule['created_by'] in authorized_names)
+    is_admin = (session.get('role') == 'admin')
+    
+    if is_author or is_admin or schedule['created_by'] == '준비팀':
+        execute_db("DELETE FROM shared_schedules WHERE id = ?", (id,))
+        
+    return redirect(url_for('shared_schedule'))
 
 # Continuous Deployment Webhook from GitHub
 @app.route('/github-webhook', methods=['POST'])

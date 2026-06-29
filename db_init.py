@@ -131,9 +131,36 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    # Create shared_schedules table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS shared_schedules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        due_date TEXT,
+        is_completed INTEGER DEFAULT 0,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    
+    # Populate default schedule items
+    default_tasks = [
+        ('1차 준비 모임 및 오리엔테이션', '2026-07-05', '준비팀'),
+        ('여름성경학교 세부 기획 및 공과 교재 준비', '2026-07-20', '준비팀'),
+        ('선교 후원금 모금 및 티셔츠 사이즈 취합', '2026-07-30', '준비팀'),
+        ('식사 메뉴 확정 및 식재료 구매 조율', '2026-08-01', '준비팀'),
+        ('예배 콘티 확정 및 찬양 악보 공유', '2026-08-05', '준비팀'),
+        ('선교 준비 최종 점검 및 짐 싸기', '2026-08-10', '준비팀'),
+        ('둔포성결교회 여름 선교 사역 출발! 🚀', '2026-08-15', '준비팀')
+    ]
+    cursor.executemany("""
+    INSERT INTO shared_schedules (title, due_date, created_by)
+    VALUES (?, ?, ?)
+    """, default_tasks)
     
     conn.commit()
-    print("Database tables created successfully.")
+    print("Database tables created and default schedule items populated successfully.")
     
     # Read Excel and populate users
     wb = openpyxl.load_workbook(excel_path, read_only=True)

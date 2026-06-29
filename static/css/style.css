@@ -2375,5 +2375,29 @@ body {
     color: #db2777;
 }
 
+/* Schedule Checklist Custom Styles */
+.schedule-item-row:hover {
+    border-color: var(--border-hover) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+.light-theme .schedule-item-row {
+    background: rgba(0, 0, 0, 0.01) !important;
+}
+.light-theme .schedule-item-row:hover {
+    background: rgba(0, 0, 0, 0.03) !important;
+}
+.schedule-item-row.completed {
+    background: rgba(99, 102, 241, 0.03) !important;
+    border-color: rgba(99, 102, 241, 0.2) !important;
+}
+.light-theme .schedule-item-row.completed {
+    background: rgba(79, 70, 229, 0.04) !important;
+    border-color: rgba(79, 70, 229, 0.15) !important;
+}
+.custom-checkbox-container:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+
 
 

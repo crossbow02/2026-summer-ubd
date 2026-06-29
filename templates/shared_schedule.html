@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}사역 준비 일정 | 유바디 2마을 선교방{% endblock %}
+
+{% block content %}
+<div class="kids-page-container" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="kids-header glass" style="margin-bottom: 25px;">
+        <div class="kids-header-text">
+            <h1>📅 사역 준비 일정 및 체크리스트</h1>
+            <p>선교 출발 전날까지의 주요 스케줄과 준비물 점검표입니다. 완료된 항목은 체크하여 함께 채워나갑니다.</p>
+        </div>
+        
+        <!-- Progress Ring or Bar -->
+        <div class="progress-section" style="width: 250px; flex-shrink: 0;">
+            <div class="progress-info">
+                <span>선교 준비율</span>
+                <span class="progress-percentage" id="overallProgressText">{{ progress_percentage }}%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="overallProgressBar" style="width: {{ progress_percentage }}%"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right; margin-top: 4px;" id="overallCountText">
+                완료 {{ completed_tasks }}개 / 전체 {{ total_tasks }}개
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Task Form Card -->
+    <div class="pt-card glass" style="margin-bottom: 30px;">
+        <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-calendar-plus"></i> <span>새로운 준비 일정/체크 항목 등록하기</span>
+        </h3>
+        <form action="{{ url_for('shared_schedule') }}" method="POST" style="margin: 0;">
+            <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
+                    <label for="task_title" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">준비할 일 / 점검 항목</label>
+                    <input type="text" id="task_title" name="title" required placeholder="예: 물놀이용 물총 30개 구매">
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+                    <label for="task_due_date" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">목표 예정일</label>
+                    <input type="date" id="task_due_date" name="due_date" style="padding: 10px 14px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding: 11px 24px; font-weight: 700; height: fit-content; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-plus"></i> 등록
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Schedule List Table -->
+    <div class="pt-card glass" style="padding: 20px 25px;">
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--color-indigo); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <i class="fa-solid fa-list-check"></i> <span>선교 준비 체크리스트</span>
+        </h3>
+
+        {% if schedules %}
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% for task in schedules %}
+                <div class="schedule-item-row {% if task.is_completed %}completed{% endif %}" id="task-row-{{ task.id }}" 
+                     style="display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.015); transition: all 0.25s ease;">
+                    
+                    <!-- Left: Checkbox + Title -->
+                    <div style="display: flex; align-items: center; gap: 15px; min-width: 0; flex: 1;">
+                        <!-- Custom styled Checkbox -->
+                        <div class="custom-checkbox-container" onclick="toggleTask({{ task.id }})" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 2px solid {% if task.is_completed %}var(--color-indigo){% else %}var(--text-muted){% endif %}; border-radius: 6px; background: {% if task.is_completed %}var(--color-indigo){% else %}transparent{% endif %}; transition: all 0.2s ease;">
+                            <i class="fa-solid fa-check" style="font-size: 0.75rem; color: white; display: {% if task.is_completed %}block{% else %}none{% endif %};" id="check-icon-{{ task.id }}"></i>
+                        </div>
+                        
+                        <!-- Task Info -->
+                        <div style="min-width: 0;">
+                            <span class="task-title-text" id="task-title-{{ task.id }}" style="font-size: 0.98rem; font-weight: 600; color: var(--text-primary); transition: all 0.25s ease; {% if task.is_completed %}text-decoration: line-through; opacity: 0.55;{% endif %}">
+                                {{ task.title }}
+                            </span>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
+                                <!-- Due Date Badge -->
+                                {% if task.due_date %}
+                                <span style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-regular fa-clock"></i> {{ task.due_date }} 까지
+                                </span>
+                                {% endif %}
+                                <!-- Creator Badge -->
+                                <span style="font-size: 0.75rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-regular fa-circle-user"></i> {{ task.created_by }} 등록
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Delete button (if allowed) -->
+                    {% if task.created_by == current_name or is_admin or task.created_by == '준비팀' %}
+                    <form action="{{ url_for('delete_schedule', id=task.id) }}" method="POST" onsubmit="return confirm('이 일정 항목을 삭제하시겠습니까?');" style="margin: 0;">
+                        <button type="submit" class="btn-action-delete" style="padding: 6px 10px; font-size: 0.78rem;" title="항목 삭제">
+                            <i class="fa-solid fa-trash-can"></i> 삭제
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-gallery glass" style="padding: 60px 40px; text-align: center; border-radius: 16px;">
+                <i class="fa-solid fa-calendar-check" style="font-size: 3.5rem; color: var(--color-indigo); margin-bottom: 20px; opacity: 0.7;"></i>
+                <h3 style="font-size: 1.25rem; margin-bottom: 6px; color: var(--text-primary);">체크리스트가 비어있습니다</h3>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin:0;">상단 폼을 이용하여 선교 준비 일정을 추가해 주세요!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function toggleTask(id) {
+        const checkContainer = document.querySelector(`#task-row-{{ 'id' }}`.replace('id', id) + ' .custom-checkbox-container');
+        const checkIcon = document.getElementById(`check-icon-${id}`);
+        const titleText = document.getElementById(`task-title-${id}`);
+        const row = document.getElementById(`task-row-${id}`);
+
+        try {
+            const response = await fetch(`/shared-schedule/toggle/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const data = await response.json();
+            if (data.success) {
+                const isCompleted = data.is_completed === 1;
+
+                // Animate checkmark
+                if (isCompleted) {
+                    checkContainer.style.background = 'var(--color-indigo)';
+                    checkContainer.style.borderColor = 'var(--color-indigo)';
+                    checkIcon.style.display = 'block';
+                    titleText.style.textDecoration = 'line-through';
+                    titleText.style.opacity = '0.55';
+                    row.classList.add('completed');
+                } else {
+                    checkContainer.style.background = 'transparent';
+                    checkContainer.style.borderColor = 'var(--text-muted)';
+                    checkIcon.style.display = 'none';
+                    titleText.style.textDecoration = 'none';
+                    titleText.style.opacity = '1';
+                    row.classList.remove('completed');
+                }
+
+                // Dynamic progress stats updates
+                updateProgressStats();
+            }
+        } catch (error) {
+            console.error('Error toggling schedule item:', error);
+            alert('일정 체크 상태를 변경하는데 실패했습니다. 다시 시도해 주세요.');
+        }
+    }
+
+    function updateProgressStats() {
+        const rows = document.querySelectorAll('.schedule-item-row');
+        const total = rows.length;
+        const completed = document.querySelectorAll('.schedule-item-row.completed').length;
+        
+        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+        
+        // Update DOM elements
+        const progressText = document.getElementById('overallProgressText');
+        const progressBar = document.getElementById('overallProgressBar');
+        const countText = document.getElementById('overallCountText');
+        
+        if (progressText) progressText.textContent = `${percentage}%`;
+        if (progressBar) progressBar.style.width = `${percentage}%`;
+        if (countText) countText.textContent = `완료 ${completed}개 / 전체 ${total}개`;
+    }
+</script>
+{% endblock %}
