@@ -2327,5 +2327,23 @@ body {
     }
 }
 
+/* High-priority inputs text color accessibility overrides */
+.form-group input,
+.form-group select,
+.form-group textarea,
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    color: var(--text-primary) !important;
+}
+.light-theme .form-group input,
+.light-theme .form-group select,
+.light-theme .form-group textarea,
+.light-theme .modal-content input,
+.light-theme .modal-content select,
+.light-theme .modal-content textarea {
+    color: #0f172a !important;
+}
+
 
 
