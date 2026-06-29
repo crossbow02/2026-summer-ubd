@@ -132,9 +132,9 @@ def init_db():
                     
         children_json = json.dumps(children_list, ensure_ascii=False)
         
-        # Determine role (정다운 is admin)
+        # Determine role (정다운 and 이현민 are admin)
         role = 'user'
-        if adult1_name == '정다운':
+        if adult1_name in ['정다운', '이현민']:
             role = 'admin'
             
         cursor.execute("""
@@ -143,9 +143,16 @@ def init_db():
         """, (group_num, adult1_name, adult1_phone, adult1_last4, adult2_name, adult2_phone, adult2_last4, children_json, role))
         user_count += 1
         
+    # Add Pastor 이현민 (담당 목사님, Admin)
+    cursor.execute("""
+    INSERT INTO users (group_num, adult1_name, adult1_phone, adult1_last4, adult2_name, adult2_phone, adult2_last4, children, role)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (0, '이현민', '010-0000-1953', '1953', None, None, None, '[]', 'admin'))
+    user_count += 1
+        
     conn.commit()
     conn.close()
-    print(f"Successfully loaded {user_count} families into the database.")
+    print(f"Successfully loaded {user_count} families (including Pastor) into the database.")
 
 if __name__ == "__main__":
     init_db()

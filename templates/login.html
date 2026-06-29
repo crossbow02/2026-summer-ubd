@@ -23,12 +23,12 @@
         <form action="{{ url_for('login') }}" method="POST" class="login-form">
             <div class="form-group">
                 <label for="username"><i class="fa-solid fa-user"></i> 이름 (가장/참가자)</label>
-                <input type="text" id="username" name="username" placeholder="이름을 입력하세요 (예: 정다운)" required autocomplete="username">
+                <input type="text" id="username" name="username" placeholder="이름을 입력하세요 (예: 홍길동)" required autocomplete="username">
             </div>
 
             <div class="form-group">
                 <label for="password"><i class="fa-solid fa-lock"></i> 비밀번호 (전화번호 뒤 4자리)</label>
-                <input type="password" id="password" name="password" placeholder="전화번호 뒤 4자리를 입력하세요 (예: 8953)" required autocomplete="current-password">
+                <input type="password" id="password" name="password" placeholder="전화번호 뒤 4자리를 입력하세요 (예: 1234)" required autocomplete="current-password">
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
