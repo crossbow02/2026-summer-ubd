@@ -1,12 +1,22 @@
 {% extends 'base.html' %}
 
-{% block title %}가족 소개 피드 | 사랑이 두근둔포{% endblock %}
+{% block title %}가족 갤러리 | 사랑이 두근둔포{% endblock %}
 
 {% block content %}
 <div class="gallery-container">
     <div class="gallery-header glass">
-        <h1>📸 우리 가족 소개 피드</h1>
-        <p>선교를 함께하는 동역자들의 가족 소개입니다. 따뜻한 격려의 댓글과 응원의 하트로 마음을 나눠주세요!</p>
+        <div class="gallery-header-top">
+            <div>
+                <h1>📸 우리 가족 소개 피드</h1>
+                <p>선교를 함께하는 동역자들의 가족 소개입니다. 따뜻한 격려의 댓글과 응원의 하트로 마음을 나눠주세요!</p>
+            </div>
+            {% if profiles %}
+            <button class="btn-tv-mode" id="btnTvMode" onclick="startPresentation(0)" title="TV 화면으로 전체 가족 소개 슬라이드 보기">
+                <i class="fa-solid fa-tv"></i>
+                <span>📺 TV 발표 모드</span>
+            </button>
+            {% endif %}
+        </div>
     </div>
 
     {% if not profiles %}
@@ -67,14 +77,13 @@
                         <span class="quote-text">{{ profile.one_liner }}</span>
                         <i class="fa-solid fa-quote-right"></i>
                     </div>
-                    <!-- Raw text rendered as rich markdown via javascript -->
                     <div class="ai-story-rendered" data-raw-text="{{ profile.ai_intro_text }}">
                         <!-- JS will inject converted HTML here -->
                     </div>
                 </div>
             </div>
 
-            <!-- Card Actions (Likes) -->
+            <!-- Card Actions -->
             <div class="profile-card-actions">
                 <button class="btn-like {% if profile.has_liked %}liked{% endif %}" 
                         onclick="toggleLike({{ profile.user_id }}, this)" 
@@ -83,13 +92,14 @@
                     <span class="like-label">응원해요</span>
                     <span class="like-count" id="like-count-{{ profile.user_id }}">{{ profile.likes_count }}</span>
                 </button>
+                <button class="btn-tv-slide" onclick="startPresentation({{ loop.index0 }})" title="이 가정부터 TV 화면으로 보기">
+                    <i class="fa-solid fa-display"></i> TV로 보기
+                </button>
             </div>
 
             <!-- Comment Section -->
             <div class="profile-comments-section">
                 <h3>💬 격려와 소통의 한 마디</h3>
-                
-                <!-- Comment List -->
                 <div class="comments-list" id="comments-list-{{ profile.user_id }}">
                     {% if profile.comments_list %}
                         {% for comment in profile.comments_list %}
@@ -100,8 +110,6 @@
                             </div>
                             <div class="comment-body">
                                 <p class="comment-content">{{ comment.content }}</p>
-                                
-                                <!-- Delete Comment Option -->
                                 {% if comment.author_name == current_name or profile.user_id == current_user_id or session.get('role') == 'admin' %}
                                 <form action="{{ url_for('delete_comment', id=profile.user_id, comment_id=comment.id) }}" method="POST" class="delete-comment-form">
                                     <button type="submit" class="btn-delete-comment" title="댓글 삭제" onclick="return confirm('이 댓글을 삭제하시겠습니까?')">
@@ -116,8 +124,6 @@
                         <p class="no-comments-text" id="no-comments-{{ profile.user_id }}">첫 번째 따뜻한 응원의 댓글을 남겨보세요!</p>
                     {% endif %}
                 </div>
-
-                <!-- Comment Input Form -->
                 <form action="{{ url_for('family_comment', id=profile.user_id) }}" method="POST" class="comment-form">
                     <input type="text" name="content" class="comment-input" placeholder="성도님 가정에 격려와 축복의 댓글을 달아주세요..." required>
                     <button type="submit" class="btn btn-primary btn-comment-submit">
@@ -130,119 +136,386 @@
     </div>
     {% endif %}
 </div>
+
+<!-- ============================================================
+     TV 프레젠테이션 모드 오버레이
+     ============================================================ -->
+<div class="tv-overlay" id="tvOverlay" style="display:none;">
+    <!-- 컨트롤 바 -->
+    <div class="tv-controls">
+        <div class="tv-progress">
+            <span id="tvCurrent">1</span> / <span id="tvTotal">{{ profiles|length }}</span>
+        </div>
+        <div class="tv-ctrl-btns">
+            <button onclick="tvPrev()" title="이전 (←)"><i class="fa-solid fa-chevron-left"></i></button>
+            <button onclick="tvToggleAuto()" id="btnAuto" title="자동 (P)"><i class="fa-solid fa-play"></i></button>
+            <button onclick="tvNext()" title="다음 (→)"><i class="fa-solid fa-chevron-right"></i></button>
+            <button onclick="closePresentation()" title="닫기 (ESC)" class="tv-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <!-- 16:9 슬라이드 무대 -->
+    <div class="tv-stage">
+        <div class="tv-slide" id="tvSlide"></div>
+    </div>
+
+    <!-- 하단 도트 네비 -->
+    <div class="tv-dots" id="tvDots"></div>
+</div>
+
+<!-- 프로필 JSON 데이터 -->
+<script id="profileData" type="application/json">
+[{% for profile in profiles %}
+{"name":"{{ profile.adult1_name }}{% if profile.adult2_name %} · {{ profile.adult2_name }}{% endif %}","family":"{{ profile.adult1_name }} 성도님 가정","group":"{{ profile.group_num }}구역","one_liner":{{ profile.one_liner|tojson }},"kids":{{ profile.kids|tojson }},"photo":{{ (profile.photo_path or '')|tojson }},"prayers":{{ (profile.prayers or '')|tojson }},"specialties":{{ (profile.specialties or '')|tojson }}}{% if not loop.last %},{% endif %}
+{% endfor %}]
+</script>
 {% endblock %}
 
 {% block scripts %}
+<style>
+/* ── TV 모드 버튼 ─────────────────────────── */
+.gallery-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.btn-tv-mode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 26px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+}
+.btn-tv-mode:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(99,102,241,0.55); }
+.btn-tv-mode i { font-size: 1.3rem; }
+
+.btn-tv-slide {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-tv-slide:hover { background: rgba(99,102,241,0.25); color: #fff; }
+
+/* ── TV 오버레이 전체 ─────────────────────── */
+.tv-overlay {
+    position: fixed;
+    inset: 0;
+    background: #04040d;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.tv-controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 28px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+}
+.tv-progress {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 2px;
+}
+.tv-ctrl-btns { display: flex; gap: 8px; }
+.tv-ctrl-btns button {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 9px;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+.tv-ctrl-btns button:hover { background: rgba(255,255,255,0.16); }
+.tv-close-btn { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.35) !important; }
+.tv-close-btn:hover { background: rgba(239,68,68,0.45) !important; }
+
+/* ── 16:9 슬라이드 무대 ──────────────────── */
+.tv-stage {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.tv-slide {
+    aspect-ratio: 16 / 9;
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    background: linear-gradient(135deg, #0e0e1c 0%, #1a1035 50%, #0b1427 100%);
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 42% 58%;
+    position: relative;
+    box-shadow: 0 0 80px rgba(99,102,241,0.25), inset 0 0 0 1px rgba(255,255,255,0.07);
+    animation: slideIn 0.4s cubic-bezier(0.25,0.8,0.25,1);
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* 왼쪽: 사진 */
+.tv-photo-col {
+    position: relative;
+    overflow: hidden;
+}
+.tv-photo-col img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.tv-no-photo {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(99,102,241,0.08);
+    color: rgba(255,255,255,0.25);
+    gap: 10px;
+    font-size: 2.2vw;
+}
+.tv-photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.1) 50%, #0e0e1c 100%);
+}
+.tv-group-badge {
+    position: absolute;
+    top: 5%; left: 5%;
+    background: rgba(99,102,241,0.88);
+    color: #fff;
+    padding: 0.25em 0.8em;
+    border-radius: 6px;
+    font-size: 1.3vw;
+    font-weight: 700;
+}
+
+/* 오른쪽: 텍스트 */
+.tv-text-col {
+    padding: 5% 6% 5% 4%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+    overflow: hidden;
+}
+.tv-family-name {
+    font-size: 2.8vw;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 0.35em;
+    line-height: 1.2;
+}
+.tv-members {
+    font-size: 1.2vw;
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 0.9em;
+}
+.tv-kid-chip {
+    background: rgba(99,102,241,0.22);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 100px;
+    padding: 0.12em 0.65em;
+    font-size: 1.05vw;
+    color: #c7d2fe;
+}
+.tv-divider {
+    width: 44px; height: 3px;
+    background: linear-gradient(90deg,#6366f1,#8b5cf6);
+    border-radius: 2px;
+    margin-bottom: 0.9em;
+}
+.tv-one-liner {
+    font-size: 1.6vw;
+    color: #dde5ff;
+    font-style: italic;
+    line-height: 1.55;
+    margin-bottom: 1em;
+    padding-left: 0.8em;
+    border-left: 3px solid #6366f1;
+}
+.tv-section-label {
+    font-size: 0.95vw;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #818cf8;
+    margin-bottom: 0.35em;
+}
+.tv-prayers {
+    font-size: 1.25vw;
+    color: rgba(255,255,255,0.72);
+    line-height: 1.6;
+    margin-bottom: 0.9em;
+}
+.tv-specialties {
+    font-size: 1.15vw;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.5;
+}
+.tv-heart-decor {
+    position: absolute;
+    bottom: 3%; right: 3%;
+    font-size: 1.1vw;
+    color: rgba(244,114,182,0.35);
+    letter-spacing: 5px;
+}
+
+/* ── 도트 ─────────────────────────────────── */
+.tv-dots {
+    display: flex; gap: 7px;
+    padding: 8px 0 12px;
+    flex-shrink: 0;
+}
+.tv-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.tv-dot.active { background: #6366f1; transform: scale(1.5); }
+</style>
+
 <script>
-    // Client-side markdown-like text formatter
+    /* ── 갤러리 피드: 마크다운 렌더링 ───────── */
     function formatStoryText(text) {
         if (!text) return '';
-        
-        let html = text;
-        
-        // Escape HTML tags to prevent XSS
-        html = html
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-            
-        // Process Headers
-        html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
-        html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
-        html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
-        
-        // Process Bold (**text**)
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Process Bullet lists (- item)
-        // Match lines starting with - and replace them
-        html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-        
-        // Process Number lists (1. item)
-        html = html.replace(/^\d+\.\s(.*$)/gim, '<li>$1</li>');
-        
-        // Convert double line breaks into paragraphs, single line breaks to <br>
-        // But ignore line breaks inside list items
-        let lines = html.split('\n');
-        let processedLines = [];
-        let inList = false;
-        
-        for (let line of lines) {
-            let trimmed = line.trim();
-            if (trimmed.startsWith('<li>') || trimmed.endsWith('</li>')) {
-                if (!inList) {
-                    processedLines.push('<ul class="story-list">');
-                    inList = true;
-                }
-                processedLines.push(line);
-            } else {
-                if (inList) {
-                    processedLines.push('</ul>');
-                    inList = false;
-                }
-                processedLines.push(line);
-            }
-        }
-        if (inList) {
-            processedLines.push('</ul>');
-        }
-        
-        html = processedLines.join('\n');
-        
-        // Convert any leftover loose line breaks to <br>
-        html = html.replace(/\n/g, '<br>');
-        // Clean up empty br tags around lists and headers
-        html = html.replace(/<br><ul/g, '<ul');
-        html = html.replace(/<\/ul><br>/g, '</ul>');
-        html = html.replace(/<br><h/g, '<h');
-        html = html.replace(/<\/h4><br>/g, '</h4>');
-        html = html.replace(/<\/h3><br>/g, '</h3>');
-        html = html.replace(/<\/h2><br>/g, '</h2>');
-        
-        return html;
+        let h = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        h = h.replace(/^### (.*$)/gim,'<h4>$1</h4>').replace(/^## (.*$)/gim,'<h3>$1</h3>').replace(/^# (.*$)/gim,'<h2>$1</h2>');
+        h = h.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+        h = h.replace(/^\- (.*$)/gim,'<li>$1</li>').replace(/^\d+\.\s(.*$)/gim,'<li>$1</li>');
+        let lines=h.split('\n'),out=[],inL=false;
+        for(let l of lines){ let t=l.trim(); if(t.startsWith('<li>')){if(!inL){out.push('<ul class="story-list">');inL=true;} out.push(l);}else{if(inL){out.push('</ul>');inL=false;} out.push(l);}}
+        if(inL) out.push('</ul>');
+        h=out.join('\n').replace(/\n/g,'<br>').replace(/<br><ul/g,'<ul').replace(/<\/ul><br>/g,'</ul>').replace(/<br><h/g,'<h').replace(/<\/(h[2-4])><br>/g,'</$1>');
+        return h;
     }
-
-    // Render all stories on load
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.ai-story-rendered').forEach(container => {
-            const rawText = container.getAttribute('data-raw-text');
-            container.innerHTML = formatStoryText(rawText);
+        document.querySelectorAll('.ai-story-rendered').forEach(el => {
+            el.innerHTML = formatStoryText(el.getAttribute('data-raw-text'));
         });
     });
 
-    // AJAX Like Toggle
-    async function toggleLike(profileId, button) {
+    async function toggleLike(id, btn) {
         try {
-            const response = await fetch(`/family/${profileId}/like`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) throw new Error('Like Request Failed');
-            
-            const data = await response.json();
-            
-            // Update UI
-            const heartIcon = button.querySelector('i');
-            const countSpan = document.getElementById(`like-count-${profileId}`);
-            
-            countSpan.textContent = data.likes_count;
-            
-            if (data.liked) {
-                button.classList.add('liked');
-                heartIcon.className = 'fa-solid fa-heart';
-                // Trigger tiny animation pop
-                button.classList.add('pulse-anim');
-                setTimeout(() => button.classList.remove('pulse-anim'), 300);
-            } else {
-                button.classList.remove('liked');
-                heartIcon.className = 'fa-regular fa-heart';
-            }
-        } catch (error) {
-            console.error('Error toggling like:', error);
-        }
+            const r=await fetch(`/family/${id}/like`,{method:'POST',headers:{'Content-Type':'application/json'}});
+            if(!r.ok) throw new Error();
+            const d=await r.json();
+            const ic=btn.querySelector('i');
+            document.getElementById(`like-count-${id}`).textContent=d.likes_count;
+            if(d.liked){btn.classList.add('liked');ic.className='fa-solid fa-heart';btn.classList.add('pulse-anim');setTimeout(()=>btn.classList.remove('pulse-anim'),300);}
+            else{btn.classList.remove('liked');ic.className='fa-regular fa-heart';}
+        }catch(e){console.error(e);}
+    }
+
+    /* ── TV 프레젠테이션 모드 ──────────────── */
+    const TV_DATA = JSON.parse(document.getElementById('profileData').textContent);
+    let tvIdx=0, tvAuto=false, tvTimer=null;
+
+    const trunc = (s,n) => s && s.length>n ? s.slice(0,n)+'…' : (s||'');
+
+    function buildSlide(i) {
+        const p = TV_DATA[i];
+        const kidsHtml = (p.kids||[]).map(k=>`<span class="tv-kid-chip">${k}</span>`).join('');
+        const photoHtml = p.photo
+            ? `<img src="${p.photo}" alt="${p.family}"><div class="tv-photo-overlay"></div>`
+            : `<div class="tv-no-photo"><i class="fa-solid fa-camera"></i><span>사진 없음</span></div>`;
+        return `
+        <div class="tv-photo-col">
+            ${photoHtml}
+            <div class="tv-group-badge">${p.group}</div>
+        </div>
+        <div class="tv-text-col">
+            <div class="tv-family-name">💖 ${p.family}</div>
+            <div class="tv-members">
+                <i class="fa-solid fa-users" style="color:#6366f1;margin-right:4px"></i>
+                ${p.name}${kidsHtml?' &nbsp;·&nbsp; ':''}${kidsHtml}
+            </div>
+            <div class="tv-divider"></div>
+            ${p.one_liner?`<div class="tv-one-liner">${p.one_liner}</div>`:''}
+            ${p.prayers?`<div class="tv-section-label">🙏 기도제목</div><div class="tv-prayers">${trunc(p.prayers,130)}</div>`:''}
+            ${p.specialties?`<div class="tv-section-label">✨ 우리 가족 매력</div><div class="tv-specialties">${trunc(p.specialties,110)}</div>`:''}
+        </div>
+        <div class="tv-heart-decor">♥ ♥ ♥</div>`;
+    }
+
+    function renderDots() {
+        document.getElementById('tvDots').innerHTML =
+            TV_DATA.map((_,i)=>`<div class="tv-dot${i===tvIdx?' active':''}" onclick="tvGoTo(${i})"></div>`).join('');
+    }
+
+    function updateSlide() {
+        document.getElementById('tvSlide').innerHTML = buildSlide(tvIdx);
+        document.getElementById('tvCurrent').textContent = tvIdx+1;
+        renderDots();
+    }
+
+    function startPresentation(startIdx) {
+        tvIdx = startIdx||0;
+        document.getElementById('tvOverlay').style.display='flex';
+        document.getElementById('tvTotal').textContent=TV_DATA.length;
+        updateSlide();
+        document.addEventListener('keydown', tvKey);
+    }
+    function closePresentation() {
+        document.getElementById('tvOverlay').style.display='none';
+        tvStop(); document.removeEventListener('keydown', tvKey);
+    }
+    function tvNext() { tvIdx=(tvIdx+1)%TV_DATA.length; updateSlide(); }
+    function tvPrev() { tvIdx=(tvIdx-1+TV_DATA.length)%TV_DATA.length; updateSlide(); }
+    function tvGoTo(i) { tvIdx=i; updateSlide(); }
+    function tvToggleAuto() {
+        tvAuto=!tvAuto;
+        const b=document.getElementById('btnAuto');
+        if(tvAuto){ b.innerHTML='<i class="fa-solid fa-pause"></i>'; tvTimer=setInterval(tvNext,6000); }
+        else { b.innerHTML='<i class="fa-solid fa-play"></i>'; tvStop(); }
+    }
+    function tvStop() { clearInterval(tvTimer); tvTimer=null; tvAuto=false; const b=document.getElementById('btnAuto'); if(b) b.innerHTML='<i class="fa-solid fa-play"></i>'; }
+    function tvKey(e) {
+        if(e.key==='ArrowRight'||e.key===' ') tvNext();
+        else if(e.key==='ArrowLeft') tvPrev();
+        else if(e.key==='Escape') closePresentation();
+        else if(e.key==='p'||e.key==='P') tvToggleAuto();
     }
 </script>
 {% endblock %}
