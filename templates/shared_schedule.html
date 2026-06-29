@@ -2,6 +2,12 @@
 
 {% block title %}사역 준비 일정 | 유바디 2마을 선교방{% endblock %}
 
+{% block head %}
+<!-- FullCalendar CDN -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <div class="kids-page-container" style="max-width: 900px;">
     <!-- Header -->
@@ -46,6 +52,14 @@
                 </button>
             </div>
         </form>
+    </div>
+
+    <!-- Calendar View Card -->
+    <div class="pt-card glass" style="margin-bottom: 30px; padding: 25px;">
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i class="fa-regular fa-calendar"></i> <span>달력으로 일정 보기</span>
+        </h3>
+        <div id="calendar"></div>
     </div>
 
     <!-- Schedule List Table -->
@@ -111,6 +125,55 @@
 
 {% block scripts %}
 <script>
+    // Map schedules to FullCalendar events
+    const events = [
+        {% for task in schedules %}
+            {% if task.due_date %}
+            {
+                id: "{{ task.id }}",
+                title: "{{ task.title }}",
+                start: "{{ task.due_date }}",
+                color: {% if task.is_completed %}'#10b981'{% else %}'#6366f1'{% endif %},
+                allDay: true
+            },
+            {% endif %}
+        {% endfor %}
+    ];
+
+    let calendar;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        if (calendarEl) {
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ko',
+                events: events,
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                eventClick: function(info) {
+                    const taskId = info.event.id;
+                    const row = document.getElementById(`task-row-${taskId}`);
+                    if (row) {
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Visual feedback highlight
+                        row.style.background = 'rgba(99, 102, 241, 0.1)';
+                        row.style.borderColor = 'var(--color-indigo)';
+                        setTimeout(() => {
+                            row.style.background = '';
+                            row.style.borderColor = '';
+                        }, 2000);
+                    }
+                }
+            });
+            calendar.render();
+        }
+    });
+
     async function toggleTask(id) {
         const checkContainer = document.querySelector(`#task-row-{{ 'id' }}`.replace('id', id) + ' .custom-checkbox-container');
         const checkIcon = document.getElementById(`check-icon-${id}`);
@@ -146,6 +209,14 @@
                     titleText.style.textDecoration = 'none';
                     titleText.style.opacity = '1';
                     row.classList.remove('completed');
+                }
+
+                // Dynamically update calendar event color
+                if (calendar) {
+                    const event = calendar.getEventById(id);
+                    if (event) {
+                        event.setProp('color', isCompleted ? '#10b981' : '#6366f1');
+                    }
                 }
 
                 // Dynamic progress stats updates
