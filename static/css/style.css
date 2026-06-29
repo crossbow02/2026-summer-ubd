@@ -1793,10 +1793,7 @@ body {
     padding: 25px;
 }
 .pt-card-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    align-items: center;
+    display: block;
 }
 .pt-card-text {
     display: flex;
@@ -1960,13 +1957,6 @@ body {
     .pt-toc-item.active {
         border-left-color: transparent;
         border-bottom-color: var(--color-indigo);
-    }
-    .pt-card-row {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    .pt-card-img {
-        order: -1;
     }
 }
 
