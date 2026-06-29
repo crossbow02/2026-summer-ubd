@@ -82,6 +82,22 @@ def migrate_db():
             cursor.execute("ALTER TABLE shared_schedules ADD COLUMN end_date TEXT")
             print("Added 'end_date' column to 'shared_schedules' table.")
             
+        # 6. Ensure family_profiles table exists (safety for Render cold starts)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS family_profiles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE,
+            one_liner TEXT,
+            motivation TEXT,
+            prayers TEXT,
+            specialties TEXT,
+            photo_path TEXT,
+            ai_intro_text TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """)
+
         conn.commit()
         conn.close()
         print("Database migrated successfully (target_children, team_posts, shared_schedules, and users team column checked).")
@@ -221,11 +237,14 @@ def login():
         if session.get('role') == 'admin':
             return redirect(url_for('dashboard'))
         else:
-            profile = query_db(
-                "SELECT id FROM family_profiles WHERE user_id = ?",
-                (session['user_id'],), one=True
-            )
-            return redirect(url_for('gallery') if profile else url_for('family_edit'))
+            try:
+                profile = query_db(
+                    "SELECT id FROM family_profiles WHERE user_id = ?",
+                    (session['user_id'],), one=True
+                )
+                return redirect(url_for('gallery') if profile else url_for('family_edit'))
+            except Exception:
+                return redirect(url_for('family_edit'))
         
     error = None
     if request.method == 'POST':
@@ -257,13 +276,16 @@ def login():
             if user['role'] == 'admin':
                 return redirect(url_for('dashboard'))
             else:
-                profile = query_db(
-                    "SELECT id FROM family_profiles WHERE user_id = ?",
-                    (user['id'],), one=True
-                )
-                if profile:
-                    return redirect(url_for('gallery'))
-                else:
+                try:
+                    profile = query_db(
+                        "SELECT id FROM family_profiles WHERE user_id = ?",
+                        (user['id'],), one=True
+                    )
+                    if profile:
+                        return redirect(url_for('gallery'))
+                    else:
+                        return redirect(url_for('family_edit'))
+                except Exception:
                     return redirect(url_for('family_edit'))
         else:
             error = "이름 또는 비밀번호(전화번호 뒤 4자리)가 일치하지 않습니다."
