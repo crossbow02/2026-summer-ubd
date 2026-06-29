@@ -85,8 +85,8 @@ def execute_db(query, args=()):
 # Auth Middleware
 @app.before_request
 def check_login():
-    # Allow login, static files, and slide service without login
-    allowed_routes = ['login', 'static', 'serve_slide']
+    # Allow login, static files, slide service, and git webhooks without login
+    allowed_routes = ['login', 'static', 'serve_slide', 'github_webhook']
     if request.endpoint not in allowed_routes and 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -495,6 +495,49 @@ def target_children_delete(id):
         
     execute_db("DELETE FROM target_children WHERE id = ?", (id,))
     return redirect(url_for('target_children'))
+
+# Continuous Deployment Webhook from GitHub
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    # Simple token check for security
+    token = request.args.get('token')
+    expected_token = os.environ.get('WEBHOOK_TOKEN') or 'yubadi_secret_token_1234'
+    if token != expected_token:
+        return jsonify({'status': 'unauthorized'}), 403
+        
+    import subprocess
+    try:
+        # 1. Run git pull
+        result = subprocess.run(
+            ['git', 'pull'], 
+            cwd=BASE_DIR, 
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        
+        # 2. Trigger Reload on PythonAnywhere by touching the WSGI file
+        wsgi_status = "Not on PythonAnywhere"
+        parts = BASE_DIR.split(os.sep)
+        if len(parts) >= 3 and parts[1] == 'home':
+            username = parts[2]
+            wsgi_path = f"/var/www/{username}_pythonanywhere_com_wsgi.py"
+            if os.path.exists(wsgi_path):
+                os.utime(wsgi_path, None)  # updates modification time (touch)
+                wsgi_status = f"WSGI touched: {wsgi_path}"
+            else:
+                wsgi_status = f"WSGI not found: {wsgi_path}"
+                
+        return jsonify({
+            'status': 'success',
+            'git_output': result.stdout,
+            'wsgi_status': wsgi_status
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'failed',
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050, debug=True)
