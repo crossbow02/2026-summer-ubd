@@ -67,7 +67,7 @@
 
                     {% if is_admin %}
                     <div class="child-actions">
-                        <button class="btn-action-edit" onclick="openEditModal({{ child|tojson }})" title="정보 수정">
+                        <button class="btn-action-edit" onclick="openEditById({{ child.id }})" title="정보 수정">
                             <i class="fa-solid fa-user-pen"></i> 수정
                         </button>
                         <form action="{{ url_for('target_children_delete', id=child.id) }}" method="POST" onsubmit="return confirm('정말 이 아이 정보를 삭제하시겠습니까?');" style="display:inline;">
@@ -226,7 +226,12 @@
         document.body.style.overflow = '';
     }
 
-    function openEditModal(child) {
+    const childrenData = {{ children|tojson|safe if children else '[]' }};
+
+    function openEditById(id) {
+        const child = childrenData.find(c => c.id === id);
+        if (!child) return;
+
         // Set action route dynamically
         editForm.action = `/target-children/edit/${child.id}`;
         
