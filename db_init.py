@@ -34,8 +34,14 @@ def parse_adult(adult_str):
     return name, phone, last4
 
 def init_db():
-    db_path = "/Users/crossbow02/Desktop/2026 유바디 여름 가족선교/database.db"
-    excel_path = "/Users/crossbow02/Desktop/2026 유바디 여름 가족선교/2026년 유바디 2마을 여름 사역 참가 가정.xlsx"
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    db_path = os.path.join(base_dir, "database.db")
+    
+    # Find Excel file dynamically in the same directory to avoid NFC/NFD encoding mismatches
+    excel_files = [f for f in os.listdir(base_dir) if f.endswith('.xlsx')]
+    if not excel_files:
+        raise FileNotFoundError("Excel file (.xlsx) not found in directory.")
+    excel_path = os.path.join(base_dir, excel_files[0])
     
     # Remove existing db to re-initialize clean
     if os.path.exists(db_path):
