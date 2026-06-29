@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}로그인 | 유바디 2마을 선교방{% endblock %}
+{% block title %}로그인 | 사랑이 두근둔포{% endblock %}
 
 {% block content %}
 <div class="login-wrapper">
@@ -9,8 +9,8 @@
             <div class="login-logo">
                 <i class="fa-solid fa-cross-sun"></i>
             </div>
-            <h1>선교 소통방 로그인</h1>
-            <p>2026 유바디 2마을 여름 선교 사역</p>
+            <h1>사랑이 두근둔포 로그인</h1>
+            <p>2026 여름 선교 사역</p>
             <span class="mission-dates"><i class="fa-regular fa-calendar-days"></i> 8월 15일 ~ 16일</span>
         </div>
 
@@ -22,7 +22,7 @@
 
         <form action="{{ url_for('login') }}" method="POST" class="login-form">
             <div class="form-group">
-                <label for="username"><i class="fa-solid fa-user"></i> 이름 (가장/참가자)</label>
+                <label for="username"><i class="fa-solid fa-user"></i> 이름</label>
                 <input type="text" id="username" name="username" placeholder="이름을 입력하세요 (예: 홍길동)" required autocomplete="username">
             </div>
 
@@ -38,10 +38,7 @@
 
         <div class="login-footer">
             <p class="login-hint">
-                <i class="fa-solid fa-circle-info"></i> 아빠(가장) 이름과 전화번호 뒤 4자리로 로그인해 주세요.
-            </p>
-            <p class="login-hint-sub">
-                * 성인 1인 가정(예: 권경숙 성도님)은 등록된 본인 이름과 전화번호 뒤 4자리로 로그인하실 수 있습니다.
+                <i class="fa-solid fa-circle-info"></i> 등록된 이름과 전화번호 뒤 4자리로 로그인해 주세요.
             </p>
         </div>
     </div>
