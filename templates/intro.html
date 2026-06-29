@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}사역 소개 PT | 유바디 2마을 선교방{% endblock %}
+{% block title %}사역 소개 | 유바디 2마을 선교방{% endblock %}
 
 {% block content %}
 <div class="presentation-container">
@@ -36,11 +36,6 @@
                                     </div>
                                     <p>이번 2026년 여름, 둔포성결교회의 러시아계 고려인 아이들과 가족초청 예배를 위한 여름 선교 사역을 시작합니다. 총 16가정(임원 4가정 포함)이 동참하여 예수님의 뜨거운 사랑을 전하고자 합니다.</p>
                                 </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 0 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[0]) }}" alt="가족선교 표지">
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -60,11 +55,6 @@
                                     <p><strong>숙소:</strong> 평택 온누리 M센터 (선교 기간 숙박 진행)</p>
                                     <p class="text-muted"><i class="fa-solid fa-car"></i> 두 장소는 자가용 이용 시 약 20분 거리입니다.</p>
                                 </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 2 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[2]) }}" alt="장소 개요">
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
 
@@ -78,22 +68,12 @@
                                         <h4>둔포 성결교회 전경</h4>
                                         <p>예배와 여름성경학교가 진행되는 이번 선교 사역의 핵심 중심 공간입니다.</p>
                                     </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 5 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[5]) }}" alt="둔포 성결교회">
-                                        {% endif %}
-                                    </div>
                                 </div>
                                 <!-- Sanctuary -->
                                 <div class="pt-card-row">
                                     <div class="pt-card-text">
                                         <h4>본당 예배실</h4>
                                         <p>주일연합예배와 여름성경학교 집회, 찬양 프로그램이 뜨겁게 열리는 본당 공간입니다.</p>
-                                    </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 6 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[6]) }}" alt="예배실">
-                                        {% endif %}
                                     </div>
                                 </div>
                                 <!-- Dining Room -->
@@ -102,11 +82,6 @@
                                         <h4>식당 및 교제실</h4>
                                         <p>맛있는 점심, 저녁 식사와 온 성도가 풍성하게 다과를 나누며 교제하는 소통의 장소입니다.</p>
                                     </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 7 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[7]) }}" alt="식당 및 교제실">
-                                        {% endif %}
-                                    </div>
                                 </div>
                                 <!-- Classrooms -->
                                 <div class="pt-card-row">
@@ -114,22 +89,12 @@
                                         <h4>교육실 & 도서방</h4>
                                         <p>어린이 분반 활동과 소그룹 공과 공부, 그리고 다양한 보드게임과 그림책이 준비된 아동 친화적 학습실입니다.</p>
                                     </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 9 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[9]) }}" alt="도서방">
-                                        {% endif %}
-                                    </div>
                                 </div>
                                 <!-- Playground & Parking -->
                                 <div class="pt-card-row">
                                     <div class="pt-card-text">
                                         <h4>초등학교 운동장 및 주차장</h4>
                                         <p>교회 바로 앞에 위치한 둔포초등학교 운동장(야외 활동 및 체육대회)과 캐노피가 설치된 주차장을 주말 동안 개방하여 사용할 예정입니다.</p>
-                                    </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 11 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[11]) }}" alt="초등학교 주차장">
-                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -145,22 +110,12 @@
                                         <h4>숙소 전경 및 대표 모임 공간</h4>
                                         <p>선교 기간 동안 가정이 안락하게 머물 숙소이며, 저녁 모임과 하루 사역을 돌아보는 나눔이 이루어지는 다목적 홀입니다.</p>
                                     </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 14 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[14]) }}" alt="M센터 모임공간">
-                                        {% endif %}
-                                    </div>
                                 </div>
                                 <!-- Rooms -->
                                 <div class="pt-card-row">
                                     <div class="pt-card-text">
                                         <h4>소모임방 및 다목적실</h4>
                                         <p>가정별 휴식 공간 및 소그룹으로 흩어져 대화할 수 있는 마룻바닥과 테이블이 설치된 쾌적한 방들로 구성되어 있습니다.</p>
-                                    </div>
-                                    <div class="pt-card-img">
-                                        {% if slides|length > 16 %}
-                                        <img src="{{ url_for('serve_slide', filename=slides[16]) }}" alt="다목적실">
-                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -202,11 +157,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 19 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[19]) }}" alt="토요일 일정">
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
 
@@ -240,11 +190,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 20 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[20]) }}" alt="주일 일정">
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -269,11 +214,6 @@
                                         <li><strong>언어와 문화:</strong> 자녀들은 어릴 때 입국했거나 한국에서 나고 자라 한국 생활과 한국어 소통에 완전히 적응되어 있어 선교팀 자녀들과도 친밀하게 어울릴 수 있습니다.</li>
                                     </ul>
                                 </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 22 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[22]) }}" alt="사역지 현황">
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -295,11 +235,6 @@
                                         <li><strong>숙소 및 교제:</strong> 평택 온누리 M센터에 짐을 풀고, 저녁에는 인근 목욕탕을 이용합니다. 일정이 끝난 후 숙소로 복귀하여 풍성한 야식과 함께 은혜 가득한 교제의 시간을 나눕니다.</li>
                                     </ul>
                                 </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 24 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[24]) }}" alt="참여 안내">
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
 
@@ -316,11 +251,6 @@
                                         <div class="timeline-item-inner"><span class="time-badge">7. 26 (주일)</span> <div class="timeline-desc"><h4>4차 준비 모임 (물놀이 안전 수칙 및 최종 동선 조율)</h4></div></div>
                                         <div class="timeline-item-inner"><span class="time-badge">8. 9 (주일)</span> <div class="timeline-desc"><h4>5차 준비 모임 (파송 예배 및 전체 리허설)</h4></div></div>
                                     </div>
-                                </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 25 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[25]) }}" alt="준비 모임 일정">
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -347,11 +277,6 @@
                                     </div>
 
                                     <p style="margin-top: 10px; font-weight: 700; color: var(--color-indigo);">기쁨과 감사, 주님의 은혜가 듬뿍 넘치는 고려인 선교가 되도록 적극적인 참여와 깊은 중보 기도를 부탁드립니다. ❤️</p>
-                                </div>
-                                <div class="pt-card-img">
-                                    {% if slides|length > 28 %}
-                                    <img src="{{ url_for('serve_slide', filename=slides[28]) }}" alt="초청 엔딩">
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
