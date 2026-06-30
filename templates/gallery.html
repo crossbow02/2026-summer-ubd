@@ -6,16 +6,17 @@
 <div class="gallery-container">
     <div class="gallery-header glass">
         <div class="gallery-header-top">
-            <div>
-                <h1>📸 우리 가족 소개 피드</h1>
+            <div class="gallery-title-container">
+                <div class="gallery-title-row">
+                    <h1>📸 우리 가족 소개 피드</h1>
+                    {% if profiles %}
+                    <button class="btn-tv-mode" id="btnTvMode" onclick="startPresentation(0)" title="TV 화면으로 전체 가족 소개 슬라이드 보기">
+                        <i class="fa-solid fa-tv"></i> <span>TV 모드</span>
+                    </button>
+                    {% endif %}
+                </div>
                 <p>선교를 함께하는 동역자들의 가족 소개입니다. 따뜻한 격려의 댓글과 응원의 하트로 마음을 나눠주세요!</p>
             </div>
-            {% if profiles %}
-            <button class="btn-tv-mode" id="btnTvMode" onclick="startPresentation(0)" title="TV 화면으로 전체 가족 소개 슬라이드 보기">
-                <i class="fa-solid fa-tv"></i>
-                <span>📺 TV 발표 모드</span>
-            </button>
-            {% endif %}
         </div>
     </div>
 
@@ -92,7 +93,7 @@
                     <span class="like-label">응원해요</span>
                     <span class="like-count" id="like-count-{{ profile.user_id }}">{{ profile.likes_count }}</span>
                 </button>
-                <button class="btn-tv-slide" onclick="startPresentation({{ loop.index0 }})" title="이 가정부터 TV 화면으로 보기">
+                <button class="btn-tv-slide" onclick="startPresentation({{ loop.index0 * 2 }})" title="이 가정부터 TV 화면으로 보기">
                     <i class="fa-solid fa-display"></i> TV로 보기
                 </button>
             </div>
@@ -166,7 +167,7 @@
 <!-- 프로필 JSON 데이터 -->
 <script id="profileData" type="application/json">
 [{% for profile in profiles %}
-{"name":"{{ profile.adult1_name }}{% if profile.adult2_name %} · {{ profile.adult2_name }}{% endif %}","family":"{{ profile.adult1_name }} 성도님 가정","group":"{{ profile.group_num }}구역","one_liner":{{ profile.one_liner|tojson }},"kids":{{ profile.kids|tojson }},"photo":{{ (profile.photo_path or '')|tojson }},"prayers":{{ (profile.prayers or '')|tojson }},"specialties":{{ (profile.specialties or '')|tojson }}}{% if not loop.last %},{% endif %}
+{"name":"{{ profile.adult1_name }}{% if profile.adult2_name %} · {{ profile.adult2_name }}{% endif %}","family":"{{ profile.adult1_name }} 성도님 가정","group":"{{ profile.group_num }}구역","one_liner":{{ profile.one_liner|tojson }},"kids":{{ profile.kids|tojson }},"photo":{{ (profile.photo_path or '')|tojson }},"prayers":{{ (profile.prayers or '')|tojson }},"specialties":{{ (profile.specialties or '')|tojson }},"motivation":{{ (profile.motivation or '')|tojson }},"ai_intro_text":{{ (profile.ai_intro_text or '')|tojson }}}{% if not loop.last %},{% endif %}
 {% endfor %}]
 </script>
 {% endblock %}
@@ -174,40 +175,51 @@
 {% block scripts %}
 <style>
 /* ── TV 모드 버튼 ─────────────────────────── */
-.gallery-header-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
+.gallery-title-container {
+    width: 100%;
 }
-.btn-tv-mode {
+.gallery-title-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 13px 26px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(99,102,241,0.4);
-    transition: all 0.25s ease;
-    flex-shrink: 0;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 8px;
 }
-.btn-tv-mode:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(99,102,241,0.55); }
-.btn-tv-mode i { font-size: 1.3rem; }
+.gallery-title-row h1 {
+    margin: 0;
+}
+.btn-tv-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.btn-tv-mode:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+.btn-tv-mode i {
+    font-size: 0.9rem;
+}
 
 .btn-tv-slide {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    background: rgba(99,102,241,0.1);
-    border: 1px solid rgba(99,102,241,0.3);
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     color: #a5b4fc;
     border-radius: 8px;
     font-size: 0.82rem;
@@ -215,7 +227,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
 }
-.btn-tv-slide:hover { background: rgba(99,102,241,0.25); color: #fff; }
+.btn-tv-slide:hover { background: rgba(99, 102, 241, 0.25); color: #fff; }
 
 /* ── TV 오버레이 전체 ─────────────────────── */
 .tv-overlay {
@@ -235,21 +247,21 @@
     align-items: center;
     justify-content: space-between;
     padding: 9px 28px;
-    background: rgba(255,255,255,0.04);
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     flex-shrink: 0;
 }
 .tv-progress {
     font-size: 0.95rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     letter-spacing: 2px;
 }
 .tv-ctrl-btns { display: flex; gap: 8px; }
 .tv-ctrl-btns button {
     width: 38px; height: 38px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 9px;
     color: #fff;
     font-size: 0.95rem;
@@ -257,7 +269,7 @@
     display: flex; align-items: center; justify-content: center;
     transition: background 0.2s;
 }
-.tv-ctrl-btns button:hover { background: rgba(255,255,255,0.16); }
+.tv-ctrl-btns button:hover { background: rgba(255, 255, 255, 0.16); }
 .tv-close-btn { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.35) !important; }
 .tv-close-btn:hover { background: rgba(239,68,68,0.45) !important; }
 
@@ -283,8 +295,8 @@
     display: grid;
     grid-template-columns: 42% 58%;
     position: relative;
-    box-shadow: 0 0 80px rgba(99,102,241,0.25), inset 0 0 0 1px rgba(255,255,255,0.07);
-    animation: slideIn 0.4s cubic-bezier(0.25,0.8,0.25,1);
+    box-shadow: 0 0 80px rgba(99, 102, 241, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    animation: slideIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 @keyframes slideIn {
     from { opacity: 0; transform: scale(0.97); }
@@ -305,19 +317,19 @@
     width: 100%; height: 100%;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    background: rgba(99,102,241,0.08);
-    color: rgba(255,255,255,0.25);
+    background: rgba(99, 102, 241, 0.08);
+    color: rgba(255, 255, 255, 0.25);
     gap: 10px;
     font-size: 2.2vw;
 }
 .tv-photo-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.1) 50%, #0e0e1c 100%);
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.1) 50%, #0e0e1c 100%);
 }
 .tv-group-badge {
     position: absolute;
     top: 5%; left: 5%;
-    background: rgba(99,102,241,0.88);
+    background: rgba(99, 102, 241, 0.88);
     color: #fff;
     padding: 0.25em 0.8em;
     border-radius: 6px;
@@ -327,76 +339,124 @@
 
 /* 오른쪽: 텍스트 */
 .tv-text-col {
-    padding: 5% 6% 5% 4%;
+    padding: 4% 5% 4% 4%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 0;
     overflow: hidden;
+    text-align: left;
+}
+.tv-family-header-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 0.35em;
 }
 .tv-family-name {
-    font-size: 2.8vw;
+    font-size: 2.5vw;
     font-weight: 900;
     color: #fff;
-    margin-bottom: 0.35em;
     line-height: 1.2;
+    margin: 0;
+}
+.tv-slide-badge {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #a5b4fc;
+    font-size: 1vw;
+    font-weight: 700;
+    padding: 0.2em 0.7em;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+.tv-badge-page-num {
+    color: #e0e7ff;
+    margin-left: 4px;
+    font-weight: 800;
 }
 .tv-members {
-    font-size: 1.2vw;
-    color: rgba(255,255,255,0.5);
+    font-size: 1.1vw;
+    color: rgba(255, 255, 255, 0.5);
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
     align-items: center;
-    margin-bottom: 0.9em;
+    margin-bottom: 0.8em;
 }
 .tv-kid-chip {
-    background: rgba(99,102,241,0.22);
-    border: 1px solid rgba(99,102,241,0.35);
+    background: rgba(99, 102, 241, 0.22);
+    border: 1px solid rgba(99, 102, 241, 0.35);
     border-radius: 100px;
     padding: 0.12em 0.65em;
-    font-size: 1.05vw;
+    font-size: 1vw;
     color: #c7d2fe;
 }
 .tv-divider {
     width: 44px; height: 3px;
-    background: linear-gradient(90deg,#6366f1,#8b5cf6);
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
     border-radius: 2px;
-    margin-bottom: 0.9em;
+    margin-bottom: 0.8em;
+    flex-shrink: 0;
 }
 .tv-one-liner {
-    font-size: 1.6vw;
+    font-size: 1.4vw;
     color: #dde5ff;
     font-style: italic;
-    line-height: 1.55;
-    margin-bottom: 1em;
+    line-height: 1.5;
+    margin-bottom: 0.8em;
     padding-left: 0.8em;
     border-left: 3px solid #6366f1;
+    flex-shrink: 0;
+}
+.tv-scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+    margin-bottom: 0.5em;
+}
+.tv-scrollable-content::-webkit-scrollbar {
+    width: 6px;
+}
+.tv-scrollable-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+.tv-story-content {
+    font-size: 1.1vw;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.6;
+}
+.tv-story-content h2, .tv-story-content h3, .tv-story-content h4 {
+    color: #c7d2fe;
+    font-size: 1.2vw;
+    margin-top: 0.6em;
+    margin-bottom: 0.3em;
+}
+.tv-story-content p {
+    margin-bottom: 0.6em;
 }
 .tv-section-label {
-    font-size: 0.95vw;
+    font-size: 0.9vw;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: #818cf8;
     margin-bottom: 0.35em;
 }
-.tv-prayers {
-    font-size: 1.25vw;
-    color: rgba(255,255,255,0.72);
+.tv-motivation-text, .tv-prayers-text, .tv-specialties-text {
+    font-size: 1.2vw;
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1.6;
-    margin-bottom: 0.9em;
-}
-.tv-specialties {
-    font-size: 1.15vw;
-    color: rgba(255,255,255,0.55);
-    line-height: 1.5;
+    margin-bottom: 1.2em;
+    white-space: pre-wrap;
 }
 .tv-heart-decor {
     position: absolute;
     bottom: 3%; right: 3%;
     font-size: 1.1vw;
-    color: rgba(244,114,182,0.35);
+    color: rgba(244, 114, 182, 0.35);
     letter-spacing: 5px;
 }
 
@@ -409,7 +469,7 @@
 .tv-dot {
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.18);
+    background: rgba(255, 255, 255, 0.18);
     cursor: pointer;
     transition: all 0.25s ease;
 }
@@ -449,7 +509,42 @@
     }
 
     /* ── TV 프레젠테이션 모드 ──────────────── */
-    const TV_DATA = JSON.parse(document.getElementById('profileData').textContent);
+    const profilesRaw = JSON.parse(document.getElementById('profileData').textContent);
+    const TV_DATA = [];
+
+    profilesRaw.forEach((p, idx) => {
+        // Slide 1: Family Intro & Story
+        TV_DATA.push({
+            originalIndex: idx,
+            family: p.family,
+            name: p.name,
+            group: p.group,
+            photo: p.photo,
+            kids: p.kids,
+            one_liner: p.one_liner,
+            slideType: 'story',
+            titleBadge: '우리 가족 이야기',
+            ai_intro_text: p.ai_intro_text,
+            motivation: p.motivation,
+            pageInfo: '1 / 2'
+        });
+
+        // Slide 2: Prayer Requests & Specialties
+        TV_DATA.push({
+            originalIndex: idx,
+            family: p.family,
+            name: p.name,
+            group: p.group,
+            photo: p.photo,
+            kids: p.kids,
+            slideType: 'details',
+            titleBadge: '기도제목 & 매력',
+            prayers: p.prayers,
+            specialties: p.specialties,
+            pageInfo: '2 / 2'
+        });
+    });
+
     let tvIdx=0, tvAuto=false, tvTimer=null;
 
     const trunc = (s,n) => s && s.length>n ? s.slice(0,n)+'…' : (s||'');
@@ -460,28 +555,63 @@
         const photoHtml = p.photo
             ? `<img src="${p.photo}" alt="${p.family}"><div class="tv-photo-overlay"></div>`
             : `<div class="tv-no-photo"><i class="fa-solid fa-camera"></i><span>사진 없음</span></div>`;
+
+        let rightContent = '';
+        if (p.slideType === 'story') {
+            const formattedStory = p.ai_intro_text ? formatStoryText(p.ai_intro_text) : '';
+            rightContent = `
+                ${p.one_liner ? `<div class="tv-one-liner">${p.one_liner}</div>` : ''}
+                <div class="tv-scrollable-content">
+                    ${formattedStory ? `<div class="tv-story-content">${formattedStory}</div>` : ''}
+                    ${(!formattedStory && p.motivation) ? `
+                        <div class="tv-section-label">🌟 선교 참여 계기 및 기대</div>
+                        <div class="tv-motivation-text">${p.motivation}</div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            rightContent = `
+                <div class="tv-scrollable-content">
+                    ${p.prayers ? `
+                        <div class="tv-section-label">🙏 기도제목</div>
+                        <div class="tv-prayers-text">${p.prayers}</div>
+                    ` : ''}
+                    ${p.specialties ? `
+                        <div class="tv-section-label">✨ 우리 가족의 매력 & 특기</div>
+                        <div class="tv-specialties-text">${p.specialties}</div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
         return `
         <div class="tv-photo-col">
             ${photoHtml}
             <div class="tv-group-badge">${p.group}</div>
         </div>
         <div class="tv-text-col">
-            <div class="tv-family-name">💖 ${p.family}</div>
+            <div class="tv-family-header-row">
+                <div class="tv-family-name">💖 ${p.family}</div>
+                <div class="tv-slide-badge">${p.titleBadge} <span class="tv-badge-page-num">${p.pageInfo}</span></div>
+            </div>
             <div class="tv-members">
                 <i class="fa-solid fa-users" style="color:#6366f1;margin-right:4px"></i>
-                ${p.name}${kidsHtml?' &nbsp;·&nbsp; ':''}${kidsHtml}
+                ${p.name}${kidsHtml ? ' &nbsp;·&nbsp; ' : ''}${kidsHtml}
             </div>
             <div class="tv-divider"></div>
-            ${p.one_liner?`<div class="tv-one-liner">${p.one_liner}</div>`:''}
-            ${p.prayers?`<div class="tv-section-label">🙏 기도제목</div><div class="tv-prayers">${trunc(p.prayers,130)}</div>`:''}
-            ${p.specialties?`<div class="tv-section-label">✨ 우리 가족 매력</div><div class="tv-specialties">${trunc(p.specialties,110)}</div>`:''}
+            ${rightContent}
         </div>
         <div class="tv-heart-decor">♥ ♥ ♥</div>`;
     }
 
     function renderDots() {
-        document.getElementById('tvDots').innerHTML =
-            TV_DATA.map((_,i)=>`<div class="tv-dot${i===tvIdx?' active':''}" onclick="tvGoTo(${i})"></div>`).join('');
+        const totalFamilies = TV_DATA.length / 2;
+        let dotsHtml = '';
+        for (let idx = 0; idx < totalFamilies; idx++) {
+            const isActive = Math.floor(tvIdx / 2) === idx;
+            dotsHtml += `<div class="tv-dot${isActive ? ' active' : ''}" onclick="tvGoTo(${idx * 2})"></div>`;
+        }
+        document.getElementById('tvDots').innerHTML = dotsHtml;
     }
 
     function updateSlide() {
@@ -507,7 +637,7 @@
     function tvToggleAuto() {
         tvAuto=!tvAuto;
         const b=document.getElementById('btnAuto');
-        if(tvAuto){ b.innerHTML='<i class="fa-solid fa-pause"></i>'; tvTimer=setInterval(tvNext,6000); }
+        if(tvAuto){ b.innerHTML='<i class="fa-solid fa-pause"></i>'; tvTimer=setInterval(tvNext,8000); }
         else { b.innerHTML='<i class="fa-solid fa-play"></i>'; tvStop(); }
     }
     function tvStop() { clearInterval(tvTimer); tvTimer=null; tvAuto=false; const b=document.getElementById('btnAuto'); if(b) b.innerHTML='<i class="fa-solid fa-play"></i>'; }
