@@ -25,8 +25,8 @@
                 <select id="kidsSorter" onchange="sortCards(this.value)" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; outline: none; font-size: 0.9rem;">
                     <option value="default">기본 정렬 (사진 우선)</option>
                     <option value="name">이름 가나다순</option>
-                    <option value="age-desc">나이 많은 순</option>
-                    <option value="age-asc">나이 적은 순</option>
+                    <option value="grade-desc">고학년 우선</option>
+                    <option value="grade-asc">저학년 우선</option>
                     <option value="gender-female">성별 (여아 우선)</option>
                     <option value="gender-male">성별 (남아 우선)</option>
                     <option value="photo-less">사진 없는 아이 우선</option>
@@ -52,7 +52,7 @@
             {% for child in children %}
             <div class="child-card glass" 
                  data-name="{{ child.name }}" 
-                 data-age="{{ child.age or '' }}" 
+                 data-grade="{{ child.grade or '' }}" 
                  data-gender="{{ child.gender }}" 
                  data-has-photo="{% if child.photo_path %}1{% else %}0{% endif %}" 
                  data-id="{{ child.id }}">
@@ -72,8 +72,8 @@
                 <div class="child-info">
                     <div class="child-meta-header">
                         <span class="child-name">{{ child.name }}</span>
-                        {% if child.age %}
-                        <span class="child-age-badge">{{ child.age }}세</span>
+                        {% if child.grade %}
+                        <span class="child-age-badge" style="background: rgba(99, 102, 241, 0.15); color: var(--color-indigo); border: 1px solid rgba(99, 102, 241, 0.2); font-size: 0.82rem; padding: 3px 8px;">{{ child.grade }}</span>
                         {% endif %}
                     </div>
 
@@ -176,7 +176,7 @@
                 <tr style="border-bottom: 2px solid var(--border-color); background: rgba(255, 255, 255, 0.03);">
                     <th style="padding: 14px 16px; font-weight: 800;">이름</th>
                     <th style="padding: 14px 16px; font-weight: 800; width: 80px;">성별</th>
-                    <th style="padding: 14px 16px; font-weight: 800; width: 80px;">나이</th>
+                    <th style="padding: 14px 16px; font-weight: 800; width: 100px;">학년</th>
                     <th style="padding: 14px 16px; font-weight: 800;">국적</th>
                     <th style="padding: 14px 16px; font-weight: 800;">한국어</th>
                     {% if is_admin %}
@@ -192,7 +192,7 @@
                 <tr class="table-row-item" 
                     data-id="{{ child.id }}" 
                     data-name="{{ child.name }}" 
-                    data-age="{{ child.age or '' }}" 
+                    data-grade="{{ child.grade or '' }}" 
                     data-gender="{{ child.gender }}" 
                     data-has-photo="{% if child.photo_path %}1{% else %}0{% endif %}"
                     style="border-bottom: 1px solid var(--border-color);">
@@ -200,7 +200,7 @@
                     <td style="padding: 14px 16px;">
                         <span class="child-gender-badge {% if child.gender == '남' %}male{% else %}female{% endif %}" style="padding: 2px 8px; border-radius: 4px; font-size: 0.78rem;">{{ child.gender }}</span>
                     </td>
-                    <td style="padding: 14px 16px;">{{ child.age or '-' }}</td>
+                    <td style="padding: 14px 16px; font-weight: 600;">{{ child.grade or '-' }}</td>
                     <td style="padding: 14px 16px;">{{ child.nationality or '-' }}</td>
                     <td style="padding: 14px 16px;">{{ child.korean_level or '-' }}</td>
                     {% if is_admin %}
@@ -237,8 +237,8 @@
 
             <div class="form-row-2">
                 <div class="form-group">
-                    <label for="add_age"><i class="fa-solid fa-cake-candles"></i> 나이 (선택)</label>
-                    <input type="number" id="add_age" name="age" min="1" max="25" placeholder="예: 9">
+                    <label for="add_grade"><i class="fa-solid fa-graduation-cap"></i> 학년 (선택)</label>
+                    <input type="text" id="add_grade" name="grade" placeholder="예: 초6, 중2">
                 </div>
                 <div class="form-group">
                     <label for="add_gender"><i class="fa-solid fa-venus-mars"></i> 성별</label>
@@ -318,8 +318,8 @@
 
             <div class="form-row-2">
                 <div class="form-group">
-                    <label for="edit_age"><i class="fa-solid fa-cake-candles"></i> 나이 (선택)</label>
-                    <input type="number" id="edit_age" name="age" min="1" max="25" placeholder="예: 9">
+                    <label for="edit_grade"><i class="fa-solid fa-graduation-cap"></i> 학년 (선택)</label>
+                    <input type="text" id="edit_grade" name="grade" placeholder="예: 초6, 중2">
                 </div>
                 <div class="form-group">
                     <label for="edit_gender"><i class="fa-solid fa-venus-mars"></i> 성별</label>
@@ -455,6 +455,24 @@
         }
     }
 
+    function getGradeWeight(gradeStr) {
+        if (!gradeStr) return 0;
+        let weight = 0;
+        if (gradeStr.includes('초')) {
+            weight = 10;
+        } else if (gradeStr.includes('중')) {
+            weight = 20;
+        } else if (gradeStr.includes('고')) {
+            weight = 30;
+        }
+        
+        const numMatch = gradeStr.match(/\d+/);
+        if (numMatch) {
+            weight += parseInt(numMatch[0]);
+        }
+        return weight;
+    }
+
     function sortCards(sortBy) {
         const grid = document.querySelector('.kids-grid');
         const tbody = document.querySelector('#kidsTableView tbody');
@@ -470,15 +488,15 @@
                 return idA - idB;
             } else if (sortBy === 'name') {
                 return a.dataset.name.localeCompare(b.dataset.name, 'ko');
-            } else if (sortBy === 'age-desc') {
-                const ageA = parseInt(a.dataset.age) || 0;
-                const ageB = parseInt(b.dataset.age) || 0;
-                if (ageA !== ageB) return ageB - ageA;
+            } else if (sortBy === 'grade-desc') {
+                const gradeA = getGradeWeight(a.dataset.grade);
+                const gradeB = getGradeWeight(b.dataset.grade);
+                if (gradeA !== gradeB) return gradeB - gradeA;
                 return idA - idB;
-            } else if (sortBy === 'age-asc') {
-                const ageA = parseInt(a.dataset.age) || 999;
-                const ageB = parseInt(b.dataset.age) || 999;
-                if (ageA !== ageB) return ageA - ageB;
+            } else if (sortBy === 'grade-asc') {
+                const gradeA = getGradeWeight(a.dataset.grade) || 999;
+                const gradeB = getGradeWeight(b.dataset.grade) || 999;
+                if (gradeA !== gradeB) return gradeA - gradeB;
                 return idA - idB;
             } else if (sortBy === 'gender-female') {
                 const genA = a.dataset.gender === '여' ? 0 : 1;
@@ -555,7 +573,7 @@
         
         // Fill values
         document.getElementById('edit_name').value = child.name;
-        document.getElementById('edit_age').value = child.age || '';
+        document.getElementById('edit_grade').value = child.grade || '';
         document.getElementById('edit_gender').value = child.gender;
         document.getElementById('edit_parents_church').value = child.parents_church;
         document.getElementById('edit_phone').value = child.phone || '';
