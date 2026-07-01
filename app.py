@@ -189,8 +189,8 @@ def migrate_db():
                 ('다니엘', '중 1', '여', None, '모름', '🙏 기도제목: 하나님의 자비를 위하여', '', '', '', '기도제목'),
             ]
             cursor.executemany("""
-                INSERT INTO target_children (name, age, gender, photo_path, parents_church, notes, phone)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO target_children (name, grade, gender, photo_path, parents_church, notes, phone, nationality, korean_level, source_sheet)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, default_children)
             print(f"Successfully seeded {len(default_children)} default children into target_children table.")
         # Force update all existing children's genders to '여' and assign corrected photo paths
