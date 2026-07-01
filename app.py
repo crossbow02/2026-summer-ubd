@@ -146,6 +146,10 @@ def migrate_db():
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, default_children)
             print(f"Successfully seeded {len(default_children)} default children into target_children table.")
+        # Force update all existing children's genders to '여' and assign corrected photo paths
+        cursor.execute("UPDATE target_children SET gender = '여'")
+        cursor.execute("UPDATE target_children SET photo_path = '/static/uploads/child_41_마샤(마리아).jpg' WHERE name = '마샤(마리아)'")
+        cursor.execute("UPDATE target_children SET photo_path = '/static/uploads/child_60_리엔.jpg' WHERE name = '리엔'")
 
         conn.commit()
         conn.close()
