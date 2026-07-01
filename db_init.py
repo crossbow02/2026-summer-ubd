@@ -211,7 +211,47 @@ def init_db():
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (0, '이현민', '010-0000-1953', '1953', None, None, None, '[]', 'admin'))
     user_count += 1
-        
+    
+    # Seed 30 target children from PDF list
+    default_children = [
+        ("밀라나", 13, "여", "초 6"),
+        ("유노나", 9, "여", "초 2"),
+        ("김 안나", 13, "여", "초 6"),
+        ("리디야", 11, "여", "초 4"),
+        ("캐롤리나", 10, "여", "초 3"),
+        ("신 바넷사", 11, "여", "초 4"),
+        ("신 로베르트", 8, "남", "초 1"),
+        ("박 니키타", 13, "남", "초 6"),
+        ("마샤(마리아)", 12, "여", "초 5"),
+        ("안 안나", 13, "여", "초 6"),
+        ("카리나", 12, "여", "초 5"),
+        ("슬라바", 14, "남", "중 1"),
+        ("채 빅토르", 15, "남", "중 2"),
+        ("카밀라", 15, "여", "중 2"),
+        ("박 베로니카", 15, "여", "둔포중 2"),
+        ("리야", 12, "여", "초 5"),
+        ("로만", 9, "남", "초 2"),
+        ("넬리", 12, "여", "초 5"),
+        ("욜라", 9, "여", "초 2"),
+        ("허 베라", 12, "여", "초 5"),
+        ("콘스탄틴", 12, "남", "초 5"),
+        ("밀레나", 12, "여", "초 5"),
+        ("폴리나", 13, "여", "초 6"),
+        ("예바", 13, "여", "초 6"),
+        ("비올레타", 13, "여", "초 6"),
+        ("크세니아", 13, "여", "초 6"),
+        ("샤샤", 14, "남", "중 1"),
+        ("리엔", 13, "여", "초 6"),
+        ("비카", 11, "여", "초 4"),
+        ("황 니키타", 15, "남", "중 2")
+    ]
+    
+    cursor.executemany("""
+    INSERT INTO target_children (name, age, gender, photo_path, parents_church, notes)
+    VALUES (?, ?, ?, NULL, '모름', ?)
+    """, default_children)
+    print(f"Successfully seeded {len(default_children)} target children into target_children table.")
+
     conn.commit()
     conn.close()
     print(f"Successfully loaded {user_count} families (including Pastor) into the database.")
