@@ -1791,6 +1791,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     background: rgba(241, 245, 249, 0.95);
     border-left: 1px solid rgba(15, 23, 42, 0.08);
 }
+.light-theme .nav-bottom-row {
+    background: rgba(241, 245, 249, 0.97);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
 .light-theme .nav-item {
     border-bottom: 1px solid rgba(15, 23, 42, 0.05);
 }
