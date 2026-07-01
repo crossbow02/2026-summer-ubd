@@ -410,13 +410,12 @@
             currentStreak++;
             
             // Check high score
-            let isNewHigh = false;
             if (currentStreak > highStreak) {
                 highStreak = currentStreak;
-                isNewHigh = true;
-                // Silent post to save new high streak
-                submitScore(currentStreak);
             }
+            
+            // 실시간 점수 등록 (도중에 나가도 기록되도록)
+            submitScore(currentStreak);
             
             updateHeader();
             

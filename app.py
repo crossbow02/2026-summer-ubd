@@ -1149,15 +1149,22 @@ def game_submit_score():
         
     user_id = session.get('user_id')
     data = request.get_json() or {}
-    score = data.get('score', 0)
     
-    if not isinstance(score, int) or score < 0:
+    try:
+        score = int(data.get('score', 0))
+    except (ValueError, TypeError):
         return jsonify({'success': False, 'error': '잘못된 점수 데이터입니다.'}), 400
+        
+    if score < 0:
+        return jsonify({'success': False, 'error': '점수는 0 이상이어야 합니다.'}), 400
         
     # Get current user and update if score is higher
     user = query_db("SELECT game_high_streak FROM users WHERE id = ?", (user_id,), one=True)
     if user:
         current_high = user['game_high_streak']
+        if current_high is None:
+            current_high = 0
+            
         if score > current_high:
             execute_db("UPDATE users SET game_high_streak = ? WHERE id = ?", (score, user_id))
             return jsonify({'success': True, 'new_high': True, 'high_streak': score})
