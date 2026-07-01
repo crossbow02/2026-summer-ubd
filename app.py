@@ -81,6 +81,15 @@ def migrate_db():
         if 'game_high_streak' not in columns:
             cursor.execute("ALTER TABLE users ADD COLUMN game_high_streak INTEGER DEFAULT 0")
             print("Added 'game_high_streak' column to 'users' table.")
+        if 'team2' not in columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN team2 TEXT DEFAULT '미지정'")
+            print("Added 'team2' column to 'users' table.")
+        if 'is_team_leader' not in columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN is_team_leader INTEGER DEFAULT 0")
+            print("Added 'is_team_leader' column to 'users' table.")
+        if 'is_team_leader2' not in columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN is_team_leader2 INTEGER DEFAULT 0")
+            print("Added 'is_team_leader2' column to 'users' table.")
             
         # 4. Create shared_schedules table
         cursor.execute("""
@@ -931,14 +940,39 @@ def admin_update_family_team():
     data = request.get_json() or {}
     family_id = data.get('family_id')
     team = data.get('team')
+    which = data.get('which', '1')  # '1' = 성인1, '2' = 성인2
     
     if not family_id or not team:
         return jsonify({'success': False, 'error': 'Invalid request'}), 400
         
-    if team not in ['미지정', '예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀']:
+    valid_teams = ['미지정', '예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀']
+    if team not in valid_teams:
         return jsonify({'success': False, 'error': 'Invalid team name'}), 400
+    
+    if which == '2':
+        execute_db("UPDATE users SET team2 = ? WHERE id = ?", (team, family_id))
+    else:
+        execute_db("UPDATE users SET team = ? WHERE id = ?", (team, family_id))
+    return jsonify({'success': True})
+
+@app.route('/admin/update-family-team-leader', methods=['POST'])
+def admin_update_family_team_leader():
+    if session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
-    execute_db("UPDATE users SET team = ? WHERE id = ?", (team, family_id))
+    data = request.get_json() or {}
+    family_id = data.get('family_id')
+    is_leader = data.get('is_leader', False)
+    which = data.get('which', '1')  # '1' = 성인1, '2' = 성인2
+    
+    if family_id is None:
+        return jsonify({'success': False, 'error': 'Invalid request'}), 400
+    
+    val = 1 if is_leader else 0
+    if which == '2':
+        execute_db("UPDATE users SET is_team_leader2 = ? WHERE id = ?", (val, family_id))
+    else:
+        execute_db("UPDATE users SET is_team_leader = ? WHERE id = ?", (val, family_id))
     return jsonify({'success': True})
 
 @app.route('/admin/update-family-role', methods=['POST'])
