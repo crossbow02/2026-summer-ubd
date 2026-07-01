@@ -54,6 +54,26 @@
                         {% endif %}
                     </div>
 
+                    <!-- Nationality & Korean level -->
+                    {% if child.nationality or child.korean_level %}
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; font-size: 0.8rem;">
+                        {% if child.nationality %}
+                        <span style="background: rgba(99, 102, 241, 0.15); color: var(--color-indigo); padding: 3px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-globe"></i> {{ child.nationality }}</span>
+                        {% endif %}
+                        {% if child.korean_level %}
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 3px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-language"></i> 한국어: {{ child.korean_level }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Source Sheet (Admin Only) -->
+                    {% if is_admin and child.source_sheet %}
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-weight: 700; color: var(--color-pink);"><i class="fa-solid fa-file-excel"></i> 출처:</span>
+                        <span>{{ child.source_sheet }}</span>
+                    </div>
+                    {% endif %}
+
                     <!-- Phone Number (Admin Only) -->
                     {% if is_admin and child.phone %}
                     <div class="child-phone-row">
@@ -146,6 +166,27 @@
                 <input type="text" id="add_phone" name="phone" placeholder="예: 010-1234-5678">
             </div>
 
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label for="add_nationality"><i class="fa-solid fa-globe"></i> 국적 (선택)</label>
+                    <input type="text" id="add_nationality" name="nationality" placeholder="예: 카자흐스탄">
+                </div>
+                <div class="form-group">
+                    <label for="add_korean_level"><i class="fa-solid fa-language"></i> 한국어 수준</label>
+                    <select id="add_korean_level" name="korean_level">
+                        <option value="" selected>선택 안 함</option>
+                        <option value="상">상 (매우 잘함)</option>
+                        <option value="중">중 (소통 가능)</option>
+                        <option value="하">하 (소통 어려움)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="add_source_sheet"><i class="fa-solid fa-file-excel"></i> 출처 시트 (관리자용)</label>
+                <input type="text" id="add_source_sheet" name="source_sheet" placeholder="예: 출석명단">
+            </div>
+
             <div class="form-group">
                 <label for="add_photo"><i class="fa-solid fa-image"></i> 아이 사진</label>
                 <input type="file" id="add_photo" name="photo" accept="image/*" onchange="handleChildPhotoChange(this)">
@@ -206,6 +247,27 @@
                 <input type="text" id="edit_phone" name="phone" placeholder="예: 010-1234-5678">
             </div>
 
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label for="edit_nationality"><i class="fa-solid fa-globe"></i> 국적</label>
+                    <input type="text" id="edit_nationality" name="nationality" placeholder="예: 카자흐스탄">
+                </div>
+                <div class="form-group">
+                    <label for="edit_korean_level"><i class="fa-solid fa-language"></i> 한국어 수준</label>
+                    <select id="edit_korean_level" name="korean_level">
+                        <option value="">선택 안 함</option>
+                        <option value="상">상 (매우 잘함)</option>
+                        <option value="중">중 (소통 가능)</option>
+                        <option value="하">하 (소통 어려움)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit_source_sheet"><i class="fa-solid fa-file-excel"></i> 출처 시트 (관리자용)</label>
+                <input type="text" id="edit_source_sheet" name="source_sheet" placeholder="예: 출석명단">
+            </div>
+
             <div class="form-group">
                 <label for="edit_photo"><i class="fa-solid fa-image"></i> 아이 사진 교체 (새로 올릴 때만 선택)</label>
                 <input type="file" id="edit_photo" name="photo" accept="image/*" onchange="handleChildPhotoChange(this)">
@@ -259,6 +321,9 @@
         document.getElementById('edit_gender').value = child.gender;
         document.getElementById('edit_parents_church').value = child.parents_church;
         document.getElementById('edit_phone').value = child.phone || '';
+        document.getElementById('edit_nationality').value = child.nationality || '';
+        document.getElementById('edit_korean_level').value = child.korean_level || '';
+        document.getElementById('edit_source_sheet').value = child.source_sheet || '';
         document.getElementById('edit_notes').value = child.notes || '';
         
         editModal.classList.add('active');

@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block title %}아이들 퀴즈 게임 | 2026 유바디 2마을 여름 아웃리치{% endblock %}
+
+{% block head %}
+<style>
+    .game-page-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 0;
+    }
+    @media (max-width: 900px) {
+        .game-page-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .game-card {
+        padding: 30px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .game-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 15px;
+    }
+    .streak-badge {
+        background: linear-gradient(135deg, #ec4899, #be185d);
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+        animation: pulse 1.5s infinite alternate;
+    }
+    .best-badge {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .photo-stage {
+        width: 320px;
+        height: 320px;
+        border-radius: 24px;
+        border: 4px solid var(--border-color);
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        margin: 20px 0;
+        position: relative;
+    }
+    .photo-stage img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .quiz-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        width: 100%;
+        max-width: 500px;
+        margin-top: 20px;
+    }
+    @media (max-width: 500px) {
+        .quiz-options {
+            grid-template-columns: 1fr;
+        }
+    }
+    .option-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 16px 20px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .option-btn:hover {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: var(--color-indigo);
+        transform: translateY(-2px);
+    }
+    .option-btn.correct {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        border-color: #10b981 !important;
+        color: white !important;
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+    }
+    .option-btn.wrong {
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        border-color: #ef4444 !important;
+        color: white !important;
+        box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Leaderboard Styles */
+    .leaderboard-card {
+        padding: 25px;
+    }
+    .leaderboard-header {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--color-pink);
+    }
+    .leaderboard-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .leaderboard-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+    }
+    .leaderboard-item.rank-1 {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+    .rank-number {
+        font-weight: 900;
+        font-size: 0.95rem;
+        min-width: 25px;
+        color: var(--text-secondary);
+    }
+    .leaderboard-item.rank-1 .rank-number {
+        color: #f59e0b;
+    }
+    .player-name {
+        flex: 1;
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-left: 10px;
+        color: var(--text-primary);
+    }
+    .player-streak {
+        font-weight: 800;
+        font-size: 1rem;
+        color: var(--color-indigo);
+    }
+    
+    /* Screens */
+    .screen {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+    }
+    .screen.active {
+        display: flex;
+        animation: fadeIn 0.4s ease;
+    }
+    
+    .screen-start h2 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+    }
+    .screen-start p {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        max-width: 400px;
+        line-height: 1.5;
+    }
+    .btn-start {
+        padding: 16px 40px;
+        font-size: 1.2rem;
+        border-radius: 30px;
+        font-weight: 800;
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    }
+    
+    .screen-over h2 {
+        font-size: 2.2rem;
+        color: #ef4444;
+        font-weight: 900;
+        margin-bottom: 10px;
+    }
+    .final-score {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 25px;
+    }
+    .high-score-notify {
+        color: #10b981;
+        font-weight: 800;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        animation: pulse 1s infinite alternate;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.05); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="game-page-container">
+    <!-- Game Stage -->
+    <div class="game-card glass">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen active">
+            <i class="fa-solid fa-gamepad" style="font-size: 4rem; color: var(--color-indigo); margin-bottom: 20px;"></i>
+            <h2>러시아계 고려인 아이들 이름 퀴즈</h2>
+            <p>
+                우리가 이번 아웃리치에서 만날 둔포의 소중한 아이들 사진을 보고 알맞은 이름을 맞춰보세요! <br>
+                연속으로 얼마나 많은 아이들을 맞출 수 있을지 도전하며 얼굴과 이름을 기억해봅시다.
+            </p>
+            <button class="btn btn-primary btn-start" onclick="startGame()">
+                게임 시작하기 <i class="fa-solid fa-play" style="margin-left: 8px;"></i>
+            </button>
+        </div>
+
+        <!-- Play Screen -->
+        <div id="playScreen" class="screen">
+            <div class="game-header">
+                <div>
+                    <span style="font-weight: 700; color: var(--text-secondary); margin-right: 8px;">최고 기록:</span>
+                    <span class="best-badge" id="displayBest">{{ high_streak }}명</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 700; color: var(--text-secondary);">현재 콤보:</span>
+                    <span class="streak-badge" id="displayStreak">0</span>
+                </div>
+            </div>
+
+            <div class="photo-stage">
+                <img id="childPhoto" src="" alt="아이 사진">
+            </div>
+
+            <div class="quiz-options" id="optionsContainer">
+                <button class="option-btn" onclick="selectAnswer(0)">이름 1</button>
+                <button class="option-btn" onclick="selectAnswer(1)">이름 2</button>
+                <button class="option-btn" onclick="selectAnswer(2)">이름 3</button>
+                <button class="option-btn" onclick="selectAnswer(3)">이름 4</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen">
+            <i class="fa-solid fa-circle-xmark" style="font-size: 4rem; color: #ef4444; margin-bottom: 20px;"></i>
+            <h2>아쉽게도 틀렸습니다!</h2>
+            <div class="final-score" id="finalScore">최종 연승: 0명</div>
+            <div id="newRecordAlert" class="high-score-notify" style="display: none;">
+                🎉 새로운 개인 최고 기록 경신! 🎉
+            </div>
+            <button class="btn btn-accent btn-start" onclick="startGame()">
+                다시 도전하기 <i class="fa-solid fa-arrow-rotate-right" style="margin-left: 8px;"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="leaderboard-card glass">
+        <div class="leaderboard-header">
+            <i class="fa-solid fa-trophy"></i>
+            <span>퀴즈 명예의 전당 (Top 10)</span>
+        </div>
+        <div class="leaderboard-list">
+            {% if leaderboard %}
+                {% for player in leaderboard %}
+                <div class="leaderboard-item {% if loop.index == 1 %}rank-1{% endif %}">
+                    <span class="rank-number">#{{ loop.index }}</span>
+                    <span class="player-name">{{ player.name }}</span>
+                    <span class="player-streak">{{ player.streak }} 연승</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.9rem;">
+                    아직 기록을 등록한 사람이 없습니다. <br>
+                    첫 도전의 주인공이 되어보세요!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const childrenData = {{ children|tojson|safe if children else '[]' }};
+    
+    let currentStreak = 0;
+    let highStreak = {{ high_streak }};
+    let currentChild = null;
+    let options = [];
+    let isTransitioning = false;
+    let recentHistory = [];
+    const maxHistoryLength = 5; // Avoid showing same child too quickly
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function startGame() {
+        if (childrenData.length < 4) {
+            alert("게임을 시작하기 위해서는 최소 4명 이상의 아이들 사진이 등록되어야 합니다.");
+            return;
+        }
+        currentStreak = 0;
+        recentHistory = [];
+        updateHeader();
+        nextQuestion();
+        showScreen('playScreen');
+    }
+
+    function updateHeader() {
+        document.getElementById('displayStreak').innerText = currentStreak;
+        document.getElementById('displayBest').innerText = highStreak + "명";
+    }
+
+    function nextQuestion() {
+        isTransitioning = false;
+        
+        // Reset option button styles
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = '';
+        
+        // Pick a target child that has photo and is not in recent history
+        const pool = childrenData.filter(c => !recentHistory.includes(c.id));
+        const finalPool = pool.length > 0 ? pool : childrenData;
+        
+        const randomIndex = Math.floor(Math.random() * finalPool.length);
+        currentChild = finalPool[randomIndex];
+        
+        // Add to history
+        recentHistory.push(currentChild.id);
+        if (recentHistory.length > maxHistoryLength) {
+            recentHistory.shift();
+        }
+
+        // Set photo
+        document.getElementById('childPhoto').src = currentChild.photo_path;
+
+        // Generate distractors
+        const distractors = [];
+        while (distractors.length < 3) {
+            const randomDist = childrenData[Math.floor(Math.random() * childrenData.length)];
+            // Make sure the distractor name is not the correct name and not already chosen
+            if (randomDist.name !== currentChild.name && !distractors.some(d => d.name === randomDist.name)) {
+                distractors.push(randomDist);
+            }
+        }
+
+        // Shuffle options
+        options = [currentChild, ...distractors];
+        options.sort(() => Math.random() - 0.5);
+
+        // Render option buttons
+        options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.name;
+            btn.onclick = () => selectAnswer(idx, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    async function selectAnswer(index, buttonElement) {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        const selected = options[index];
+        const isCorrect = (selected.name === currentChild.name);
+
+        if (isCorrect) {
+            buttonElement.classList.add('correct');
+            currentStreak++;
+            
+            // Check high score
+            let isNewHigh = false;
+            if (currentStreak > highStreak) {
+                highStreak = currentStreak;
+                isNewHigh = true;
+                // Silent post to save new high streak
+                submitScore(currentStreak);
+            }
+            
+            updateHeader();
+            
+            // Next question after 1s
+            setTimeout(() => {
+                nextQuestion();
+            }, 1000);
+        } else {
+            buttonElement.classList.add('wrong');
+            
+            // Highlight the correct one
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, idx) => {
+                if (options[idx].name === currentChild.name) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            // End game after 1.5s
+            setTimeout(async () => {
+                const wasNewHigh = await submitScore(currentStreak);
+                document.getElementById('finalScore').innerText = `최종 연승: ${currentStreak}명`;
+                document.getElementById('newRecordAlert').style.display = wasNewHigh ? 'block' : 'none';
+                showScreen('gameOverScreen');
+            }, 1500);
+        }
+    }
+
+    async function submitScore(score) {
+        if (score <= 0) return false;
+        try {
+            const response = await fetch('/game/submit-score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ score: score })
+            });
+            const data = await response.json();
+            return data.new_high || false;
+        } catch (e) {
+            console.error('Failed to submit score:', e);
+            return false;
+        }
+    }
+</script>
+{% endblock %}

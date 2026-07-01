@@ -84,9 +84,14 @@
                 <a href="{{ url_for('target_children') }}" class="nav-item {% if request.endpoint == 'target_children' %}active{% endif %}">
                     <i class="fa-solid fa-children"></i> <span>만날 아이들</span>
                 </a>
+                <a href="{{ url_for('game') }}" class="nav-item {% if request.endpoint == 'game' %}active{% endif %}">
+                    <i class="fa-solid fa-gamepad"></i> <span>퀴즈 게임</span>
+                </a>
+                {#
                 <a href="{{ url_for('team_boards') }}" class="nav-item {% if request.endpoint == 'team_boards' %}active{% endif %}">
                     <i class="fa-solid fa-comments"></i> <span>팀별 소통방</span>
                 </a>
+                #}
             </nav>
             <div class="user-badge-nav mobile-only">
                 <span class="user-name-tag">
