@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}우리 가족 소개 등록 | 2026 유바디 2마을 아웃리치{% endblock %}
+{% block title %}우리 가족 소개 등록 | 2026 유바디 2마을 여름 아웃리치{% endblock %}
 
 {% block content %}
 <div class="edit-profile-container">
@@ -49,6 +49,7 @@
                            placeholder="예: 주님의 사랑을 나누는 기쁨 넘치는 가정" required>
                 </div>
 
+                {% if session.get('role') == 'admin' %}
                 <div class="form-group">
                     <label for="team"><i class="fa-solid fa-people-group"></i> 사역 참가 팀 선택 (가안)</label>
                     <select id="team" name="team" required class="filter-select" style="width: 100%;">
@@ -58,6 +59,9 @@
                         <option value="예배팀" {% if user.team == '예배팀' %}selected{% endif %}>예배팀 (예배 찬양 및 특송 지원)</option>
                     </select>
                 </div>
+                {% else %}
+                <input type="hidden" name="team" value="{{ user.team or '미지정' }}">
+                {% endif %}
 
                 <div class="form-group">
                     <label for="motivation">💖 이번 사역에 참여하게 된 계기와 기대감은 무엇인가요?</label>

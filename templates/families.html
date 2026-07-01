@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}가정 명단 | 2026 유바디 2마을 아웃리치{% endblock %}
+{% block title %}가정 명단 | 2026 유바디 2마을 여름 아웃리치{% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
     <!-- Header Roster Intro -->
     <div class="dashboard-header glass">
         <div class="welcome-section">
-            <h1>📋 2026 유바디 2마을 아웃리치 참가 가정 명단</h1>
+            <h1>📋 2026 유바디 2마을 여름 아웃리치 참가 가정 명단</h1>
             <p>이번 8월 15~16일 둔포성결교회 러시아계 고려인 사역을 함께 준비하는 믿음의 가정들입니다.</p>
             
             <!-- 삼행시 슬로건 배너 -->
@@ -113,6 +113,7 @@
                 {% endfor %}
             </select>
 
+            {% if session.get('role') == 'admin' %}
             <select id="teamFilter" class="filter-select" onchange="filterRoster()">
                 <option value="">모든 팀</option>
                 <option value="미지정">미지정</option>
@@ -120,6 +121,7 @@
                 <option value="식사준비팀">식사준비팀</option>
                 <option value="예배팀">예배팀</option>
             </select>
+            {% endif %}
         </div>
     </div>
 
@@ -136,9 +138,11 @@
             <!-- Group Badge -->
             <div class="family-badge">
                 <span class="district-badge">{{ user.group_num }}구역</span>
+                {% if session.get('role') == 'admin' %}
                 <span class="team-badge team-{{ 'school' if user.team == '성경학교팀' else 'meal' if user.team == '식사준비팀' else 'worship' if user.team == '예배팀' else 'unassigned' }}">
                     <i class="fa-solid fa-people-group"></i> {{ user.team or '미지정' }}
                 </span>
+                {% endif %}
                 {% if user.has_intro %}
                 <span class="status-badge status-completed"><i class="fa-solid fa-circle-check"></i> 소개 완료</span>
                 {% else %}
@@ -258,7 +262,8 @@
     function filterRoster() {
         const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
         const districtVal = document.getElementById('districtFilter').value;
-        const teamVal = document.getElementById('teamFilter').value;
+        const teamFilterEl = document.getElementById('teamFilter');
+        const teamVal = teamFilterEl ? teamFilterEl.value : '';
         const cards = document.querySelectorAll('.family-card');
 
         cards.forEach(card => {
