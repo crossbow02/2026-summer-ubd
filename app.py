@@ -50,6 +50,15 @@ def migrate_db():
             cursor.execute("ALTER TABLE target_children ADD COLUMN phone TEXT")
             print("Added 'phone' column to 'target_children' table.")
         
+        # Add new fields if not exists
+        for col in ['nationality', 'korean_level', 'source_sheet', 'bible_school', 'water_play']:
+            if col not in columns:
+                if col in ['bible_school', 'water_play']:
+                    cursor.execute(f"ALTER TABLE target_children ADD COLUMN {col} INTEGER DEFAULT 0")
+                else:
+                    cursor.execute(f"ALTER TABLE target_children ADD COLUMN {col} TEXT")
+                print(f"Added '{col}' column to 'target_children' table.")
+        
         # 2. Team posts table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS team_posts (
@@ -743,6 +752,21 @@ def target_children_delete_photo(id):
         execute_db("UPDATE target_children SET photo_path = NULL WHERE id = ?", (id,))
         
     return redirect(url_for('target_children'))
+
+@app.route('/target-children/toggle-attendance/<int:id>', methods=['POST'])
+def target_children_toggle_attendance(id):
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'error': '로그인이 필요합니다.'}), 401
+        
+    data = request.get_json() or {}
+    field = data.get('field')
+    value = data.get('value')
+    
+    if field not in ['bible_school', 'water_play'] or value not in [0, 1]:
+        return jsonify({'success': False, 'error': '잘못된 필드 또는 값입니다.'}), 400
+        
+    execute_db(f"UPDATE target_children SET {field} = ? WHERE id = ?", (value, id))
+    return jsonify({'success': True})
 
 # Team Board routes
 @app.route('/team-boards', methods=['GET', 'POST'])

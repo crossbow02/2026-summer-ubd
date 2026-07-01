@@ -18,18 +18,28 @@
 
     <!-- Kids Controls Row -->
     <div class="kids-controls glass" style="margin: 15px 0 25px 0; padding: 15px 20px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02);">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-arrow-down-wide-short" style="color: var(--color-indigo); font-size: 1.1rem;"></i>
-            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary);">정렬 기준:</span>
-            <select id="kidsSorter" onchange="sortCards(this.value)" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; outline: none; font-size: 0.9rem;">
-                <option value="default">기본 정렬 (사진 우선)</option>
-                <option value="name">이름 가나다순</option>
-                <option value="age-desc">나이 많은 순</option>
-                <option value="age-asc">나이 적은 순</option>
-                <option value="gender-female">성별 (여아 우선)</option>
-                <option value="gender-male">성별 (남아 우선)</option>
-                <option value="photo-less">사진 없는 아이 우선</option>
-            </select>
+        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-arrow-down-wide-short" style="color: var(--color-indigo); font-size: 1.1rem;"></i>
+                <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary);">정렬 기준:</span>
+                <select id="kidsSorter" onchange="sortCards(this.value)" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; outline: none; font-size: 0.9rem;">
+                    <option value="default">기본 정렬 (사진 우선)</option>
+                    <option value="name">이름 가나다순</option>
+                    <option value="age-desc">나이 많은 순</option>
+                    <option value="age-asc">나이 적은 순</option>
+                    <option value="gender-female">성별 (여아 우선)</option>
+                    <option value="gender-male">성별 (남아 우선)</option>
+                    <option value="photo-less">사진 없는 아이 우선</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 8px; border: 1px solid var(--border-color); padding: 4px; border-radius: 12px; background: rgba(0, 0, 0, 0.1);">
+                <button type="button" class="view-toggle-btn" id="btnCardView" onclick="toggleView('card')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; background: var(--color-indigo); color: white; transition: all 0.2s;">
+                    <i class="fa-solid fa-grip"></i> 카드 뷰
+                </button>
+                <button type="button" class="view-toggle-btn" id="btnTableView" onclick="toggleView('table')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; background: transparent; color: var(--text-secondary); transition: all 0.2s;">
+                    <i class="fa-solid fa-list"></i> 표 뷰
+                </button>
+            </div>
         </div>
         <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
             총 <span style="color: var(--color-indigo); font-weight: 800;">{{ children|length }}</span>명 등록됨
@@ -37,7 +47,7 @@
     </div>
 
     <!-- Kids Card Grid -->
-    <div class="kids-grid">
+    <div class="kids-grid" id="kidsGridView">
         {% if children %}
             {% for child in children %}
             <div class="child-card glass" 
@@ -118,6 +128,18 @@
                     </div>
                     {% endif %}
 
+                    <!-- Attendance Checkboxes -->
+                    <div class="attendance-checkboxes" style="margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; text-align: left;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" class="attendance-cb" data-id="{{ child.id }}" data-field="bible_school" {% if child.bible_school %}checked{% endif %} onchange="handleAttendanceChange(this)" style="width: 16px; height: 16px; accent-color: var(--color-indigo); cursor: pointer;">
+                            ⛪ 성경학교 참석
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" class="attendance-cb" data-id="{{ child.id }}" data-field="water_play" {% if child.water_play %}checked{% endif %} onchange="handleAttendanceChange(this)" style="width: 16px; height: 16px; accent-color: var(--color-pink); cursor: pointer;">
+                            🌊 물놀이 참석
+                        </label>
+                    </div>
+
                     {% if is_admin %}
                     <div class="child-actions">
                         <button class="btn-action-edit" onclick="openEditById({{ child.id }})" title="정보 수정">
@@ -145,6 +167,56 @@
                 {% endif %}
             </div>
         {% endif %}
+    </div>
+
+    <!-- Kids Table View -->
+    <div class="kids-table-container glass" id="kidsTableView" style="display: none; width: 100%; overflow-x: auto; margin-top: 20px; border-radius: 16px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.01);">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; min-width: 800px;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); background: rgba(255, 255, 255, 0.03);">
+                    <th style="padding: 14px 16px; font-weight: 800;">이름</th>
+                    <th style="padding: 14px 16px; font-weight: 800; width: 80px;">성별</th>
+                    <th style="padding: 14px 16px; font-weight: 800; width: 80px;">나이</th>
+                    <th style="padding: 14px 16px; font-weight: 800;">국적</th>
+                    <th style="padding: 14px 16px; font-weight: 800;">한국어</th>
+                    {% if is_admin %}
+                    <th style="padding: 14px 16px; font-weight: 800;">연락처</th>
+                    <th style="padding: 14px 16px; font-weight: 800;">출처</th>
+                    {% endif %}
+                    <th style="padding: 14px 16px; font-weight: 800; text-align: center; width: 120px;">⛪ 성경학교</th>
+                    <th style="padding: 14px 16px; font-weight: 800; text-align: center; width: 120px;">🌊 물놀이</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for child in children %}
+                <tr class="table-row-item" 
+                    data-id="{{ child.id }}" 
+                    data-name="{{ child.name }}" 
+                    data-age="{{ child.age or '' }}" 
+                    data-gender="{{ child.gender }}" 
+                    data-has-photo="{% if child.photo_path %}1{% else %}0{% endif %}"
+                    style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 14px 16px; font-weight: 700; color: var(--text-primary);">{{ child.name }}</td>
+                    <td style="padding: 14px 16px;">
+                        <span class="child-gender-badge {% if child.gender == '남' %}male{% else %}female{% endif %}" style="padding: 2px 8px; border-radius: 4px; font-size: 0.78rem;">{{ child.gender }}</span>
+                    </td>
+                    <td style="padding: 14px 16px;">{{ child.age or '-' }}</td>
+                    <td style="padding: 14px 16px;">{{ child.nationality or '-' }}</td>
+                    <td style="padding: 14px 16px;">{{ child.korean_level or '-' }}</td>
+                    {% if is_admin %}
+                    <td style="padding: 14px 16px; font-family: monospace;">{{ child.phone or '-' }}</td>
+                    <td style="padding: 14px 16px; font-size: 0.8rem; color: var(--text-muted);">{{ child.source_sheet or '-' }}</td>
+                    {% endif %}
+                    <td style="padding: 14px 16px; text-align: center;">
+                        <input type="checkbox" class="attendance-cb" data-id="{{ child.id }}" data-field="bible_school" {% if child.bible_school %}checked{% endif %} onchange="handleAttendanceChange(this)" style="width: 18px; height: 18px; accent-color: var(--color-indigo); cursor: pointer;">
+                    </td>
+                    <td style="padding: 14px 16px; text-align: center;">
+                        <input type="checkbox" class="attendance-cb" data-id="{{ child.id }}" data-field="water_play" {% if child.water_play %}checked{% endif %} onchange="handleAttendanceChange(this)" style="width: 18px; height: 18px; accent-color: var(--color-pink); cursor: pointer;">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -323,14 +395,71 @@
 
 {% block scripts %}
 <script>
+    function toggleView(viewType) {
+        const gridView = document.getElementById('kidsGridView');
+        const tableView = document.getElementById('kidsTableView');
+        const btnCard = document.getElementById('btnCardView');
+        const btnTable = document.getElementById('btnTableView');
+        
+        if (viewType === 'card') {
+            gridView.style.display = 'grid';
+            tableView.style.display = 'none';
+            
+            btnCard.style.background = 'var(--color-indigo)';
+            btnCard.style.color = 'white';
+            btnTable.style.background = 'transparent';
+            btnTable.style.color = 'var(--text-secondary)';
+        } else {
+            gridView.style.display = 'none';
+            tableView.style.display = 'block';
+            
+            btnTable.style.background = 'var(--color-indigo)';
+            btnTable.style.color = 'white';
+            btnCard.style.background = 'transparent';
+            btnCard.style.color = 'var(--text-secondary)';
+        }
+    }
+
+    async function handleAttendanceChange(checkbox) {
+        const id = checkbox.dataset.id;
+        const field = checkbox.dataset.field;
+        const value = checkbox.checked ? 1 : 0;
+        
+        // Sync checks across views
+        const allCbs = document.querySelectorAll(`.attendance-cb[data-id="${id}"][data-field="${field}"]`);
+        allCbs.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+        
+        try {
+            const response = await fetch(`/target-children/toggle-attendance/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ field: field, value: value })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert('출석 정보를 업데이트하지 못했습니다: ' + data.error);
+                allCbs.forEach(cb => {
+                    cb.checked = !checkbox.checked;
+                });
+            }
+        } catch (e) {
+            console.error('Attendance toggle failed:', e);
+            alert('네트워크 연결에 실패했습니다.');
+            allCbs.forEach(cb => {
+                cb.checked = !checkbox.checked;
+            });
+        }
+    }
+
     function sortCards(sortBy) {
         const grid = document.querySelector('.kids-grid');
-        if (!grid) return;
+        const tbody = document.querySelector('#kidsTableView tbody');
         
-        const cards = Array.from(grid.querySelectorAll('.child-card'));
-        if (cards.length === 0) return;
-        
-        cards.sort((a, b) => {
+        const comparator = (a, b) => {
             const idA = parseInt(a.dataset.id);
             const idB = parseInt(b.dataset.id);
             
@@ -368,9 +497,23 @@
                 return idA - idB;
             }
             return 0;
-        });
+        };
+
+        if (grid) {
+            const cards = Array.from(grid.querySelectorAll('.child-card'));
+            if (cards.length > 0) {
+                cards.sort(comparator);
+                cards.forEach(card => grid.appendChild(card));
+            }
+        }
         
-        cards.forEach(card => grid.appendChild(card));
+        if (tbody) {
+            const rows = Array.from(tbody.querySelectorAll('.table-row-item'));
+            if (rows.length > 0) {
+                rows.sort(comparator);
+                rows.forEach(row => tbody.appendChild(row));
+            }
+        }
     }
 </script>
 
