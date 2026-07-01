@@ -16,11 +16,36 @@
         {% endif %}
     </div>
 
+    <!-- Kids Controls Row -->
+    <div class="kids-controls glass" style="margin: 15px 0 25px 0; padding: 15px 20px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-arrow-down-wide-short" style="color: var(--color-indigo); font-size: 1.1rem;"></i>
+            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-secondary);">정렬 기준:</span>
+            <select id="kidsSorter" onchange="sortCards(this.value)" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; outline: none; font-size: 0.9rem;">
+                <option value="default">기본 정렬 (사진 우선)</option>
+                <option value="name">이름 가나다순</option>
+                <option value="age-desc">나이 많은 순</option>
+                <option value="age-asc">나이 적은 순</option>
+                <option value="gender-female">성별 (여아 우선)</option>
+                <option value="gender-male">성별 (남아 우선)</option>
+                <option value="photo-less">사진 없는 아이 우선</option>
+            </select>
+        </div>
+        <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
+            총 <span style="color: var(--color-indigo); font-weight: 800;">{{ children|length }}</span>명 등록됨
+        </div>
+    </div>
+
     <!-- Kids Card Grid -->
     <div class="kids-grid">
         {% if children %}
             {% for child in children %}
-            <div class="child-card glass">
+            <div class="child-card glass" 
+                 data-name="{{ child.name }}" 
+                 data-age="{{ child.age or '' }}" 
+                 data-gender="{{ child.gender }}" 
+                 data-has-photo="{% if child.photo_path %}1{% else %}0{% endif %}" 
+                 data-id="{{ child.id }}">
                 <div class="child-image-wrapper">
                     {% if child.photo_path %}
                         <img src="{{ child.photo_path }}" alt="{{ child.name }} 사진">
@@ -297,22 +322,74 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    function sortCards(sortBy) {
+        const grid = document.querySelector('.kids-grid');
+        if (!grid) return;
+        
+        const cards = Array.from(grid.querySelectorAll('.child-card'));
+        if (cards.length === 0) return;
+        
+        cards.sort((a, b) => {
+            const idA = parseInt(a.dataset.id);
+            const idB = parseInt(b.dataset.id);
+            
+            if (sortBy === 'default') {
+                const photoA = parseInt(a.dataset.hasPhoto);
+                const photoB = parseInt(b.dataset.hasPhoto);
+                if (photoA !== photoB) return photoB - photoA;
+                return idA - idB;
+            } else if (sortBy === 'name') {
+                return a.dataset.name.localeCompare(b.dataset.name, 'ko');
+            } else if (sortBy === 'age-desc') {
+                const ageA = parseInt(a.dataset.age) || 0;
+                const ageB = parseInt(b.dataset.age) || 0;
+                if (ageA !== ageB) return ageB - ageA;
+                return idA - idB;
+            } else if (sortBy === 'age-asc') {
+                const ageA = parseInt(a.dataset.age) || 999;
+                const ageB = parseInt(b.dataset.age) || 999;
+                if (ageA !== ageB) return ageA - ageB;
+                return idA - idB;
+            } else if (sortBy === 'gender-female') {
+                const genA = a.dataset.gender === '여' ? 0 : 1;
+                const genB = b.dataset.gender === '여' ? 0 : 1;
+                if (genA !== genB) return genA - genB;
+                return idA - idB;
+            } else if (sortBy === 'gender-male') {
+                const genA = a.dataset.gender === '남' ? 0 : 1;
+                const genB = b.dataset.gender === '남' ? 0 : 1;
+                if (genA !== genB) return genA - genB;
+                return idA - idB;
+            } else if (sortBy === 'photo-less') {
+                const photoA = parseInt(a.dataset.hasPhoto);
+                const photoB = parseInt(b.dataset.hasPhoto);
+                if (photoA !== photoB) return photoA - photoB;
+                return idA - idB;
+            }
+            return 0;
+        });
+        
+        cards.forEach(card => grid.appendChild(card));
+    }
+</script>
+
 {% if is_admin %}
 <script>
     const addModal = document.getElementById('addChildModal');
     const editModal = document.getElementById('editChildModal');
     const editForm = document.getElementById('editForm');
-
+ 
     function openAddModal() {
         addModal.classList.add('active');
         document.body.style.overflow = 'hidden'; // prevent bg scroll
     }
-
+ 
     function closeAddModal() {
         addModal.classList.remove('active');
         document.body.style.overflow = '';
     }
-
+ 
     const childrenData = {{ children|tojson|safe if children else '[]' }};
     let editingChildId = null;
 
