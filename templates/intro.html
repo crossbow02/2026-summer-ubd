@@ -288,10 +288,32 @@
                                     </ul>
                                     
                                     <!-- Deposit Information Box -->
-                                    <div class="deposit-info-box" style="margin: 20px 0; padding: 18px; background: rgba(99, 102, 241, 0.08); border-radius: 10px; border: 1px dashed var(--color-indigo);">
-                                        <h4 style="margin: 0 0 10px 0; color: var(--color-indigo); font-size: 1.05rem; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-money-check-dollar"></i> 회비 납부 안내</h4>
-                                        <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-primary);"><strong>입금 계좌:</strong> [은행명 입력] 000-000000-00000 (예금주: [이름 입력])</p>
-                                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-solid fa-circle-exclamation"></i> 입금 시 보내는 분 성함 뒤에 구역 번호를 붙여주세요. (예: 홍길동 3구역)</p>
+                                    <div class="deposit-info-box" style="margin: 20px 0; padding: 22px; background: linear-gradient(135deg, rgba(255,193,7,0.08), rgba(99,102,241,0.08)); border-radius: 14px; border: 2px solid rgba(255,193,7,0.35);">
+                                        <h4 style="margin: 0 0 16px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                            <i class="fa-solid fa-money-check-dollar" style="color: #f5a623;"></i> 💰 회비 납부 안내
+                                        </h4>
+
+                                        <!-- Account -->
+                                        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: rgba(0,0,0,0.2); border-radius: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                                            <div style="background: #ffeb00; border-radius: 8px; padding: 4px 10px; font-weight: 900; font-size: 0.78rem; color: #000; white-space: nowrap;">카카오뱅크</div>
+                                            <div>
+                                                <div style="font-size: 1.2rem; font-weight: 900; letter-spacing: 1px; color: var(--text-primary);">3333-37-3977448</div>
+                                                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">예금주: 천지연</div>
+                                            </div>
+                                            <button onclick="navigator.clipboard.writeText('3333373977448').then(()=>this.textContent='✅ 복사됨!').catch(()=>{}); setTimeout(()=>this.innerHTML='<i class=\'fa-regular fa-copy\'></i> 계좌 복사', 2000)"
+                                                    class="btn btn-secondary btn-sm" style="margin-left: auto; font-size: 0.78rem; padding: 5px 12px;">
+                                                <i class="fa-regular fa-copy"></i> 계좌 복사
+                                            </button>
+                                        </div>
+
+                                        <!-- Amount -->
+                                        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 18px; background: rgba(255,193,7,0.1); border-radius: 10px; border: 1px solid rgba(255,193,7,0.25);">
+                                            <i class="fa-solid fa-users" style="color: #f5a623;"></i>
+                                            <div>
+                                                <span style="font-weight: 800; font-size: 1rem;">1인당 50,000원</span>
+                                                <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 8px;">어른, 자녀 구분없이 참여인원 수대로</span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <p style="margin-top: 10px; font-weight: 700; color: var(--color-indigo);">기쁨과 감사, 주님의 은혜가 듬뿍 넘치는 둔포 선교가 되도록 적극적인 참여와 깊은 중보 기도를 부탁드립니다. ❤️</p>
