@@ -640,7 +640,10 @@ def delete_comment(id, comment_id):
 # Target Children routes
 @app.route('/target-children')
 def target_children():
-    rows = query_db("SELECT * FROM target_children ORDER BY name")
+    rows = query_db("""
+        SELECT * FROM target_children 
+        ORDER BY (CASE WHEN photo_path IS NOT NULL AND photo_path != '' THEN 0 ELSE 1 END) ASC, id ASC
+    """)
     children = [dict(row) for row in rows]
     is_admin = (session.get('role') == 'admin')
     return render_template('target_children.html', children=children, is_admin=is_admin)
@@ -718,6 +721,27 @@ def target_children_delete(id):
         return redirect(url_for('target_children'))
         
     execute_db("DELETE FROM target_children WHERE id = ?", (id,))
+    return redirect(url_for('target_children'))
+
+@app.route('/target-children/delete-photo/<int:id>', methods=['POST'])
+def target_children_delete_photo(id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('target_children'))
+        
+    child = query_db("SELECT photo_path FROM target_children WHERE id = ?", (id,), one=True)
+    if child and child['photo_path']:
+        photo_path = child['photo_path']
+        if photo_path.startswith('/static/uploads/'):
+            filename = photo_path.replace('/static/uploads/', '')
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            if os.path.exists(filepath):
+                try:
+                    os.remove(filepath)
+                except Exception as e:
+                    print("Failed to delete physical file:", e)
+                    
+        execute_db("UPDATE target_children SET photo_path = NULL WHERE id = ?", (id,))
+        
     return redirect(url_for('target_children'))
 
 # Team Board routes
