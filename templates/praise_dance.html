@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}찬양 율동 배우기 | 2026 유바디 2마을 여름 아웃리치{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+  <!-- Header -->
+  <div class="dashboard-header glass">
+    <div class="welcome-section">
+      <h1>🎵 찬양 율동 배우기</h1>
+      <p>아이들과 함께 찬양하고 율동할 영상 플레이리스트입니다. 사역 전에 미리 익혀두세요! 💃🕺</p>
+    </div>
+  </div>
+
+  <!-- YouTube Playlist Section -->
+  <div class="glass" style="border-radius: 16px; overflow: hidden; margin-bottom: 24px;">
+    <div style="padding: 20px 24px 12px;">
+      <h2 style="font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; margin: 0;">
+        <span style="background: #ff0000; color: white; border-radius: 8px; padding: 4px 10px; font-size: 0.85rem;">
+          <i class="fa-brands fa-youtube"></i> YouTube
+        </span>
+        찬양 율동 플레이리스트
+      </h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 0;">
+        영상이 재생되지 않으면 아래 버튼으로 유튜브에서 직접 보세요.
+      </p>
+    </div>
+
+    <!-- iframe embed -->
+    <div style="position: relative; width: 100%; padding-bottom: 56.25%; background: #000;">
+      <iframe
+        id="ytPlayer"
+        src="https://www.youtube.com/embed/videoseries?list=PLrzVa3M-OqUyt6WM-Ec2N88apGcC6_Mz5&autoplay=0&rel=0"
+        title="찬양 율동 플레이리스트"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+        onerror="handleIframeError()"
+      ></iframe>
+    </div>
+
+    <div style="padding: 14px 24px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--border-color);">
+      <a href="https://youtube.com/playlist?list=PLrzVa3M-OqUyt6WM-Ec2N88apGcC6_Mz5&si=6AtiNfq37XFCkKsI"
+         target="_blank" rel="noopener noreferrer"
+         class="btn btn-accent btn-sm" id="ytOpenBtn">
+        <i class="fa-brands fa-youtube"></i> 유튜브에서 전체 재생
+      </a>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">
+        <i class="fa-solid fa-circle-info"></i> 영상이 안 보이면 위 버튼으로 유튜브 앱에서 열어보세요
+      </span>
+    </div>
+  </div>
+
+  <!-- Sheet Music / Resources Section -->
+  <div class="glass" style="border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+      <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-file-music" style="color: var(--color-indigo);"></i> 악보 &amp; 자료실
+      </h2>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="toggleAddForm()" id="addFormToggle">
+        <i class="fa-solid fa-plus"></i> 자료 추가
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Admin Upload Form -->
+    {% if is_admin %}
+    <div id="addResourceForm" style="display: none; background: rgba(99,102,241,0.07); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--color-indigo);">
+        <i class="fa-solid fa-plus-circle"></i> 새 자료 추가
+      </h3>
+      <form action="{{ url_for('praise_dance') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="add_resource">
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block;">📌 제목</label>
+          <input type="text" name="title" class="filter-select" style="width: 100%; padding: 9px 12px;" 
+                 placeholder="예: 찬양 악보 - 주 예수보다 더 귀한 것은" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block;">자료 종류</label>
+          <div style="display: flex; gap: 16px;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem;">
+              <input type="radio" name="resource_type" value="link" checked onchange="toggleResourceType(this.value)">
+              <i class="fa-solid fa-link"></i> 링크 (URL)
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem;">
+              <input type="radio" name="resource_type" value="file" onchange="toggleResourceType(this.value)">
+              <i class="fa-solid fa-file-arrow-up"></i> 파일 업로드
+            </label>
+          </div>
+        </div>
+
+        <div id="linkInput" class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block;">🔗 링크 URL</label>
+          <input type="url" name="link_url" class="filter-select" style="width: 100%; padding: 9px 12px;"
+                 placeholder="https://...">
+        </div>
+
+        <div id="fileInput" class="form-group" style="display: none; margin-bottom: 12px;">
+          <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block;">📎 파일 선택 (PDF, 이미지 등)</label>
+          <input type="file" name="resource_file" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
+                 class="filter-select" style="width: 100%; padding: 9px 12px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block;">📝 설명 (선택)</label>
+          <textarea name="description" rows="2" class="filter-select" style="width: 100%; padding: 9px 12px; resize: vertical;"
+                    placeholder="자료에 대한 간단한 설명을 입력하세요"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-circle-check"></i> 저장
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddForm()">취소</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- Resources List -->
+    {% if resources %}
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for res in resources %}
+      <div style="display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px;
+                  background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+                  border-radius: 10px; transition: background 0.2s;"
+           onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+           onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+
+        <!-- Icon -->
+        <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                    background: {% if res.resource_type == 'file' %}rgba(99,102,241,0.15){% else %}rgba(236,72,153,0.15){% endif %};">
+          <i class="fa-solid {% if res.resource_type == 'file' %}fa-file-pdf{% else %}fa-link{% endif %}"
+             style="color: {% if res.resource_type == 'file' %}var(--color-indigo){% else %}var(--color-pink){% endif %};"></i>
+        </div>
+
+        <!-- Content -->
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 3px;">{{ res.title }}</div>
+          {% if res.description %}
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">{{ res.description }}</div>
+          {% endif %}
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            {% if res.file_path %}
+            <a href="{{ res.file_path }}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 12px; font-size: 0.78rem;">
+              <i class="fa-solid fa-download"></i> 파일 다운로드
+            </a>
+            {% elif res.link_url %}
+            <a href="{{ res.link_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding: 4px 12px; font-size: 0.78rem;">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> 링크 열기
+            </a>
+            {% endif %}
+            <span style="font-size: 0.72rem; color: var(--text-muted);">
+              {{ res.uploaded_by }} · {{ res.created_at[:10] if res.created_at else '' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Delete (admin only) -->
+        {% if is_admin %}
+        <form action="{{ url_for('praise_dance') }}" method="POST" style="flex-shrink: 0;"
+              onsubmit="return confirm('이 자료를 삭제하시겠습니까?')">
+          <input type="hidden" name="action" value="delete_resource">
+          <input type="hidden" name="resource_id" value="{{ res.id }}">
+          <button type="submit" class="btn btn-sm" style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px;">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+      <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.4;"></i>
+      <p style="font-size: 0.9rem;">아직 등록된 악보/자료가 없습니다.</p>
+      {% if is_admin %}
+      <p style="font-size: 0.82rem; margin-top: 6px;">위 <strong>자료 추가</strong> 버튼을 눌러 첫 번째 자료를 올려보세요!</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleAddForm() {
+    const form = document.getElementById('addResourceForm');
+    const btn = document.getElementById('addFormToggle');
+    const isVisible = form.style.display !== 'none';
+    form.style.display = isVisible ? 'none' : 'block';
+    btn.innerHTML = isVisible
+      ? '<i class="fa-solid fa-plus"></i> 자료 추가'
+      : '<i class="fa-solid fa-xmark"></i> 닫기';
+    if (!isVisible) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function toggleResourceType(type) {
+    document.getElementById('linkInput').style.display = type === 'link' ? 'block' : 'none';
+    document.getElementById('fileInput').style.display = type === 'file' ? 'block' : 'none';
+  }
+
+  // iframe error fallback: if blocked, show the open button prominently
+  function handleIframeError() {
+    document.getElementById('ytPlayer').style.display = 'none';
+    document.getElementById('ytOpenBtn').style.fontSize = '1rem';
+    document.getElementById('ytOpenBtn').style.padding = '14px 24px';
+  }
+</script>
+{% endblock %}

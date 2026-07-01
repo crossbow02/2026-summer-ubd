@@ -126,6 +126,21 @@ def migrate_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
         """)
+
+        # 7. Worship resources table (악보/찬양 자료)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS worship_resources (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            link_url TEXT,
+            file_path TEXT,
+            resource_type TEXT DEFAULT 'link',
+            description TEXT,
+            uploaded_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
         # Check if target_children table is empty (seed default children on first startup)
         cursor.execute("SELECT COUNT(*) FROM target_children")
         children_count = cursor.fetchone()[0]
@@ -865,6 +880,57 @@ def delete_team_post(post_id):
         execute_db("DELETE FROM team_posts WHERE id = ?", (post_id,))
         
     return redirect(url_for('team_boards', team=post['team_name']))
+
+# ──────────────────────────────────────────
+# 찬양 율동 배우기 페이지
+# ──────────────────────────────────────────
+@app.route('/praise-dance', methods=['GET', 'POST'])
+def praise_dance():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    is_admin = session.get('role') == 'admin'
+
+    if request.method == 'POST' and is_admin:
+        action = request.form.get('action')
+
+        if action == 'add_resource':
+            title = request.form.get('title', '').strip()
+            link_url = request.form.get('link_url', '').strip()
+            resource_type = request.form.get('resource_type', 'link')  # 'link' or 'file'
+            description = request.form.get('description', '').strip()
+
+            file_path = None
+            if resource_type == 'file':
+                file = request.files.get('resource_file')
+                if file and file.filename != '':
+                    filename = secure_filename(f"score_{int(datetime.now().timestamp())}_{file.filename}")
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    file_path = f"/static/uploads/{filename}"
+
+            execute_db("""
+                INSERT INTO worship_resources (title, link_url, file_path, resource_type, description, uploaded_by)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (title, link_url or None, file_path, resource_type, description, session.get('name')))
+
+        elif action == 'delete_resource':
+            resource_id = request.form.get('resource_id')
+            resource = query_db("SELECT * FROM worship_resources WHERE id = ?", (resource_id,), one=True)
+            if resource and resource['file_path']:
+                try:
+                    full_path = os.path.join(BASE_DIR, resource['file_path'].lstrip('/'))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+                except Exception as e:
+                    print("Failed to delete resource file:", e)
+            execute_db("DELETE FROM worship_resources WHERE id = ?", (resource_id,))
+
+        return redirect(url_for('praise_dance'))
+
+    resources = query_db("SELECT * FROM worship_resources ORDER BY created_at DESC")
+    return render_template('praise_dance.html',
+                           resources=[dict(r) for r in resources] if resources else [],
+                           is_admin=is_admin)
 
 # Shared Schedule routes
 @app.route('/shared-schedule', methods=['GET', 'POST'])
