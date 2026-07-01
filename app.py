@@ -38,9 +38,17 @@ def migrate_db():
             photo_path TEXT,
             parents_church TEXT,
             notes TEXT,
+            phone TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+        
+        # Add phone column to target_children if not exists
+        cursor.execute("PRAGMA table_info(target_children)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'phone' not in columns:
+            cursor.execute("ALTER TABLE target_children ADD COLUMN phone TEXT")
+            print("Added 'phone' column to 'target_children' table.")
         
         # 2. Team posts table
         cursor.execute("""
@@ -565,6 +573,7 @@ def target_children_add():
     gender = request.form.get('gender', '').strip()
     parents_church = request.form.get('parents_church', '모름').strip()
     notes = request.form.get('notes', '').strip()
+    phone = request.form.get('phone', '').strip()
     
     photo_path = None
     file = request.files.get('photo')
@@ -575,9 +584,9 @@ def target_children_add():
         photo_path = f"/static/uploads/{filename}"
         
     execute_db("""
-        INSERT INTO target_children (name, age, gender, photo_path, parents_church, notes)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (name, age, gender, photo_path, parents_church, notes))
+        INSERT INTO target_children (name, age, gender, photo_path, parents_church, notes, phone)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (name, age, gender, photo_path, parents_church, notes, phone))
     
     return redirect(url_for('target_children'))
 
@@ -596,6 +605,7 @@ def target_children_edit(id):
     gender = request.form.get('gender', '').strip()
     parents_church = request.form.get('parents_church', '모름').strip()
     notes = request.form.get('notes', '').strip()
+    phone = request.form.get('phone', '').strip()
     
     photo_path = child['photo_path']
     file = request.files.get('photo')
@@ -607,9 +617,9 @@ def target_children_edit(id):
         
     execute_db("""
         UPDATE target_children 
-        SET name = ?, age = ?, gender = ?, photo_path = ?, parents_church = ?, notes = ?
+        SET name = ?, age = ?, gender = ?, photo_path = ?, parents_church = ?, notes = ?, phone = ?
         WHERE id = ?
-    """, (name, age, gender, photo_path, parents_church, notes, id))
+    """, (name, age, gender, photo_path, parents_church, notes, phone, id))
     
     return redirect(url_for('target_children'))
 

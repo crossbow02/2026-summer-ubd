@@ -54,10 +54,18 @@
                         {% endif %}
                     </div>
 
+                    <!-- Phone Number (Admin Only) -->
+                    {% if is_admin and child.phone %}
+                    <div class="child-phone-row">
+                        <span class="phone-label"><i class="fa-solid fa-phone"></i> 연락처:</span>
+                        <span class="phone-number">{{ child.phone }}</span>
+                    </div>
+                    {% endif %}
+
                     <!-- Remarks Notes -->
                     {% if child.notes %}
                     <div class="child-notes">
-                        <p>{{ child.notes }}</p>
+                        <p style="white-space: pre-wrap;">{{ child.notes }}</p>
                     </div>
                     {% else %}
                     <div class="child-notes empty">
@@ -134,6 +142,11 @@
             </div>
 
             <div class="form-group">
+                <label for="add_phone"><i class="fa-solid fa-phone"></i> 연락처 (관리자만 조회 가능)</label>
+                <input type="text" id="add_phone" name="phone" placeholder="예: 010-1234-5678">
+            </div>
+
+            <div class="form-group">
                 <label for="add_photo"><i class="fa-solid fa-image"></i> 아이 사진</label>
                 <input type="file" id="add_photo" name="photo" accept="image/*" onchange="handleChildPhotoChange(this)">
                 <span class="file-help-text">가급적 1:1 비율 또는 정사각형에 가까운 밝은 전신/얼굴 사진을 올려주세요.</span>
@@ -189,6 +202,11 @@
             </div>
 
             <div class="form-group">
+                <label for="edit_phone"><i class="fa-solid fa-phone"></i> 연락처 (관리자만 조회 가능)</label>
+                <input type="text" id="edit_phone" name="phone" placeholder="예: 010-1234-5678">
+            </div>
+
+            <div class="form-group">
                 <label for="edit_photo"><i class="fa-solid fa-image"></i> 아이 사진 교체 (새로 올릴 때만 선택)</label>
                 <input type="file" id="edit_photo" name="photo" accept="image/*" onchange="handleChildPhotoChange(this)">
                 <span class="file-help-text">새 사진을 올리면 기존 사진이 변경됩니다.</span>
@@ -240,6 +258,7 @@
         document.getElementById('edit_age').value = child.age || '';
         document.getElementById('edit_gender').value = child.gender;
         document.getElementById('edit_parents_church').value = child.parents_church;
+        document.getElementById('edit_phone').value = child.phone || '';
         document.getElementById('edit_notes').value = child.notes || '';
         
         editModal.classList.add('active');
