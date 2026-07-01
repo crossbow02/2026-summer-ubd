@@ -772,11 +772,11 @@ def team_boards():
     current_user_id = session['user_id']
     user = query_db("SELECT * FROM users WHERE id = ?", (current_user_id,), one=True)
     
-    # Default to user's assigned team if valid, else default to '성경학교팀'
-    user_team = user['team'] if user['team'] in ['성경학교팀', '식사준비팀', '예배팀'] else '성경학교팀'
+    # Default to user's assigned team if valid, else default to '예배팀'
+    user_team = user['team'] if user['team'] in ['예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀'] else '예배팀'
     selected_team = request.args.get('team', user_team)
-    if selected_team not in ['성경학교팀', '식사준비팀', '예배팀']:
-        selected_team = '성경학교팀'
+    if selected_team not in ['예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀']:
+        selected_team = '예배팀'
         
     if request.method == 'POST':
         content = request.form.get('content', '').strip()
@@ -935,7 +935,7 @@ def admin_update_family_team():
     if not family_id or not team:
         return jsonify({'success': False, 'error': 'Invalid request'}), 400
         
-    if team not in ['미지정', '성경학교팀', '식사준비팀', '예배팀']:
+    if team not in ['미지정', '예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀']:
         return jsonify({'success': False, 'error': 'Invalid team name'}), 400
         
     execute_db("UPDATE users SET team = ? WHERE id = ?", (team, family_id))

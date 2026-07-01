@@ -117,9 +117,10 @@
             <select id="teamFilter" class="filter-select" onchange="filterRoster()">
                 <option value="">모든 팀</option>
                 <option value="미지정">미지정</option>
-                <option value="성경학교팀">성경학교팀</option>
-                <option value="식사준비팀">식사준비팀</option>
                 <option value="예배팀">예배팀</option>
+                <option value="식탁교제팀">식탁교제팀</option>
+                <option value="성경학교 및 물놀이팀">성경학교 및 물놀이팀</option>
+                <option value="행정지원팀">행정지원팀</option>
             </select>
             {% endif %}
         </div>
@@ -230,9 +231,10 @@
                     <span style="font-size: 0.78rem; color: var(--text-secondary);">소속 팀</span>
                     <select onchange="updateUserTeam({{ user.id }}, this.value)" class="filter-select" style="margin: 0; padding: 6px 10px; font-size: 0.82rem; width: 140px; background: rgba(0,0,0,0.25);">
                         <option value="미지정" {% if user.team == '미지정' or not user.team %}selected{% endif %}>미지정</option>
-                        <option value="성경학교팀" {% if user.team == '성경학교팀' %}selected{% endif %}>성경학교팀</option>
-                        <option value="식사준비팀" {% if user.team == '식사준비팀' %}selected{% endif %}>식사준비팀</option>
                         <option value="예배팀" {% if user.team == '예배팀' %}selected{% endif %}>예배팀</option>
+                        <option value="식탁교제팀" {% if user.team == '식탁교제팀' %}selected{% endif %}>식탁교제팀</option>
+                        <option value="성경학교 및 물놀이팀" {% if user.team == '성경학교 및 물놀이팀' %}selected{% endif %}>성경학교 및 물놀이팀</option>
+                        <option value="행정지원팀" {% if user.team == '행정지원팀' %}selected{% endif %}>행정지원팀</option>
                     </select>
                 </div>
             </div>
