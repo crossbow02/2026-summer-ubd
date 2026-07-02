@@ -126,6 +126,100 @@
         </div>
     </div>
 
+    <!-- View Toggle -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">보기 방식:</span>
+        <button id="btnCardView" onclick="switchView('card')" class="btn btn-primary btn-sm" style="gap: 6px;">
+            <i class="fa-solid fa-grip"></i> 카드
+        </button>
+        <button id="btnTableView" onclick="switchView('table')" class="btn btn-secondary btn-sm" style="gap: 6px;">
+            <i class="fa-solid fa-table-list"></i> 표
+        </button>
+        <span id="tableSortInfo" style="display:none; font-size: 0.78rem; color: var(--text-muted); margin-left: 6px;">
+            <i class="fa-solid fa-circle-info"></i> 열 헤더를 클릭하면 정렬할 수 있습니다
+        </span>
+    </div>
+
+    <!-- Table View -->
+    <div id="familiesTable" style="display: none; overflow-x: auto; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 24px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+            <thead>
+                <tr style="background: rgba(99,102,241,0.12); border-bottom: 2px solid var(--border-color);">
+                    <th onclick="sortTable('num')" class="th-sortable" style="width: 50px;">번호 <i class="fa-solid fa-sort" id="sort-num" style="color: var(--text-muted);"></i></th>
+                    <th onclick="sortTable('district')" class="th-sortable">구역 <i class="fa-solid fa-sort" id="sort-district" style="color: var(--text-muted);"></i></th>
+                    <th onclick="sortTable('team')" class="th-sortable">팀 <i class="fa-solid fa-sort" id="sort-team" style="color: var(--text-muted);"></i></th>
+                    <th>성인 1</th>
+                    <th>성인 2</th>
+                    <th>자녀</th>
+                    <th onclick="sortTable('status')" class="th-sortable">소개 <i class="fa-solid fa-sort" id="sort-status" style="color: var(--text-muted);"></i></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                {% set teams_order = ['예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀', '미지정'] %}
+                {% set row_num = namespace(val=0) %}
+                {% for team_name in teams_order %}
+                    {% set team_members = [] %}
+                    {% for u in users %}
+                        {% if (u.team == team_name) or (u.team2 == team_name and u.team != team_name and u.team in ['미지정', None, '']) or (team_name == '미지정' and u.team in ['미지정', None, ''] and u.team2 in ['미지정', None, '']) %}
+                            {% set _ = team_members.append(u) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if team_members %}
+                    <tr class="team-group-row" data-team-group="{{ team_name }}"
+                        style="background: rgba({% if team_name == '예배팀' %}99,102,241{% elif team_name == '식탁교제팀' %}236,72,153{% elif team_name == '성경학교 및 물놀이팀' %}16,185,129{% elif team_name == '행정지원팀' %}245,158,11{% else %}100,100,100{% endif %},0.12); border-top: 1px solid rgba(255,255,255,0.07);">
+                        <td colspan="7" style="padding: 8px 16px; font-weight: 800; font-size: 0.82rem; letter-spacing: 0.03em; color: {% if team_name == '예배팀' %}var(--color-indigo){% elif team_name == '식탁교제팀' %}var(--color-pink){% elif team_name == '성경학교 및 물놀이팀' %}#10b981{% elif team_name == '행정지원팀' %}#f59e0b{% else %}var(--text-muted){% endif %};">
+                            <i class="fa-solid fa-{% if team_name == '예배팀' %}music{% elif team_name == '식탁교제팀' %}utensils{% elif team_name == '성경학교 및 물놀이팀' %}children{% elif team_name == '행정지원팀' %}gears{% else %}circle-question{% endif %}"></i>
+                            {{ team_name }} ({{ team_members|length }}가정)
+                        </td>
+                    </tr>
+                    {% for u in team_members %}
+                    {% set row_num.val = row_num.val + 1 %}
+                    <tr class="table-data-row"
+                        data-name="{{ u.adult1_name or '' }} {{ u.adult2_name or '' }} {{ u.children or '' }}"
+                        data-district="{{ u.group_num }}"
+                        data-team="{{ u.team or '미지정' }}"
+                        data-status="{% if u.has_intro %}completed{% else %}pending{% endif %}"
+                        data-team-group="{{ team_name }}"
+                        style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                        onmouseout="this.style.background=''">
+                        <td style="padding: 10px 16px; color: var(--text-muted); font-size: 0.78rem; text-align: center;">{{ row_num.val }}</td>
+                        <td style="padding: 10px 8px; font-size: 0.82rem;"><span style="background: rgba(99,102,241,0.15); padding: 2px 8px; border-radius: 6px; font-weight: 700;">{{ u.group_num }}구역</span></td>
+                        <td style="padding: 10px 8px;">
+                            {% set t1 = u.team or '미지정' %}
+                            {% set t2 = u.team2 or '미지정' %}
+                            <div style="display: flex; flex-direction: column; gap: 3px;">
+                                <span style="font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; width: fit-content; background: rgba({% if t1 == '예배팀' %}99,102,241{% elif t1 == '식탁교제팀' %}236,72,153{% elif t1 == '성경학교 및 물놀이팀' %}16,185,129{% elif t1 == '행정지원팀' %}245,158,11{% else %}100,100,100{% endif %},0.2); color: {% if t1 == '예배팀' %}var(--color-indigo){% elif t1 == '식탁교제팀' %}var(--color-pink){% elif t1 == '성경학교 및 물놀이팀' %}#10b981{% elif t1 == '행정지원팀' %}#f59e0b{% else %}var(--text-muted){% endif %};">
+                                    {{ u.adult1_name }}: {{ t1 }}{% if u.is_team_leader %} ⭐{% endif %}
+                                </span>
+                                {% if u.adult2_name %}
+                                <span style="font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; width: fit-content; background: rgba({% if t2 == '예배팀' %}99,102,241{% elif t2 == '식탁교제팀' %}236,72,153{% elif t2 == '성경학교 및 물놀이팀' %}16,185,129{% elif t2 == '행정지원팀' %}245,158,11{% else %}100,100,100{% endif %},0.2); color: {% if t2 == '예배팀' %}var(--color-indigo){% elif t2 == '식탁교제팀' %}var(--color-pink){% elif t2 == '성경학교 및 물놀이팀' %}#10b981{% elif t2 == '행정지원팀' %}#f59e0b{% else %}var(--text-muted){% endif %};">
+                                    {{ u.adult2_name }}: {{ t2 }}{% if u.is_team_leader2 %} ⭐{% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="padding: 10px 8px; font-weight: 700;">{{ u.adult1_name }}<br><span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">{{ u.adult1_phone or '-' }}</span></td>
+                        <td style="padding: 10px 8px; font-weight: 600;">{% if u.adult2_name %}{{ u.adult2_name }}<br><span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">{{ u.adult2_phone or '-' }}</span>{% else %}<span style="color: var(--text-muted);">-</span>{% endif %}</td>
+                        <td style="padding: 10px 8px; font-size: 0.78rem; color: var(--text-muted);">
+                            {% set kids = u.children|list_from_json %}
+                            {% if kids %}{{ kids|join(', ') }}{% else %}-{% endif %}
+                        </td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            {% if u.has_intro %}
+                            <span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> 완료</span>
+                            {% else %}
+                            <span style="background: rgba(239,68,68,0.12); color: #ef4444; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-clock"></i> 미작성</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <!-- Families Grid -->
     <div class="families-grid" id="familiesGrid">
         {% for user in users %}
@@ -290,8 +384,120 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+    .th-sortable {
+        padding: 12px 10px;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+        color: var(--text-primary);
+    }
+    .th-sortable:hover { background: rgba(255,255,255,0.05); }
+    #familiesTable td { vertical-align: middle; }
+</style>
 <script>
     let currentFilter = 'all';
+    let currentView = 'card';
+    let sortCol = 'team';
+    let sortDir = 1;
+
+    function switchView(view) {
+        currentView = view;
+        const cardView = document.getElementById('familiesGrid');
+        const tableView = document.getElementById('familiesTable');
+        const sortInfo = document.getElementById('tableSortInfo');
+        const btnCard = document.getElementById('btnCardView');
+        const btnTable = document.getElementById('btnTableView');
+
+        if (view === 'card') {
+            cardView.style.display = '';
+            tableView.style.display = 'none';
+            sortInfo.style.display = 'none';
+            btnCard.className = 'btn btn-primary btn-sm';
+            btnTable.className = 'btn btn-secondary btn-sm';
+        } else {
+            cardView.style.display = 'none';
+            tableView.style.display = 'block';
+            sortInfo.style.display = 'inline';
+            btnCard.className = 'btn btn-secondary btn-sm';
+            btnTable.className = 'btn btn-primary btn-sm';
+            filterTable();
+        }
+    }
+
+    function sortTable(col) {
+        if (sortCol === col) sortDir *= -1;
+        else { sortCol = col; sortDir = 1; }
+        ['num', 'district', 'team', 'status'].forEach(c => {
+            const el = document.getElementById('sort-' + c);
+            if (el) el.className = (c === col)
+                ? (sortDir === 1 ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down')
+                : 'fa-solid fa-sort';
+        });
+        const tbody = document.getElementById('tableBody');
+        const rows = [...tbody.querySelectorAll('tr.table-data-row')];
+        const groups = [...tbody.querySelectorAll('tr.team-group-row')];
+
+        // Sort data rows
+        rows.sort((a, b) => {
+            let va, vb;
+            if (col === 'num') { va = parseInt(a.style.cssText); vb = parseInt(b.style.cssText); return 0; }
+            if (col === 'district') { va = parseInt(a.dataset.district); vb = parseInt(b.dataset.district); }
+            else if (col === 'team') { va = a.dataset.team; vb = b.dataset.team; }
+            else if (col === 'status') { va = a.dataset.status; vb = b.dataset.status; }
+            else { va = a.dataset[col] || ''; vb = b.dataset[col] || ''; }
+            if (typeof va === 'number') return (va - vb) * sortDir;
+            return va.localeCompare(vb, 'ko') * sortDir;
+        });
+
+        // If sorting by team: re-group with team header rows
+        tbody.innerHTML = '';
+        if (col === 'team') {
+            const order = ['예배팀', '식탁교제팀', '성경학교 및 물놀이팀', '행정지원팀', '미지정'];
+            const orderedTeams = sortDir === 1 ? order : [...order].reverse();
+            orderedTeams.forEach(team => {
+                const groupRows = rows.filter(r => r.dataset.teamGroup === team);
+                if (!groupRows.length) return;
+                const header = groups.find(g => g.dataset.teamGroup === team);
+                if (header) tbody.appendChild(header);
+                groupRows.forEach(r => tbody.appendChild(r));
+            });
+        } else {
+            // Flat sort without group headers
+            rows.forEach(r => tbody.appendChild(r));
+        }
+        filterTable();
+    }
+
+    function filterTable() {
+        const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+        const districtVal = document.getElementById('districtFilter').value;
+        const teamFilterEl = document.getElementById('teamFilter');
+        const teamVal = teamFilterEl ? teamFilterEl.value : '';
+        const rows = document.querySelectorAll('tr.table-data-row');
+        const groupHeaders = document.querySelectorAll('tr.team-group-row');
+
+        rows.forEach(row => {
+            const nameData = (row.dataset.name || '').toLowerCase();
+            const matchSearch = !searchVal || nameData.includes(searchVal);
+            const matchDistrict = !districtVal || row.dataset.district === districtVal;
+            const matchTeam = !teamVal || row.dataset.team === teamVal;
+            let matchStatus = true;
+            if (currentFilter === 'completed') matchStatus = row.dataset.status === 'completed';
+            else if (currentFilter === 'pending') matchStatus = row.dataset.status === 'pending';
+            row.style.display = (matchSearch && matchDistrict && matchTeam && matchStatus) ? '' : 'none';
+        });
+
+        // Show/hide group headers based on whether any visible row belongs to them
+        groupHeaders.forEach(header => {
+            const team = header.dataset.teamGroup;
+            const hasVisible = [...rows].some(r => r.dataset.teamGroup === team && r.style.display !== 'none');
+            header.style.display = hasVisible ? '' : 'none';
+        });
+    }
 
     function setFilter(filterType, element) {
         // Toggle active button class
@@ -314,22 +520,12 @@
             const statusData = card.getAttribute('data-status');
             const teamData = card.getAttribute('data-team');
 
-            // Check Search Match
             const matchesSearch = nameData.includes(searchVal);
-
-            // Check District Match
             const matchesDistrict = !districtVal || districtData === districtVal;
-
-            // Check Team Match
             const matchesTeam = !teamVal || teamData === teamVal;
-
-            // Check Status Match
             let matchesStatus = true;
-            if (currentFilter === 'completed') {
-                matchesStatus = statusData === 'completed';
-            } else if (currentFilter === 'pending') {
-                matchesStatus = statusData === 'pending';
-            }
+            if (currentFilter === 'completed') matchesStatus = statusData === 'completed';
+            else if (currentFilter === 'pending') matchesStatus = statusData === 'pending';
 
             if (matchesSearch && matchesDistrict && matchesTeam && matchesStatus) {
                 card.style.display = 'flex';
@@ -339,6 +535,9 @@
                 card.classList.remove('animate-fade-in');
             }
         });
+
+        // Also sync table if visible
+        if (currentView === 'table') filterTable();
     }
 
     async function toggleAdminRole(userId, isChecked) {
