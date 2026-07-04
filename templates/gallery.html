@@ -93,7 +93,7 @@
                     <span class="like-label">응원해요</span>
                     <span class="like-count" id="like-count-{{ profile.user_id }}">{{ profile.likes_count }}</span>
                 </button>
-                <button class="btn-tv-slide" onclick="startPresentation({{ loop.index0 * 2 }})" title="이 가정부터 TV 화면으로 보기">
+                <button class="btn-tv-slide" onclick="startPresentationForFamily({{ loop.index0 }})" title="이 가정부터 TV 화면으로 보기">
                     <i class="fa-solid fa-display"></i> TV로 보기
                 </button>
             </div>
@@ -273,27 +273,25 @@
 .tv-close-btn { background: rgba(239,68,68,0.18) !important; border-color: rgba(239,68,68,0.35) !important; }
 .tv-close-btn:hover { background: rgba(239,68,68,0.45) !important; }
 
-/* ── 16:9 슬라이드 무대 ──────────────────── */
+/* ── 슬라이드 무대 (화면 꽉 채움) ──────────── */
 .tv-stage {
     flex: 1;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 14px 20px;
+    padding: 8px 10px;
     box-sizing: border-box;
     overflow: hidden;
 }
 .tv-slide {
-    aspect-ratio: 16 / 9;
-    max-height: 100%;
-    max-width: 100%;
-    width: auto;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(135deg, #0e0e1c 0%, #1a1035 50%, #0b1427 100%);
-    border-radius: 14px;
+    border-radius: 10px;
     overflow: hidden;
     display: grid;
-    grid-template-columns: 42% 58%;
+    grid-template-columns: 40% 60%;
     position: relative;
     box-shadow: 0 0 80px rgba(99, 102, 241, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
     animation: slideIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -303,14 +301,25 @@
     to   { opacity: 1; transform: scale(1); }
 }
 
-/* 왼쪽: 사진 */
+/* 왼쪽: 사진 (원본 전체가 보이도록 contain + 블러 배경으로 여백 채움) */
 .tv-photo-col {
     position: relative;
     overflow: hidden;
+    background: #050510;
 }
-.tv-photo-col img {
+.tv-photo-bg {
+    position: absolute;
+    inset: -8%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(34px) brightness(0.5) saturate(1.15);
+    transform: scale(1.15);
+}
+.tv-photo-fg {
+    position: relative;
+    z-index: 1;
     width: 100%; height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
 }
 .tv-no-photo {
@@ -320,26 +329,28 @@
     background: rgba(99, 102, 241, 0.08);
     color: rgba(255, 255, 255, 0.25);
     gap: 10px;
-    font-size: 2.2vw;
+    font-size: clamp(20px, 2.4vw, 40px);
 }
 .tv-photo-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.1) 50%, #0e0e1c 100%);
+    z-index: 2;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.05) 55%, #0e0e1c 100%);
 }
 .tv-group-badge {
     position: absolute;
+    z-index: 3;
     top: 5%; left: 5%;
     background: rgba(99, 102, 241, 0.88);
     color: #fff;
     padding: 0.25em 0.8em;
     border-radius: 6px;
-    font-size: 1.3vw;
+    font-size: clamp(16px, 1.6vw, 26px);
     font-weight: 700;
 }
 
-/* 오른쪽: 텍스트 */
+/* 오른쪽: 텍스트 (큰 글씨) */
 .tv-text-col {
-    padding: 4% 5% 4% 4%;
+    padding: 3.5% 4.5% 3.5% 4%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -352,10 +363,10 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 15px;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.3em;
 }
 .tv-family-name {
-    font-size: 2.5vw;
+    font-size: clamp(30px, 3.6vw, 68px);
     font-weight: 900;
     color: #fff;
     line-height: 1.2;
@@ -365,7 +376,7 @@
     background: rgba(99, 102, 241, 0.2);
     border: 1px solid rgba(99, 102, 241, 0.4);
     color: #a5b4fc;
-    font-size: 1vw;
+    font-size: clamp(14px, 1.3vw, 22px);
     font-weight: 700;
     padding: 0.2em 0.7em;
     border-radius: 6px;
@@ -377,37 +388,38 @@
     font-weight: 800;
 }
 .tv-members {
-    font-size: 1.1vw;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: clamp(16px, 1.5vw, 26px);
+    color: rgba(255, 255, 255, 0.55);
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 6px;
     align-items: center;
-    margin-bottom: 0.8em;
+    margin-bottom: 0.7em;
 }
 .tv-kid-chip {
     background: rgba(99, 102, 241, 0.22);
     border: 1px solid rgba(99, 102, 241, 0.35);
     border-radius: 100px;
     padding: 0.12em 0.65em;
-    font-size: 1vw;
+    font-size: clamp(13px, 1.1vw, 20px);
     color: #c7d2fe;
 }
 .tv-divider {
-    width: 44px; height: 3px;
+    width: 48px; height: 4px;
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     border-radius: 2px;
-    margin-bottom: 0.8em;
+    margin-bottom: 0.7em;
     flex-shrink: 0;
 }
 .tv-one-liner {
-    font-size: 1.4vw;
+    font-size: clamp(22px, 2.3vw, 40px);
     color: #dde5ff;
+    font-weight: 700;
     font-style: italic;
     line-height: 1.5;
-    margin-bottom: 0.8em;
-    padding-left: 0.8em;
-    border-left: 3px solid #6366f1;
+    margin-bottom: 0.7em;
+    padding-left: 0.7em;
+    border-left: 4px solid #6366f1;
     flex-shrink: 0;
 }
 .tv-scrollable-content {
@@ -424,38 +436,41 @@
     border-radius: 3px;
 }
 .tv-story-content {
-    font-size: 1.1vw;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.6;
+    font-size: clamp(19px, 1.9vw, 32px);
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.55;
+    font-weight: 500;
 }
 .tv-story-content h2, .tv-story-content h3, .tv-story-content h4 {
     color: #c7d2fe;
-    font-size: 1.2vw;
-    margin-top: 0.6em;
+    font-size: clamp(21px, 2.1vw, 36px);
+    margin-top: 0.5em;
     margin-bottom: 0.3em;
 }
 .tv-story-content p {
-    margin-bottom: 0.6em;
+    margin-bottom: 0.5em;
 }
 .tv-section-label {
-    font-size: 0.9vw;
+    font-size: clamp(14px, 1.2vw, 20px);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: #818cf8;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.3em;
 }
 .tv-motivation-text, .tv-prayers-text, .tv-specialties-text {
-    font-size: 1.2vw;
+    font-size: clamp(19px, 2vw, 34px);
     color: rgba(255, 255, 255, 0.9);
-    line-height: 1.6;
-    margin-bottom: 1.2em;
+    line-height: 1.55;
+    font-weight: 500;
+    margin-bottom: 1em;
     white-space: pre-wrap;
 }
 .tv-heart-decor {
     position: absolute;
+    z-index: 3;
     bottom: 3%; right: 3%;
-    font-size: 1.1vw;
+    font-size: clamp(14px, 1.3vw, 22px);
     color: rgba(244, 114, 182, 0.35);
     letter-spacing: 5px;
 }
@@ -512,73 +527,108 @@
     const profilesRaw = JSON.parse(document.getElementById('profileData').textContent);
     const TV_DATA = [];
 
+    // 큰 글씨로 봐도 TV에서 스크롤 없이 읽히도록, 긴 텍스트는 문단 단위로 여러 슬라이드로 분할
+    function chunkText(text, limit) {
+        text = (text || '').trim();
+        if (!text) return [''];
+        if (text.length <= limit) return [text];
+        const paras = text.split(/\n\s*\n|\n/).map(s => s.trim()).filter(Boolean);
+        const chunks = [];
+        let cur = '';
+        const pushCur = () => { if (cur) { chunks.push(cur.trim()); cur = ''; } };
+        for (let para of paras) {
+            while (para.length > limit) {
+                let cut = para.lastIndexOf('. ', limit);
+                if (cut < limit * 0.5) cut = para.lastIndexOf(' ', limit);
+                if (cut < limit * 0.3) cut = limit;
+                const piece = para.slice(0, cut + 1).trim();
+                if (cur && (cur.length + piece.length + 1) > limit) pushCur();
+                cur = cur ? cur + '\n' + piece : piece;
+                pushCur();
+                para = para.slice(cut + 1).trim();
+            }
+            if (!para) continue;
+            if (cur && (cur.length + para.length + 1) > limit) pushCur();
+            cur = cur ? cur + '\n' + para : para;
+        }
+        pushCur();
+        return chunks.length ? chunks : [text];
+    }
+
+    const STORY_LIMIT = 420;
+    const DETAIL_COMBINED_LIMIT = 320;
+    const DETAIL_SECTION_LIMIT = 260;
+
     profilesRaw.forEach((p, idx) => {
-        // Slide 1: Family Intro & Story
-        TV_DATA.push({
-            originalIndex: idx,
-            family: p.family,
-            name: p.name,
-            group: p.group,
-            photo: p.photo,
-            kids: p.kids,
-            one_liner: p.one_liner,
-            slideType: 'story',
-            titleBadge: '우리 가족 이야기',
-            ai_intro_text: p.ai_intro_text,
-            motivation: p.motivation,
-            pageInfo: '1 / 2'
+        const familySlides = [];
+
+        // 소개 이야기 슬라이드(들)
+        const isMotivationFallback = !p.ai_intro_text && !!p.motivation;
+        const storyText = p.ai_intro_text || p.motivation || '';
+        chunkText(storyText, STORY_LIMIT).forEach(chunk => {
+            familySlides.push({ slideType: 'story', storyChunk: chunk, isMotivationFallback });
         });
 
-        // Slide 2: Prayer Requests & Specialties
-        TV_DATA.push({
-            originalIndex: idx,
-            family: p.family,
-            name: p.name,
-            group: p.group,
-            photo: p.photo,
-            kids: p.kids,
-            slideType: 'details',
-            titleBadge: '기도제목 & 매력',
-            prayers: p.prayers,
-            specialties: p.specialties,
-            pageInfo: '2 / 2'
+        // 기도제목 & 매력 슬라이드(들): 짧으면 한 장에 합치고, 길면 필요한 만큼만 분할
+        const prayers = (p.prayers || '').trim();
+        const specialties = (p.specialties || '').trim();
+        if (prayers.length + specialties.length <= DETAIL_COMBINED_LIMIT) {
+            familySlides.push({ slideType: 'details', prayersChunk: prayers, specialtiesChunk: '' + specialties });
+        } else {
+            chunkText(prayers, DETAIL_SECTION_LIMIT).forEach(c => {
+                if (c) familySlides.push({ slideType: 'details', prayersChunk: c, specialtiesChunk: '' });
+            });
+            chunkText(specialties, DETAIL_SECTION_LIMIT).forEach(c => {
+                if (c) familySlides.push({ slideType: 'details', prayersChunk: '', specialtiesChunk: c });
+            });
+        }
+
+        familySlides.forEach((fs, si) => {
+            TV_DATA.push(Object.assign({
+                originalIndex: idx,
+                family: p.family,
+                name: p.name,
+                group: p.group,
+                photo: p.photo,
+                kids: p.kids,
+                one_liner: si === 0 ? p.one_liner : '',
+                pageInfo: `${si + 1} / ${familySlides.length}`
+            }, fs));
         });
     });
 
     let tvIdx=0, tvAuto=false, tvTimer=null;
 
-    const trunc = (s,n) => s && s.length>n ? s.slice(0,n)+'…' : (s||'');
-
     function buildSlide(i) {
         const p = TV_DATA[i];
         const kidsHtml = (p.kids||[]).map(k=>`<span class="tv-kid-chip">${k}</span>`).join('');
         const photoHtml = p.photo
-            ? `<img src="${p.photo}" alt="${p.family}"><div class="tv-photo-overlay"></div>`
+            ? `<div class="tv-photo-bg" style="background-image:url('${p.photo}')"></div><img class="tv-photo-fg" src="${p.photo}" alt="${p.family}"><div class="tv-photo-overlay"></div>`
             : `<div class="tv-no-photo"><i class="fa-solid fa-camera"></i><span>사진 없음</span></div>`;
 
-        let rightContent = '';
+        let rightContent = '', titleBadge = '';
         if (p.slideType === 'story') {
-            const formattedStory = p.ai_intro_text ? formatStoryText(p.ai_intro_text) : '';
+            titleBadge = p.isMotivationFallback ? '🌟 선교 참여 계기' : '우리 가족 이야기';
+            const formattedStory = p.storyChunk ? formatStoryText(p.storyChunk) : '';
             rightContent = `
                 ${p.one_liner ? `<div class="tv-one-liner">${p.one_liner}</div>` : ''}
                 <div class="tv-scrollable-content">
                     ${formattedStory ? `<div class="tv-story-content">${formattedStory}</div>` : ''}
-                    ${(!formattedStory && p.motivation) ? `
-                        <div class="tv-section-label">🌟 선교 참여 계기 및 기대</div>
-                        <div class="tv-motivation-text">${p.motivation}</div>
-                    ` : ''}
                 </div>
             `;
         } else {
+            titleBadge = (p.prayersChunk && p.specialtiesChunk) ? '기도제목 & 매력'
+                : p.prayersChunk ? '🙏 기도제목'
+                : '✨ 가족의 매력 & 특기';
             rightContent = `
                 <div class="tv-scrollable-content">
-                    ${p.prayers ? `
+                    ${p.prayersChunk ? `
                         <div class="tv-section-label">🙏 기도제목</div>
-                        <div class="tv-prayers-text">${p.prayers}</div>
+                        <div class="tv-prayers-text">${p.prayersChunk}</div>
                     ` : ''}
-                    ${p.specialties ? `
+                    ${p.specialtiesChunk ? `
                         <div class="tv-section-label">✨ 우리 가족의 매력 & 특기</div>
-                        <div class="tv-specialties-text">${p.specialties}</div>
+                        <div class="tv-specialties-text">${p.specialtiesChunk}</div>
                     ` : ''}
                 </div>
             `;
@@ -592,7 +642,7 @@
         <div class="tv-text-col">
             <div class="tv-family-header-row">
                 <div class="tv-family-name">💖 ${p.family}</div>
-                <div class="tv-slide-badge">${p.titleBadge} <span class="tv-badge-page-num">${p.pageInfo}</span></div>
+                <div class="tv-slide-badge">${titleBadge} <span class="tv-badge-page-num">${p.pageInfo}</span></div>
             </div>
             <div class="tv-members">
                 <i class="fa-solid fa-users" style="color:#6366f1;margin-right:4px"></i>
@@ -605,11 +655,13 @@
     }
 
     function renderDots() {
-        const totalFamilies = TV_DATA.length / 2;
+        const totalFamilies = profilesRaw.length;
+        const currentFamily = TV_DATA[tvIdx].originalIndex;
         let dotsHtml = '';
         for (let idx = 0; idx < totalFamilies; idx++) {
-            const isActive = Math.floor(tvIdx / 2) === idx;
-            dotsHtml += `<div class="tv-dot${isActive ? ' active' : ''}" onclick="tvGoTo(${idx * 2})"></div>`;
+            const isActive = currentFamily === idx;
+            const jumpIdx = TV_DATA.findIndex(s => s.originalIndex === idx);
+            dotsHtml += `<div class="tv-dot${isActive ? ' active' : ''}" onclick="tvGoTo(${jumpIdx})"></div>`;
         }
         document.getElementById('tvDots').innerHTML = dotsHtml;
     }
@@ -626,6 +678,10 @@
         document.getElementById('tvTotal').textContent=TV_DATA.length;
         updateSlide();
         document.addEventListener('keydown', tvKey);
+    }
+    function startPresentationForFamily(familyIdx) {
+        const startIdx = TV_DATA.findIndex(s => s.originalIndex === familyIdx);
+        startPresentation(startIdx >= 0 ? startIdx : 0);
     }
     function closePresentation() {
         document.getElementById('tvOverlay').style.display='none';

@@ -59,7 +59,7 @@ python3 app.py
 
 ## 🐙 깃허브(GitHub) 배포 방법
 
-이 프로젝트는 동적 Flask 서버 및 SQLite 데이터베이스를 사용하므로, 정적 사이트만 호스팅하는 GitHub Pages에서는 live 작동이 불가능합니다. 따라서 **깃허브에 코드를 업로드한 뒤, 외부 무료 호스팅 서비스(Render 등)를 연결하여 배포**해야 합니다.
+이 프로젝트는 동적 Flask 서버 및 SQLite 데이터베이스를 사용하므로, 정적 사이트만 호스팅하는 GitHub Pages에서는 live 작동이 불가능합니다. 따라서 **깃허브에 코드를 업로드한 뒤, 외부 무료 호스팅 서비스(PythonAnywhere 등)를 연결하여 배포**해야 합니다.
 
 ### 1. 로컬 Git 저장소 초기화 및 첫 커밋 (로컬에 세팅 완료됨)
 ```bash
@@ -80,24 +80,28 @@ git push -u origin main
 
 ---
 
-## 🌐 무료 웹 서버(Render) 배포 가이드
+## 🌍 PythonAnywhere 배포 & 운영 가이드
 
-[Render (render.com)](https://render.com)는 깃허브 리포지토리를 연결해 Python/Flask 애플리케이션을 무료로 배포할 수 있는 매우 간편한 서비스입니다.
+[PythonAnywhere](https://www.pythonanywhere.com)는 깃허브 저장소를 연결해 Python/Flask 애플리케이션을 무료로 배포할 수 있으며, Render 무료 티어와 달리 **서버 파일시스템이 항상 유지되어 재배포해도 데이터가 초기화되지 않습니다.**
 
-### 1. requirements.txt 및 gunicorn 추가 (동봉 완료)
-서버용 패키지 명세서인 `requirements.txt`가 폴더 내에 생성되어 있습니다. Render 빌드 시 패키지가 자동 다운로드됩니다.
+### 1. 최초 배포
+PythonAnywhere 계정의 **Bash 콘솔**에서:
+```bash
+git clone https://github.com/사용자이름/저장소이름.git
+cd 저장소이름
+pip install -r requirements.txt
+python db_init.py   # 최초 1회, DB를 처음 만들 때만 실행합니다
+```
+그 다음 **Web** 탭에서 새 웹앱을 추가(Manual configuration)하고, WSGI 설정 파일이 이 프로젝트의 Flask 앱(`app`)을 가리키도록 지정한 후 **Reload** 버튼을 누릅니다.
 
-### 2. Render 배포 설정
-Render에 가입한 후 **`New` -> `Web Service`**를 누르고 위에서 올린 깃허브 저장소를 연동합니다.
-- **Runtime:** `Python`
-- **Build Command:** `pip install -r requirements.txt && python db_init.py`
-- **Start Command:** `gunicorn app:app` (또는 `python app.py`로 구동하는 경우 `python app.py` 입력)
+### 2. ⚠️ 이후 업데이트(코드 수정 반영) 시에는 반드시 이 순서만 따르기
 
-### 3. 데이터 보존 설정 (영구 디스크 마운트)
-Render 무료 티어는 컨테이너가 15분간 요청이 없으면 잠들며, 재시작 시 로컬 파일 시스템이 초기화됩니다. 이로 인해 업로드한 가족 사진과 SQLite 데이터베이스의 수정한 내용이 초기화되는 것을 막으려면 다음을 권장합니다.
+운영 서버의 `database.db`와 `static/uploads/`에는 팀원들이 입력한 가족 소개글, 댓글, 응원, 업로드 사진이 저장되어 있습니다. 두 파일 모두 `.gitignore`에 등록되어 git이 추적하지 않으므로 코드 업데이트로 사라지지 않지만, **`db_init.py`는 실행할 때마다 DB를 통째로 삭제하고 엑셀 명단으로 재생성하므로, 최초 배포 이후에는 절대 다시 실행하면 안 됩니다.**
 
-1. Render 웹서비스 설정 내 **`Disk`** 탭으로 이동합니다.
-2. **`Add Disk`**를 누르고 아래와 같이 입력하여 1GB 무료 영구 디스크를 마운트합니다.
-   - **Name:** `yubadi-data`
-   - **Mount Path:** `/data`
-3. 소스코드 `app.py`와 `db_init.py` 상의 `database.db` 파일 위치 경로 및 사진이 업로드되는 `static/uploads/` 폴더 경로를 `/data/database.db` 및 `/data/uploads/`로 지정하면 서버 재시작 시에도 데이터가 완벽하게 유지 보존됩니다.
+```bash
+cd ~/저장소이름
+cp database.db ~/database_backup_$(date +%Y%m%d_%H%M).db   # 안전 백업 (권장)
+git pull origin main                                         # 코드만 최신화
+# python db_init.py  <- 이 줄은 실행하지 않습니다!
+```
+마지막으로 PythonAnywhere **Web** 탭에서 **Reload** 버튼을 눌러야 변경된 코드가 실제로 반영됩니다.
