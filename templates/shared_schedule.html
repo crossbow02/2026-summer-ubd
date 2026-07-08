@@ -172,7 +172,7 @@
                     return d.toISOString().split('T')[0];
                 })(),
                 {% endif %}
-                color: {% if task.is_completed %}'#10b981'{% else %}'#6366f1'{% endif %},
+                color: {% if task.is_completed %}'#6FA83C'{% else %}'#2E7DC0'{% endif %},
                 allDay: true
             },
             {% endif %}
@@ -200,7 +200,7 @@
                     if (row) {
                         row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         // Visual feedback highlight
-                        row.style.background = 'rgba(99, 102, 241, 0.1)';
+                        row.style.background = 'rgba(46, 125, 192, 0.1)';
                         row.style.borderColor = 'var(--color-indigo)';
                         setTimeout(() => {
                             row.style.background = '';
@@ -254,7 +254,7 @@
                 if (calendar) {
                     const event = calendar.getEventById(id);
                     if (event) {
-                        event.setProp('color', isCompleted ? '#10b981' : '#6366f1');
+                        event.setProp('color', isCompleted ? '#6FA83C' : '#2E7DC0');
                     }
                 }
 

@@ -58,7 +58,7 @@
 
         {% if session.get('role') == 'admin' %}
         <!-- Admin-Only Gender & Age Stats -->
-        <div class="admin-stats-panel" style="margin-top: 25px; padding: 20px; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; background: rgba(99, 102, 241, 0.05); animation: fadeIn 0.4s ease;">
+        <div class="admin-stats-panel" style="margin-top: 25px; padding: 20px; border: 1px solid rgba(46, 125, 192, 0.2); border-radius: 12px; background: rgba(46, 125, 192, 0.05); animation: fadeIn 0.4s ease;">
             <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 15px; color: var(--color-indigo); display: flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-chart-pie"></i> <span>[관리자 전용] 선교팀 성비 및 세부 구성 통계</span>
             </h3>
@@ -144,7 +144,7 @@
     <div id="familiesTable" style="display: none; overflow-x: auto; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 24px;">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
             <thead>
-                <tr style="background: rgba(99,102,241,0.12); border-bottom: 2px solid var(--border-color);">
+                <tr style="background: rgba(46,125,192,0.12); border-bottom: 2px solid var(--border-color);">
                     <th onclick="sortTable('num')" class="th-sortable" style="width: 50px;">번호 <i class="fa-solid fa-sort" id="sort-num" style="color: var(--text-muted);"></i></th>
                     <th onclick="sortTable('district')" class="th-sortable">구역 <i class="fa-solid fa-sort" id="sort-district" style="color: var(--text-muted);"></i></th>
                     <th onclick="sortTable('team')" class="th-sortable">팀 <i class="fa-solid fa-sort" id="sort-team" style="color: var(--text-muted);"></i></th>
@@ -166,8 +166,8 @@
                     {% endfor %}
                     {% if team_members %}
                     <tr class="team-group-row" data-team-group="{{ team_name }}"
-                        style="background: rgba({% if team_name == '예배팀' %}99,102,241{% elif team_name == '식탁교제팀' %}236,72,153{% elif team_name == '성경학교 및 물놀이팀' %}16,185,129{% elif team_name == '행정지원팀' %}245,158,11{% else %}100,100,100{% endif %},0.12); border-top: 1px solid rgba(255,255,255,0.07);">
-                        <td colspan="7" style="padding: 8px 16px; font-weight: 800; font-size: 0.82rem; letter-spacing: 0.03em; color: {% if team_name == '예배팀' %}var(--color-indigo){% elif team_name == '식탁교제팀' %}var(--color-pink){% elif team_name == '성경학교 및 물놀이팀' %}#10b981{% elif team_name == '행정지원팀' %}#f59e0b{% else %}var(--text-muted){% endif %};">
+                        style="background: rgba({% if team_name == '예배팀' %}46,125,192{% elif team_name == '식탁교제팀' %}240,137,31{% elif team_name == '성경학교 및 물놀이팀' %}111,168,60{% elif team_name == '행정지원팀' %}232,168,61{% else %}100,100,100{% endif %},0.12); border-top: 1px solid rgba(255,255,255,0.07);">
+                        <td colspan="7" style="padding: 8px 16px; font-weight: 800; font-size: 0.82rem; letter-spacing: 0.03em; color: {% if team_name == '예배팀' %}var(--color-indigo){% elif team_name == '식탁교제팀' %}var(--color-pink){% elif team_name == '성경학교 및 물놀이팀' %}#6FA83C{% elif team_name == '행정지원팀' %}#E8A83D{% else %}var(--text-muted){% endif %};">
                             <i class="fa-solid fa-{% if team_name == '예배팀' %}music{% elif team_name == '식탁교제팀' %}utensils{% elif team_name == '성경학교 및 물놀이팀' %}children{% elif team_name == '행정지원팀' %}gears{% else %}circle-question{% endif %}"></i>
                             {{ team_name }} ({{ team_members|length }}가정)
                         </td>
@@ -184,16 +184,16 @@
                         onmouseover="this.style.background='rgba(255,255,255,0.04)'"
                         onmouseout="this.style.background=''">
                         <td style="padding: 10px 16px; color: var(--text-muted); font-size: 0.78rem; text-align: center;">{{ row_num.val }}</td>
-                        <td style="padding: 10px 8px; font-size: 0.82rem;"><span style="background: rgba(99,102,241,0.15); padding: 2px 8px; border-radius: 6px; font-weight: 700;">{{ u.group_num }}구역</span></td>
+                        <td style="padding: 10px 8px; font-size: 0.82rem;"><span style="background: rgba(46,125,192,0.15); padding: 2px 8px; border-radius: 6px; font-weight: 700;">{{ u.group_num }}구역</span></td>
                         <td style="padding: 10px 8px;">
                             {% set t1 = u.team or '미지정' %}
                             {% set t2 = u.team2 or '미지정' %}
                             <div style="display: flex; flex-direction: column; gap: 3px;">
-                                <span style="font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; width: fit-content; background: rgba({% if t1 == '예배팀' %}99,102,241{% elif t1 == '식탁교제팀' %}236,72,153{% elif t1 == '성경학교 및 물놀이팀' %}16,185,129{% elif t1 == '행정지원팀' %}245,158,11{% else %}100,100,100{% endif %},0.2); color: {% if t1 == '예배팀' %}var(--color-indigo){% elif t1 == '식탁교제팀' %}var(--color-pink){% elif t1 == '성경학교 및 물놀이팀' %}#10b981{% elif t1 == '행정지원팀' %}#f59e0b{% else %}var(--text-muted){% endif %};">
+                                <span style="font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; width: fit-content; background: rgba({% if t1 == '예배팀' %}46,125,192{% elif t1 == '식탁교제팀' %}240,137,31{% elif t1 == '성경학교 및 물놀이팀' %}111,168,60{% elif t1 == '행정지원팀' %}232,168,61{% else %}100,100,100{% endif %},0.2); color: {% if t1 == '예배팀' %}var(--color-indigo){% elif t1 == '식탁교제팀' %}var(--color-pink){% elif t1 == '성경학교 및 물놀이팀' %}#6FA83C{% elif t1 == '행정지원팀' %}#E8A83D{% else %}var(--text-muted){% endif %};">
                                     {{ u.adult1_name }}: {{ t1 }}{% if u.is_team_leader %} ⭐{% endif %}
                                 </span>
                                 {% if u.adult2_name %}
-                                <span style="font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; width: fit-content; background: rgba({% if t2 == '예배팀' %}99,102,241{% elif t2 == '식탁교제팀' %}236,72,153{% elif t2 == '성경학교 및 물놀이팀' %}16,185,129{% elif t2 == '행정지원팀' %}245,158,11{% else %}100,100,100{% endif %},0.2); color: {% if t2 == '예배팀' %}var(--color-indigo){% elif t2 == '식탁교제팀' %}var(--color-pink){% elif t2 == '성경학교 및 물놀이팀' %}#10b981{% elif t2 == '행정지원팀' %}#f59e0b{% else %}var(--text-muted){% endif %};">
+                                <span style="font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; width: fit-content; background: rgba({% if t2 == '예배팀' %}46,125,192{% elif t2 == '식탁교제팀' %}240,137,31{% elif t2 == '성경학교 및 물놀이팀' %}111,168,60{% elif t2 == '행정지원팀' %}232,168,61{% else %}100,100,100{% endif %},0.2); color: {% if t2 == '예배팀' %}var(--color-indigo){% elif t2 == '식탁교제팀' %}var(--color-pink){% elif t2 == '성경학교 및 물놀이팀' %}#6FA83C{% elif t2 == '행정지원팀' %}#E8A83D{% else %}var(--text-muted){% endif %};">
                                     {{ u.adult2_name }}: {{ t2 }}{% if u.is_team_leader2 %} ⭐{% endif %}
                                 </span>
                                 {% endif %}
@@ -207,7 +207,7 @@
                         </td>
                         <td style="padding: 10px 12px; text-align: center;">
                             {% if u.has_intro %}
-                            <span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> 완료</span>
+                            <span style="background: rgba(111,168,60,0.15); color: #6FA83C; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> 완료</span>
                             {% else %}
                             <span style="background: rgba(239,68,68,0.12); color: #ef4444; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-clock"></i> 미작성</span>
                             {% endif %}
@@ -321,7 +321,7 @@
                 </div>
 
                 <!-- Adult 1 Team + Leader -->
-                <div style="background: rgba(99,102,241,0.06); border-radius: 8px; padding: 10px; border: 1px solid rgba(99,102,241,0.15);">
+                <div style="background: rgba(46,125,192,0.06); border-radius: 8px; padding: 10px; border: 1px solid rgba(46,125,192,0.15);">
                     <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-indigo); margin-bottom: 8px;">
                         <i class="fa-solid fa-user-tie"></i> {{ user.adult1_name or '성인1' }}
                     </div>
@@ -347,7 +347,7 @@
 
                 <!-- Adult 2 Team + Leader (only if adult2 exists) -->
                 {% if user.adult2_name %}
-                <div style="background: rgba(236,72,153,0.06); border-radius: 8px; padding: 10px; border: 1px solid rgba(236,72,153,0.15);">
+                <div style="background: rgba(240,137,31,0.06); border-radius: 8px; padding: 10px; border: 1px solid rgba(240,137,31,0.15);">
                     <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-pink); margin-bottom: 8px;">
                         <i class="fa-solid fa-user-group"></i> {{ user.adult2_name }}
                     </div>

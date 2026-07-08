@@ -11,7 +11,8 @@
     <!-- FontAwesome icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style Sheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.5">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <!-- Inline Theme Checker Script -->
     <script>
         (function() {
@@ -32,7 +33,7 @@
         <!-- Top Row: Logo & Profile Actions -->
         <div class="nav-top-row">
             <a href="{{ url_for('dashboard') }}" class="nav-logo">
-                <span class="emoji-spin">⛪</span> <span>2026 유바디 2마을 여름 아웃리치</span>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="유아GOOD" class="nav-logo-img"> <span>2026 유바디 2마을 여름 아웃리치</span>
             </a>
             
             <div class="nav-right-actions">
