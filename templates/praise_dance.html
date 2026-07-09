@@ -68,6 +68,55 @@
     </div>
   </div>
 
+  <!-- 특송 연습: 나는 예배자입니다 -->
+  <div class="glass" style="border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0 0 6px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-microphone-lines" style="color: var(--color-pink);"></i> 특송 연습: 나는 예배자입니다
+    </h2>
+    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 20px;">
+      특송 준비를 위한 악보와 연습 영상입니다. 미리 들어보고 익혀오세요!
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: start;">
+      <!-- Sheet Music -->
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary);">
+          <i class="fa-solid fa-file-music"></i> 악보
+        </div>
+        <a href="{{ url_for('static', filename='images/특송_나는예배자입니다_악보.png') }}" target="_blank" rel="noopener noreferrer">
+          <img src="{{ url_for('static', filename='images/특송_나는예배자입니다_악보.png') }}"
+               alt="나는 예배자입니다 악보"
+               style="width: 100%; border-radius: 12px; border: 1px solid var(--border-color); display: block; cursor: zoom-in;">
+        </a>
+        <a href="{{ url_for('static', filename='images/특송_나는예배자입니다_악보.png') }}" download
+           class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 10px;">
+          <i class="fa-solid fa-download"></i> 악보 다운로드
+        </a>
+      </div>
+
+      <!-- Practice Videos -->
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary);">
+          <i class="fa-brands fa-youtube"></i> 연습 영상
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); aspect-ratio: 16/9;">
+            <iframe style="width: 100%; height: 100%; display: block; border: none;"
+                    src="https://www.youtube.com/embed/9Oh2F3X_G9w"
+                    title="나는 예배자입니다 연습 영상 1" allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+          </div>
+          <div style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); aspect-ratio: 16/9;">
+            <iframe style="width: 100%; height: 100%; display: block; border: none;"
+                    src="https://www.youtube.com/embed/XbbfiXmsbFs"
+                    title="나는 예배자입니다 연습 영상 2" allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Sheet Music / Resources Section -->
   <div class="glass" style="border-radius: 16px; padding: 24px; margin-bottom: 24px;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">

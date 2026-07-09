@@ -113,7 +113,6 @@
                 {% endfor %}
             </select>
 
-            {% if session.get('role') == 'admin' %}
             <select id="teamFilter" class="filter-select" onchange="filterRoster()">
                 <option value="">모든 팀</option>
                 <option value="미지정">미지정</option>
@@ -122,7 +121,6 @@
                 <option value="성경학교 및 물놀이팀">성경학교 및 물놀이팀</option>
                 <option value="행정지원팀">행정지원팀</option>
             </select>
-            {% endif %}
         </div>
     </div>
 
@@ -233,12 +231,10 @@
             <!-- Group Badge -->
             <div class="family-badge">
                 <span class="district-badge">{{ user.group_num }}구역</span>
-                {% if session.get('role') == 'admin' %}
                 <span class="team-badge team-{{ 'worship' if user.team == '예배팀' else 'meal' if user.team == '식탁교제팀' else 'school' if user.team == '성경학교 및 물놀이팀' else 'admin-team' if user.team == '행정지원팀' else 'unassigned' }}" id="team-badge-{{ user.id }}">
                     <i class="fa-solid fa-people-group"></i> {{ user.team or '미지정' }}
                     {% if user.is_team_leader %}<i class="fa-solid fa-star" style="color: gold; margin-left: 3px;" title="팀장"></i>{% endif %}
                 </span>
-                {% endif %}
                 {% if user.has_intro %}
                 <span class="status-badge status-completed"><i class="fa-solid fa-circle-check"></i> 소개 완료</span>
                 {% else %}

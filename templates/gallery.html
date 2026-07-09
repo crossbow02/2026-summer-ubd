@@ -8,14 +8,14 @@
         <div class="gallery-header-top">
             <div class="gallery-title-container">
                 <div class="gallery-title-row">
-                    <h1>📸 우리 가족 소개 피드</h1>
+                    <h1>📸 우리 가족 갤러리</h1>
                     {% if profiles %}
                     <button class="btn-tv-mode" id="btnTvMode" onclick="startPresentation(0)" title="TV 화면으로 전체 가족 소개 슬라이드 보기">
                         <i class="fa-solid fa-tv"></i> <span>TV 모드</span>
                     </button>
                     {% endif %}
                 </div>
-                <p>선교를 함께하는 동역자들의 가족 소개입니다. 따뜻한 격려의 댓글과 응원의 하트로 마음을 나눠주세요!</p>
+                <p>사진을 클릭하면 그 가정의 소개글과 댓글을 볼 수 있어요. 따뜻한 격려의 댓글과 응원의 하트로 마음을 나눠주세요!</p>
             </div>
         </div>
     </div>
@@ -30,9 +30,42 @@
         </a>
     </div>
     {% else %}
-    <div class="gallery-feed">
+    <!-- Photo Thumbnail Grid -->
+    <div class="gallery-grid">
         {% for profile in profiles %}
-        <div class="profile-card glass" id="family-{{ profile.user_id }}">
+        <div class="gallery-thumb" data-modal-index="{{ loop.index0 }}" onclick="openProfileModal({{ loop.index0 }})">
+            <div class="gallery-thumb-photo">
+                {% if profile.photo_path %}
+                <img src="{{ profile.photo_path }}" alt="{{ profile.adult1_name }} 성도님 가족 사진" loading="lazy">
+                {% else %}
+                <div class="no-photo-placeholder">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>사진 없음</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="gallery-thumb-overlay">
+                <span class="gallery-thumb-group">{{ profile.group_num }}구역</span>
+                <span class="gallery-thumb-name">{{ profile.adult1_name }} 성도님 가정</span>
+                <span class="gallery-thumb-meta">
+                    <i class="fa-solid fa-heart"></i> {{ profile.likes_count }}
+                    <span class="gallery-thumb-meta-sep">·</span>
+                    <i class="fa-solid fa-comment"></i> {{ profile.comments_list|length }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Profile Detail Modal (reuses full card markup, opened on thumbnail click) -->
+    <div class="profile-modal-overlay" id="profileModalOverlay">
+        <div class="profile-modal-backdrop" onclick="closeProfileModal()"></div>
+        <div class="profile-modal-scroll">
+            <button class="profile-modal-close" onclick="closeProfileModal()" title="닫기 (ESC)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        {% for profile in profiles %}
+        <div class="profile-card glass profile-modal-card" id="family-{{ profile.user_id }}" data-modal-index="{{ loop.index0 }}">
             <!-- Card Header -->
             <div class="profile-card-header">
                 <div class="family-title-info">
@@ -134,6 +167,7 @@
             </div>
         </div>
         {% endfor %}
+        </div>
     </div>
     {% endif %}
 </div>
@@ -228,6 +262,141 @@
     transition: all 0.2s ease;
 }
 .btn-tv-slide:hover { background: rgba(46, 125, 192, 0.25); color: #fff; }
+
+/* ── 갤러리 썸네일 그리드 ─────────────────── */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.gallery-thumb {
+    position: relative;
+    aspect-ratio: 4/5;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.gallery-thumb:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.5);
+    border-color: var(--border-hover);
+}
+.gallery-thumb-photo {
+    width: 100%;
+    height: 100%;
+}
+.gallery-thumb-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.gallery-thumb:hover .gallery-thumb-photo img {
+    transform: scale(1.06);
+}
+.gallery-thumb-photo .no-photo-placeholder {
+    width: 100%;
+    height: 100%;
+}
+.gallery-thumb-overlay {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 12px 8px;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.gallery-thumb-group {
+    align-self: flex-start;
+    background: rgba(46, 125, 192, 0.85);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-bottom: 3px;
+}
+.gallery-thumb-name {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gallery-thumb-meta {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.gallery-thumb-meta-sep { opacity: 0.5; }
+
+/* ── 프로필 상세 모달 ─────────────────────── */
+.profile-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+}
+.profile-modal-overlay.active {
+    display: flex;
+}
+.profile-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 0;
+}
+.profile-modal-scroll {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 900px;
+}
+.profile-modal-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(20, 20, 35, 0.9);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -10px;
+    z-index: 2;
+}
+.profile-modal-close:hover {
+    background: rgba(244, 63, 94, 0.25);
+    border-color: rgba(244, 63, 94, 0.4);
+}
+.profile-modal-card {
+    display: none;
+    animation: fadeIn 0.3s ease forwards;
+}
+.profile-modal-card.active {
+    display: flex;
+}
 
 /* ── TV 오버레이 전체 ─────────────────────── */
 .tv-overlay {
@@ -509,6 +678,33 @@
         document.querySelectorAll('.ai-story-rendered').forEach(el => {
             el.innerHTML = formatStoryText(el.getAttribute('data-raw-text'));
         });
+
+        // 다른 페이지에서 #family-<id> 해시로 들어온 경우 해당 가정 모달을 바로 열기
+        if (location.hash.startsWith('#family-')) {
+            const card = document.querySelector(location.hash);
+            if (card && card.classList.contains('profile-modal-card')) {
+                openProfileModal(card.getAttribute('data-modal-index'));
+            }
+        }
+    });
+
+    /* ── 갤러리 상세 모달 ──────────────────── */
+    function openProfileModal(idx) {
+        document.querySelectorAll('.profile-modal-card').forEach(c => c.classList.remove('active'));
+        const card = document.querySelector(`.profile-modal-card[data-modal-index="${idx}"]`);
+        if (!card) return;
+        card.classList.add('active');
+        document.getElementById('profileModalOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeProfileModal() {
+        document.getElementById('profileModalOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('profileModalOverlay').classList.contains('active')) {
+            closeProfileModal();
+        }
     });
 
     async function toggleLike(id, btn) {

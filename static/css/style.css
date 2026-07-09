@@ -2590,6 +2590,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     border-color: rgba(240, 137, 31, 0.25);
     color: #F0A857;
 }
+.team-admin-team {
+    background: rgba(232, 168, 61, 0.15);
+    border-color: rgba(232, 168, 61, 0.25);
+    color: #E8A83D;
+}
 
 .light-theme .team-unassigned {
     background: rgba(0, 0, 0, 0.04);
@@ -2609,7 +2614,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .light-theme .team-worship {
     background: rgba(196, 106, 15, 0.08);
     border-color: rgba(196, 106, 15, 0.18);
-    color: #db267f;
+    color: #C2570A;
+}
+.light-theme .team-admin-team {
+    background: rgba(184, 128, 31, 0.08);
+    border-color: rgba(184, 128, 31, 0.18);
+    color: #B8801F;
 }
 
 /* Mini Switch styles */

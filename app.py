@@ -644,31 +644,31 @@ def family_comment(id):
     
     if content:
         execute_db("INSERT INTO comments (profile_id, author_name, content) VALUES (?, ?, ?)", (id, author_name, content))
-        
-    return redirect(url_for('gallery'))
+
+    return redirect(url_for('gallery') + f'#family-{id}')
 
 @app.route('/family/<int:id>/comment/delete/<int:comment_id>', methods=['POST'])
 def delete_comment(id, comment_id):
     # Ensure current user is authorized (admin, comment author, or family profile owner)
     comment = query_db("SELECT * FROM comments WHERE id = ?", (comment_id,), one=True)
     if not comment:
-        return redirect(url_for('gallery'))
-        
+        return redirect(url_for('gallery') + f'#family-{id}')
+
     user_id = session['user_id']
     user = query_db("SELECT * FROM users WHERE id = ?", (user_id,), one=True)
-    
+
     # Authorized names
     authorized_names = [user['adult1_name'], user['adult2_name']] if user else []
-    
+
     # Owner of profile
     is_profile_owner = (user_id == id)
     is_comment_author = (comment['author_name'] in authorized_names)
     is_admin = (session.get('role') == 'admin')
-    
+
     if is_profile_owner or is_comment_author or is_admin:
         execute_db("DELETE FROM comments WHERE id = ?", (comment_id,))
-        
-    return redirect(url_for('gallery'))
+
+    return redirect(url_for('gallery') + f'#family-{id}')
 
 # Target Children routes
 @app.route('/target-children')
