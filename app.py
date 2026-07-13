@@ -153,7 +153,14 @@ def migrate_db():
         )
         """)
 
-        # 8. Prayer relay table (기도 릴레이: 날짜별 담당 가정 + 기도제목 번호 + 가정이 직접 올리는 기도내용)
+        # 8. Add last_page column to users (remembers each user's last visited page)
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'last_page' not in columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN last_page TEXT")
+            print("Added 'last_page' column to 'users' table.")
+
+        # 9. Prayer relay table (기도 릴레이: 날짜별 담당 가정 + 기도제목 번호 + 가정이 직접 올리는 기도내용)
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS prayer_relay (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -345,6 +352,17 @@ def check_login():
     if request.endpoint not in allowed_routes and 'user_id' not in session:
         return redirect(url_for('login'))
 
+# Remember each user's last visited page, so their next login can resume there
+TRACKABLE_ENDPOINTS = {
+    'dashboard', 'family_edit', 'gallery', 'intro', 'shared_schedule',
+    'target_children', 'game', 'praise_dance', 'team_boards',
+}
+
+@app.before_request
+def track_last_page():
+    if request.method == 'GET' and request.endpoint in TRACKABLE_ENDPOINTS and 'user_id' in session:
+        execute_db("UPDATE users SET last_page = ? WHERE id = ?", (request.path, session['user_id']))
+
 # Serving presentation slides
 @app.route('/slides/<filename>')
 def serve_slide(filename):
@@ -426,6 +444,13 @@ def generate_local_ai_text(name, one_liner, motivation, prayers, specialties, ch
 둔포 아이들 사역을 섬기는 모든 팀원들을 축복합니다. 현장에서 주님의 사랑으로 기쁘게 동역하길 원합니다. 함께해주셔서 감사합니다! 😊"""
     return intro
 
+def resolve_user_landing_page(user):
+    """일반 사용자의 로그인 후 이동 페이지: 마지막 열람 페이지가 있으면 그곳으로,
+    없으면 준비 일정표(기도 릴레이 보기)로 안내한다."""
+    if user['last_page']:
+        return redirect(user['last_page'])
+    return redirect(url_for('shared_schedule') + '#prayer-relay')
+
 # Routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -433,15 +458,9 @@ def login():
         if session.get('role') == 'admin':
             return redirect(url_for('dashboard'))
         else:
-            try:
-                profile = query_db(
-                    "SELECT id FROM family_profiles WHERE user_id = ?",
-                    (session['user_id'],), one=True
-                )
-                return redirect(url_for('gallery') if profile else url_for('family_edit'))
-            except Exception:
-                return redirect(url_for('family_edit'))
-        
+            user = query_db("SELECT * FROM users WHERE id = ?", (session['user_id'],), one=True)
+            return resolve_user_landing_page(user)
+
     error = None
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -468,21 +487,11 @@ def login():
 
             # 리다이렉트 결정:
             # 관리자 → 참가 가정 명단(대시보드)
-            # 일반 사용자 → 소개 미완료면 우리가족 소개하기, 완료면 가족 갤러리
+            # 일반 사용자 → 마지막 열람 페이지, 없으면 준비 일정표(기도 릴레이 보기)
             if user['role'] == 'admin':
                 return redirect(url_for('dashboard'))
             else:
-                try:
-                    profile = query_db(
-                        "SELECT id FROM family_profiles WHERE user_id = ?",
-                        (user['id'],), one=True
-                    )
-                    if profile:
-                        return redirect(url_for('gallery'))
-                    else:
-                        return redirect(url_for('family_edit'))
-                except Exception:
-                    return redirect(url_for('family_edit'))
+                return resolve_user_landing_page(user)
         else:
             error = "이름 또는 비밀번호(전화번호 뒤 4자리)가 일치하지 않습니다."
             
