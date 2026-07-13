@@ -1443,6 +1443,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     100% { transform: scale(1); }
 }
 
+.btn-like.btn-amen:hover {
+    background: rgba(232, 168, 61, 0.1);
+    border-color: rgba(232, 168, 61, 0.35);
+    color: #E8A83D;
+}
+.btn-like.btn-amen.liked {
+    background: rgba(232, 168, 61, 0.18);
+    border-color: rgba(232, 168, 61, 0.3);
+    color: #E8A83D;
+}
+
 .pulse-anim {
     animation: buttonPulse 0.3s ease-out;
 }

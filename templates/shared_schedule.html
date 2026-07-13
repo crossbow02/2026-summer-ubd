@@ -99,8 +99,8 @@
 
         <div id="calendar"></div>
 
-        <!-- Selected Prayer Day Detail + 등록 폼 -->
-        <div id="prayerDayDetail" style="display:none; margin-top: 20px; padding: 20px 22px; border-radius: 14px; border: 1px solid rgba(240, 137, 31, 0.25); background: rgba(240, 137, 31, 0.05);">
+        <!-- 선택한(기본값: 오늘) 날짜의 기도내용 + 등록 폼 -->
+        <div id="prayerDayDetail" style="margin-top: 20px; padding: 20px 22px; border-radius: 14px; border: 1px solid rgba(240, 137, 31, 0.25); background: rgba(240, 137, 31, 0.05);">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                 <div>
                     <div id="prayerDetailDate" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;"></div>
@@ -111,6 +111,12 @@
             <div id="prayerDetailTopicText" style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 14px; padding-left: 2px;"></div>
 
             <div id="prayerDetailExisting" style="display:none; background: rgba(0,0,0,0.15); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.88rem; color: var(--text-primary); white-space: pre-wrap;"></div>
+
+            <button id="prayerAmenBtn" onclick="toggleAmen()" class="btn-like btn-amen" style="margin-bottom: 16px;">
+                <i class="fa-solid fa-hands-praying"></i>
+                <span class="like-label">아멘</span>
+                <span class="like-count" id="prayerAmenCount">0</span>
+            </button>
 
             <form id="prayerDayForm" action="{{ url_for('prayer_relay_submit') }}" method="POST" style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
                 <input type="hidden" name="prayer_date" id="prayerFormDate">
@@ -231,8 +237,9 @@
         {% endfor %}
     ];
 
-    // 기도 릴레이 데이터 (날짜별 담당 가정 + 기도제목 번호 + 등록된 기도내용)
+    // 기도 릴레이 데이터 (날짜별 담당 가정 + 기도제목 번호 + 등록된 기도내용 + 아멘 반응)
     const prayerTopics = {{ prayer_topics|tojson }};
+    const todayPrayerDate = {{ today_prayer_date|tojson }};
     const prayerDays = {
         {% for day in prayer_days %}
         "{{ day.prayer_date }}": {
@@ -240,7 +247,8 @@
             topicNumber: {{ day.topic_number|tojson if day.topic_number is not none else 'null' }},
             isSpecial: {{ 'true' if day.is_special else 'false' }},
             content: {{ (day.prayer_content or '')|tojson }},
-            postedBy: {{ (day.posted_by or '')|tojson }}
+            amenCount: {{ day.amen_count }},
+            userAmened: {{ 'true' if day.user_amened else 'false' }}
         },
         {% endfor %}
     };
@@ -258,13 +266,26 @@
 
     let calendar;
     let calendarMode = 'schedule';
+    let currentPrayerDate = null;
 
-    function renderPrayerDetail(date) {
+    function renderAmenButton(date) {
+        const d = prayerDays[date];
+        const btn = document.getElementById('prayerAmenBtn');
+        const countEl = document.getElementById('prayerAmenCount');
+        if (!d) { btn.style.display = 'none'; return; }
+        btn.style.display = 'inline-flex';
+        countEl.textContent = d.amenCount;
+        btn.classList.toggle('liked', d.userAmened);
+    }
+
+    function renderPrayerDetail(date, scrollTo) {
         const d = prayerDays[date];
         const panel = document.getElementById('prayerDayDetail');
-        if (!d) { panel.style.display = 'none'; return; }
+        if (!d) { return; }
 
-        document.getElementById('prayerDetailDate').textContent = date;
+        currentPrayerDate = date;
+        const dateLabel = date === todayPrayerDate ? `오늘 · ${date}` : date;
+        document.getElementById('prayerDetailDate').textContent = dateLabel;
         document.getElementById('prayerDetailFamily').textContent = d.family;
 
         const badge = document.getElementById('prayerDetailTopicBadge');
@@ -281,17 +302,32 @@
         const existingBox = document.getElementById('prayerDetailExisting');
         if (d.content) {
             existingBox.style.display = 'block';
-            existingBox.textContent = `💬 ${d.content}${d.postedBy ? ' — ' + d.postedBy : ''}`;
+            existingBox.textContent = `💬 ${d.content}`;
         } else {
             existingBox.style.display = 'none';
             existingBox.textContent = '';
         }
 
+        renderAmenButton(date);
+
         document.getElementById('prayerFormDate').value = date;
         document.getElementById('prayerFormContent').value = d.content || '';
 
-        panel.style.display = 'block';
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (scrollTo) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function toggleAmen() {
+        if (!currentPrayerDate) return;
+        try {
+            const r = await fetch(`/prayer-relay/amen/${currentPrayerDate}`, { method: 'POST' });
+            if (!r.ok) throw new Error();
+            const d = await r.json();
+            prayerDays[currentPrayerDate].amenCount = d.amen_count;
+            prayerDays[currentPrayerDate].userAmened = d.amened;
+            renderAmenButton(currentPrayerDate);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     function switchCalendarView(mode) {
@@ -299,13 +335,11 @@
         const btnSchedule = document.getElementById('btnViewSchedule');
         const btnPrayer = document.getElementById('btnViewPrayer');
         const hint = document.getElementById('prayerViewHint');
-        const detail = document.getElementById('prayerDayDetail');
 
         if (mode === 'schedule') {
             btnSchedule.className = 'btn btn-primary btn-sm';
             btnPrayer.className = 'btn btn-secondary btn-sm';
             hint.style.display = 'none';
-            detail.style.display = 'none';
         } else {
             btnSchedule.className = 'btn btn-secondary btn-sm';
             btnPrayer.className = 'btn btn-primary btn-sm';
@@ -334,7 +368,7 @@
                 eventClick: function(info) {
                     if (calendarMode === 'prayer') {
                         const date = info.event.startStr;
-                        renderPrayerDetail(date);
+                        renderPrayerDetail(date, true);
                         return;
                     }
                     const taskId = info.event.id;
@@ -352,6 +386,11 @@
                 }
             });
             calendar.render();
+        }
+
+        // 달력 아래에는 항상 오늘 날짜의 기도내용을 기본으로 보여준다
+        if (prayerDays[todayPrayerDate]) {
+            renderPrayerDetail(todayPrayerDate, false);
         }
 
         // #prayer-relay 해시로 들어온 경우 바로 기도 릴레이 보기로 전환

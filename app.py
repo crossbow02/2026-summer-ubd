@@ -220,6 +220,17 @@ def migrate_db():
             """, prayer_relay_seed)
             print(f"Successfully seeded {len(prayer_relay_seed)} days into prayer_relay table.")
 
+        # 10. Prayer relay amens (기도제목에 대한 '아멘' 반응)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prayer_amens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prayer_date TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(prayer_date, user_id)
+        )
+        """)
+
         # Check if target_children table is empty (seed default children on first startup)
         cursor.execute("SELECT COUNT(*) FROM target_children")
         children_count = cursor.fetchone()[0]
@@ -1042,7 +1053,19 @@ def shared_schedule():
     progress_percentage = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
 
     prayer_days = query_db("SELECT * FROM prayer_relay ORDER BY prayer_date ASC")
-    prayer_days_list = [dict(p) for p in prayer_days]
+    amen_counts = {row['prayer_date']: row['cnt'] for row in query_db(
+        "SELECT prayer_date, COUNT(*) as cnt FROM prayer_amens GROUP BY prayer_date")}
+    user_amened_dates = {row['prayer_date'] for row in query_db(
+        "SELECT prayer_date FROM prayer_amens WHERE user_id = ?", (session['user_id'],))}
+
+    prayer_days_list = []
+    for p in prayer_days:
+        p_dict = dict(p)
+        p_dict['amen_count'] = amen_counts.get(p['prayer_date'], 0)
+        p_dict['user_amened'] = p['prayer_date'] in user_amened_dates
+        prayer_days_list.append(p_dict)
+
+    today_str = datetime.now().strftime('%Y-%m-%d')
 
     return render_template('shared_schedule.html',
                            schedules=schedules_list,
@@ -1051,6 +1074,7 @@ def shared_schedule():
                            progress_percentage=progress_percentage,
                            prayer_topics=PRAYER_TOPICS,
                            prayer_days=prayer_days_list,
+                           today_prayer_date=today_str,
                            is_admin=(session.get('role') == 'admin'),
                            current_name=session.get('name'))
 
@@ -1067,6 +1091,25 @@ def prayer_relay_submit():
         """, (content, session.get('name'), prayer_date))
 
     return redirect(url_for('shared_schedule') + '#prayer-relay')
+
+@app.route('/prayer-relay/amen/<prayer_date>', methods=['POST'])
+def prayer_relay_amen(prayer_date):
+    user_id = session['user_id']
+    existing = query_db(
+        "SELECT id FROM prayer_amens WHERE prayer_date = ? AND user_id = ?",
+        (prayer_date, user_id), one=True)
+
+    if existing:
+        execute_db("DELETE FROM prayer_amens WHERE id = ?", (existing['id'],))
+        amened = False
+    else:
+        execute_db("INSERT INTO prayer_amens (prayer_date, user_id) VALUES (?, ?)", (prayer_date, user_id))
+        amened = True
+
+    amen_count = query_db(
+        "SELECT COUNT(*) as cnt FROM prayer_amens WHERE prayer_date = ?",
+        (prayer_date,), one=True)['cnt']
+    return jsonify({'amened': amened, 'amen_count': amen_count})
 
 @app.route('/shared-schedule/toggle/<int:id>', methods=['POST'])
 def toggle_schedule(id):
