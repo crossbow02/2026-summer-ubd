@@ -70,9 +70,6 @@
                 <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <i class="fa-solid fa-users-viewfinder"></i> <span>참가 가정 명단</span>
                 </a>
-                <a href="{{ url_for('family_edit') }}" class="nav-item {% if request.endpoint == 'family_edit' %}active{% endif %}">
-                    <i class="fa-solid fa-house-chimney-user"></i> <span>우리가족 소개하기</span>
-                </a>
                 <a href="{{ url_for('gallery') }}" class="nav-item {% if request.endpoint == 'gallery' %}active{% endif %}">
                     <i class="fa-solid fa-images"></i> <span>가족 갤러리</span>
                 </a>
@@ -80,7 +77,7 @@
                     <i class="fa-solid fa-photo-film"></i> <span>사역 소개</span>
                 </a>
                 <a href="{{ url_for('shared_schedule') }}" class="nav-item {% if request.endpoint == 'shared_schedule' %}active{% endif %}">
-                    <i class="fa-solid fa-calendar-check"></i> <span>준비 일정표</span>
+                    <i class="fa-solid fa-calendar-check"></i> <span>준비 일정표 · 기도릴레이</span>
                 </a>
                 <a href="{{ url_for('target_children') }}" class="nav-item {% if request.endpoint == 'target_children' %}active{% endif %}">
                     <i class="fa-solid fa-children"></i> <span>만날 아이들</span>
