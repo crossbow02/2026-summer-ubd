@@ -63,12 +63,64 @@
         </form>
     </div>
 
-    <!-- Calendar View Card -->
-    <div class="pt-card glass" style="margin-bottom: 30px; padding: 25px;">
-        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-            <i class="fa-regular fa-calendar"></i> <span>달력으로 일정 보기</span>
+    <!-- Calendar View Card (준비 일정 + 기도 릴레이 통합) -->
+    <div class="pt-card glass" style="margin-bottom: 30px; padding: 25px;" id="prayer-relay">
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i class="fa-regular fa-calendar"></i> <span>달력으로 보기</span>
         </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 18px;">
+            아래 버튼으로 <strong>준비 일정</strong>과 <strong>기도 릴레이</strong>를 같은 달력에서 골라 볼 수 있어요.
+        </p>
+
+        <!-- 기도제목 리스트 (상단 고정) -->
+        <div style="background: rgba(240, 137, 31, 0.06); border: 1px solid rgba(240, 137, 31, 0.2); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;">
+            <h4 style="font-size: 0.98rem; font-weight: 800; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; color: var(--color-pink);">
+                <i class="fa-solid fa-hands-praying"></i> 기도제목
+            </h4>
+            <ol style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 20px; margin: 0; padding-left: 20px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                {% for topic in prayer_topics %}
+                <li style="padding-left: 2px;">{{ topic }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- View Toggle -->
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+            <button id="btnViewSchedule" onclick="switchCalendarView('schedule')" class="btn btn-primary btn-sm" style="gap: 6px;">
+                <i class="fa-solid fa-list-check"></i> 준비 일정
+            </button>
+            <button id="btnViewPrayer" onclick="switchCalendarView('prayer')" class="btn btn-secondary btn-sm" style="gap: 6px;">
+                <i class="fa-solid fa-hands-praying"></i> 기도 릴레이
+            </button>
+            <span id="prayerViewHint" style="display:none; font-size: 0.78rem; color: var(--text-muted);">
+                <i class="fa-solid fa-circle-info"></i> 날짜를 클릭하면 담당 가정과 기도제목, 기도내용을 볼 수 있어요
+            </span>
+        </div>
+
         <div id="calendar"></div>
+
+        <!-- Selected Prayer Day Detail + 등록 폼 -->
+        <div id="prayerDayDetail" style="display:none; margin-top: 20px; padding: 20px 22px; border-radius: 14px; border: 1px solid rgba(240, 137, 31, 0.25); background: rgba(240, 137, 31, 0.05);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <div id="prayerDetailDate" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;"></div>
+                    <div id="prayerDetailFamily" style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary);"></div>
+                </div>
+                <div id="prayerDetailTopicBadge" style="font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; background: rgba(240, 137, 31, 0.15); color: var(--color-pink); white-space: nowrap;"></div>
+            </div>
+            <div id="prayerDetailTopicText" style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 14px; padding-left: 2px;"></div>
+
+            <div id="prayerDetailExisting" style="display:none; background: rgba(0,0,0,0.15); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.88rem; color: var(--text-primary); white-space: pre-wrap;"></div>
+
+            <form id="prayerDayForm" action="{{ url_for('prayer_relay_submit') }}" method="POST" style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+                <input type="hidden" name="prayer_date" id="prayerFormDate">
+                <textarea name="content" id="prayerFormContent" rows="2" required placeholder="오늘 우리 가정의 기도제목을 자유롭게 올려주세요"
+                          style="flex: 1; min-width: 220px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-primary); font-family: var(--font-outfit); font-size: 0.9rem; resize: vertical;"></textarea>
+                <button type="submit" class="btn btn-accent btn-sm" style="height: fit-content;">
+                    <i class="fa-solid fa-paper-plane"></i> 등록
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- Schedule List Table -->
@@ -157,7 +209,7 @@
     }
 
     // Map schedules to FullCalendar events
-    const events = [
+    const scheduleEvents = [
         {% for task in schedules %}
             {% if task.due_date %}
             {
@@ -179,7 +231,92 @@
         {% endfor %}
     ];
 
+    // 기도 릴레이 데이터 (날짜별 담당 가정 + 기도제목 번호 + 등록된 기도내용)
+    const prayerTopics = {{ prayer_topics|tojson }};
+    const prayerDays = {
+        {% for day in prayer_days %}
+        "{{ day.prayer_date }}": {
+            family: {{ (day.assigned_family or '')|tojson }},
+            topicNumber: {{ day.topic_number|tojson if day.topic_number is not none else 'null' }},
+            isSpecial: {{ 'true' if day.is_special else 'false' }},
+            content: {{ (day.prayer_content or '')|tojson }},
+            postedBy: {{ (day.posted_by or '')|tojson }}
+        },
+        {% endfor %}
+    };
+    const prayerEvents = Object.keys(prayerDays).map(date => {
+        const d = prayerDays[date];
+        const label = d.topicNumber ? `${d.topicNumber}번 · ${d.family}` : d.family;
+        return {
+            id: `prayer-${date}`,
+            title: label,
+            start: date,
+            allDay: true,
+            color: d.isSpecial ? '#E8A83D' : (d.content ? '#6FA83C' : '#F0891F')
+        };
+    });
+
     let calendar;
+    let calendarMode = 'schedule';
+
+    function renderPrayerDetail(date) {
+        const d = prayerDays[date];
+        const panel = document.getElementById('prayerDayDetail');
+        if (!d) { panel.style.display = 'none'; return; }
+
+        document.getElementById('prayerDetailDate').textContent = date;
+        document.getElementById('prayerDetailFamily').textContent = d.family;
+
+        const badge = document.getElementById('prayerDetailTopicBadge');
+        const topicText = document.getElementById('prayerDetailTopicText');
+        if (d.topicNumber) {
+            badge.style.display = 'inline-block';
+            badge.textContent = `기도제목 ${d.topicNumber}번`;
+            topicText.textContent = prayerTopics[d.topicNumber - 1] || '';
+        } else {
+            badge.style.display = 'none';
+            topicText.textContent = '';
+        }
+
+        const existingBox = document.getElementById('prayerDetailExisting');
+        if (d.content) {
+            existingBox.style.display = 'block';
+            existingBox.textContent = `💬 ${d.content}${d.postedBy ? ' — ' + d.postedBy : ''}`;
+        } else {
+            existingBox.style.display = 'none';
+            existingBox.textContent = '';
+        }
+
+        document.getElementById('prayerFormDate').value = date;
+        document.getElementById('prayerFormContent').value = d.content || '';
+
+        panel.style.display = 'block';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function switchCalendarView(mode) {
+        calendarMode = mode;
+        const btnSchedule = document.getElementById('btnViewSchedule');
+        const btnPrayer = document.getElementById('btnViewPrayer');
+        const hint = document.getElementById('prayerViewHint');
+        const detail = document.getElementById('prayerDayDetail');
+
+        if (mode === 'schedule') {
+            btnSchedule.className = 'btn btn-primary btn-sm';
+            btnPrayer.className = 'btn btn-secondary btn-sm';
+            hint.style.display = 'none';
+            detail.style.display = 'none';
+        } else {
+            btnSchedule.className = 'btn btn-secondary btn-sm';
+            btnPrayer.className = 'btn btn-primary btn-sm';
+            hint.style.display = 'inline';
+        }
+
+        if (calendar) {
+            calendar.removeAllEventSources();
+            calendar.addEventSource(mode === 'schedule' ? scheduleEvents : prayerEvents);
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
@@ -187,7 +324,7 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'ko',
-                events: events,
+                events: scheduleEvents,
                 height: 'auto',
                 headerToolbar: {
                     left: 'prev,next today',
@@ -195,6 +332,11 @@
                     right: 'dayGridMonth,listMonth'
                 },
                 eventClick: function(info) {
+                    if (calendarMode === 'prayer') {
+                        const date = info.event.startStr;
+                        renderPrayerDetail(date);
+                        return;
+                    }
                     const taskId = info.event.id;
                     const row = document.getElementById(`task-row-${taskId}`);
                     if (row) {
@@ -210,6 +352,11 @@
                 }
             });
             calendar.render();
+        }
+
+        // #prayer-relay 해시로 들어온 경우 바로 기도 릴레이 보기로 전환
+        if (location.hash === '#prayer-relay') {
+            switchCalendarView('prayer');
         }
     });
 

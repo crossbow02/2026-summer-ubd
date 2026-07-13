@@ -22,6 +22,18 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 # Create upload folder if not exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# 2026 유바디 2마을 여름선교를 위한 기도제목 (기도 릴레이 상단 고정 리스트)
+PRAYER_TOPICS = [
+    '우리가 만날 아이들을 위해 그리스도의 사랑을 품도록',
+    '언어, 문화적 차이를 복음으로 허무는 지혜를 주시도록',
+    '우리가 만날 아이들의 마음 문이 열리도록',
+    '토요일/주일 사역의 현장과 프로그램이 은혜 가운데 진행되도록',
+    '동참하는 가정(부모+자녀)들의 영적 결속과 하나가 되도록',
+    '온누리 M센터와 조우현 선교사님(김온유 선교사님), 둔포성결교회 간의 긴밀한 동역이 되도록',
+    '선교 이후에 계속적으로 일상의 선교사로 헌신하는 가정이 되도록',
+    '물질과 재정이 꼭 필요한 곳에 쓰이며, 부족함 없이 채워지도록',
+]
+
 # Database Self-Migration helper for Target Children and Teams
 def migrate_db():
     try:
@@ -140,6 +152,66 @@ def migrate_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+
+        # 8. Prayer relay table (기도 릴레이: 날짜별 담당 가정 + 기도제목 번호 + 가정이 직접 올리는 기도내용)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prayer_relay (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prayer_date TEXT UNIQUE NOT NULL,
+            assigned_family TEXT,
+            topic_number INTEGER,
+            is_special INTEGER DEFAULT 0,
+            prayer_content TEXT,
+            posted_by TEXT,
+            updated_at TIMESTAMP
+        )
+        """)
+
+        # Seed the prayer relay calendar (2026/7/13 ~ 8/16) on first run, from 기도릴레이 리스트.png
+        cursor.execute("SELECT COUNT(*) FROM prayer_relay")
+        if cursor.fetchone()[0] == 0:
+            prayer_relay_seed = [
+                ('2026-07-13', '김진석/민은숙 가정', 1, 0),
+                ('2026-07-14', '정다운/김도희 가정', 2, 0),
+                ('2026-07-15', '염대한/김금년 가정', 3, 0),
+                ('2026-07-16', '허무길/천지연 가정', 4, 0),
+                ('2026-07-17', '김민웅/김혜영 가정', 5, 0),
+                ('2026-07-18', '조성필/천예연 가정', 6, 0),
+                ('2026-07-19', '김종대/민슬기 가정', 7, 0),
+                ('2026-07-20', '권경숙 가정', 8, 0),
+                ('2026-07-21', '허슬기/전현주 가정', 1, 0),
+                ('2026-07-22', '신호상/민혜인 가정', 2, 0),
+                ('2026-07-23', '이재한/이리라 가정', 3, 0),
+                ('2026-07-24', '김정휘/방지안 가정', 4, 0),
+                ('2026-07-25', '이준구/고은선 가정', 5, 0),
+                ('2026-07-26', '최중근/송경민 가정', 6, 0),
+                ('2026-07-27', '박우성/송혜린 가정', 7, 0),
+                ('2026-07-28', '서재영/장인경 가정', 8, 0),
+                ('2026-07-29', '김진석/민은숙 가정', 5, 0),
+                ('2026-07-30', '정다운/김도희 가정', 6, 0),
+                ('2026-07-31', '염대한/김금년 가정', 7, 0),
+                ('2026-08-01', '허무길/천지연 가정', 8, 0),
+                ('2026-08-02', '김민웅/김혜영 가정', 1, 0),
+                ('2026-08-03', '조성필/천예연 가정', 2, 0),
+                ('2026-08-04', '김종대/민슬기 가정', 3, 0),
+                ('2026-08-05', '권경숙 가정', 4, 0),
+                ('2026-08-06', '허슬기/전현주 가정', 5, 0),
+                ('2026-08-07', '신호상/민혜인 가정', 6, 0),
+                ('2026-08-08', '이재한/이리라 가정', 7, 0),
+                ('2026-08-09', '김정휘/방지안 가정', 8, 0),
+                ('2026-08-10', '이준구/고은선 가정', 1, 0),
+                ('2026-08-11', '최중근/송경민 가정', 2, 0),
+                ('2026-08-12', '박우성/송혜린 가정', 3, 0),
+                ('2026-08-13', '서재영/장인경 가정', 4, 0),
+                ('2026-08-14', '이현민 목사님', None, 0),
+                ('2026-08-15', '여름선교', None, 1),
+                ('2026-08-16', '여름선교', None, 1),
+            ]
+            cursor.executemany("""
+                INSERT INTO prayer_relay (prayer_date, assigned_family, topic_number, is_special)
+                VALUES (?, ?, ?, ?)
+            """, prayer_relay_seed)
+            print(f"Successfully seeded {len(prayer_relay_seed)} days into prayer_relay table.")
 
         # Check if target_children table is empty (seed default children on first startup)
         cursor.execute("SELECT COUNT(*) FROM target_children")
@@ -950,23 +1022,42 @@ def shared_schedule():
         return redirect(url_for('shared_schedule'))
         
     schedules = query_db("""
-        SELECT * FROM shared_schedules 
+        SELECT * FROM shared_schedules
         ORDER BY due_date IS NULL, due_date ASC, created_at ASC
     """)
     schedules_list = [dict(s) for s in schedules]
-    
+
     # Calculate progress metrics
     total_tasks = len(schedules_list)
     completed_tasks = sum(1 for s in schedules_list if s['is_completed'])
     progress_percentage = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-    
+
+    prayer_days = query_db("SELECT * FROM prayer_relay ORDER BY prayer_date ASC")
+    prayer_days_list = [dict(p) for p in prayer_days]
+
     return render_template('shared_schedule.html',
                            schedules=schedules_list,
                            total_tasks=total_tasks,
                            completed_tasks=completed_tasks,
                            progress_percentage=progress_percentage,
+                           prayer_topics=PRAYER_TOPICS,
+                           prayer_days=prayer_days_list,
                            is_admin=(session.get('role') == 'admin'),
                            current_name=session.get('name'))
+
+@app.route('/prayer-relay/submit', methods=['POST'])
+def prayer_relay_submit():
+    prayer_date = request.form.get('prayer_date', '').strip()
+    content = request.form.get('content', '').strip()
+
+    if prayer_date and content:
+        execute_db("""
+            UPDATE prayer_relay
+            SET prayer_content = ?, posted_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE prayer_date = ?
+        """, (content, session.get('name'), prayer_date))
+
+    return redirect(url_for('shared_schedule') + '#prayer-relay')
 
 @app.route('/shared-schedule/toggle/<int:id>', methods=['POST'])
 def toggle_schedule(id):
