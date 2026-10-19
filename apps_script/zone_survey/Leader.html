@@ -75,7 +75,10 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
   .person { grid-template-columns: 44px 1fr 96px 150px; }
   .person .phone { grid-column: auto; }
 }
-.child { display: grid; grid-template-columns: 1fr 64px 72px 32px; gap: 6px; margin-bottom: 6px; }
+.child, .kid-head { display: grid; grid-template-columns: 1fr 84px 72px 32px; gap: 6px; margin-bottom: 6px; }
+.kid-head { margin-bottom: 4px; font-size: 12px; color: var(--muted); }
+.kid-head span { padding-left: 4px; }
+.kid-head:has(+ .kids:empty) { display: none; }
 .child .del { border: none; background: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0; }
 .hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
 .confirm { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px; border-radius: 10px;
@@ -173,7 +176,7 @@ function kidRow(c) {
   c = c || {name: '', year: '', gender: '', note: ''};
   return `<div class="child">
     <input type="text" data-k="name" value="${esc(c.name)}" placeholder="이름">
-    <input type="text" data-k="year" value="${esc(c.year)}" placeholder="출생년" inputmode="numeric">
+    <input type="text" data-k="year" value="${esc(c.year)}" placeholder="예: 17" inputmode="numeric">
     <select data-k="gender"><option value="">성별</option>
       <option ${c.gender === '남' ? 'selected' : ''}>남</option><option ${c.gender === '여' ? 'selected' : ''}>여</option></select>
     <button type="button" class="del" aria-label="자녀 삭제">×</button>
@@ -208,6 +211,7 @@ function familyCard(f) {
       </div>
       <div class="section">
         <h3><span class="num">2</span>자녀정보</h3>
+        <div class="kid-head"><span>이름</span><span>출생년도 뒷자리</span><span>성별</span><span></span></div>
         <div class="kids">${f.children.map(kidRow).join('')}</div>
         <button type="button" class="btn sm add-kid">+ 자녀 추가</button>
         <p class="hint">출생년은 두 자리로 적어주세요 (예: 2017년생 → 17).</p>
