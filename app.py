@@ -24,6 +24,18 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 # Create upload folder if not exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# 2026 유바디 2마을 여름선교를 위한 기도제목 (기도 릴레이 상단 고정 리스트)
+PRAYER_TOPICS = [
+    '우리가 만날 아이들을 위해 그리스도의 사랑을 품도록',
+    '언어, 문화적 차이를 복음으로 허무는 지혜를 주시도록',
+    '우리가 만날 아이들의 마음 문이 열리도록',
+    '토요일/주일 사역의 현장과 프로그램이 은혜 가운데 진행되도록',
+    '동참하는 가정(부모+자녀)들의 영적 결속과 하나가 되도록',
+    '온누리 M센터와 조우현 선교사님(김온유 선교사님), 둔포성결교회 간의 긴밀한 동역이 되도록',
+    '선교 이후에 계속적으로 일상의 선교사로 헌신하는 가정이 되도록',
+    '물질과 재정이 꼭 필요한 곳에 쓰이며, 부족함 없이 채워지도록',
+]
+
 # Database Self-Migration helper for Target Children and Teams
 def migrate_db():
     try:
@@ -140,6 +152,84 @@ def migrate_db():
             description TEXT,
             uploaded_by TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        # 8. Add last_page column to users (remembers each user's last visited page)
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [info[1] for info in cursor.fetchall()]
+        if 'last_page' not in columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN last_page TEXT")
+            print("Added 'last_page' column to 'users' table.")
+
+        # 9. Prayer relay table (기도 릴레이: 날짜별 담당 가정 + 기도제목 번호 + 가정이 직접 올리는 기도내용)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prayer_relay (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prayer_date TEXT UNIQUE NOT NULL,
+            assigned_family TEXT,
+            topic_number INTEGER,
+            is_special INTEGER DEFAULT 0,
+            prayer_content TEXT,
+            posted_by TEXT,
+            updated_at TIMESTAMP
+        )
+        """)
+
+        # Seed the prayer relay calendar (2026/7/13 ~ 8/16) on first run, from 기도릴레이 리스트.png
+        cursor.execute("SELECT COUNT(*) FROM prayer_relay")
+        if cursor.fetchone()[0] == 0:
+            prayer_relay_seed = [
+                ('2026-07-13', '김진석/민은숙 가정', 1, 0),
+                ('2026-07-14', '정다운/김도희 가정', 2, 0),
+                ('2026-07-15', '염대한/김금년 가정', 3, 0),
+                ('2026-07-16', '허무길/천지연 가정', 4, 0),
+                ('2026-07-17', '김민웅/김혜영 가정', 5, 0),
+                ('2026-07-18', '조성필/천예연 가정', 6, 0),
+                ('2026-07-19', '김종대/민슬기 가정', 7, 0),
+                ('2026-07-20', '권경숙 가정', 8, 0),
+                ('2026-07-21', '허슬기/전현주 가정', 1, 0),
+                ('2026-07-22', '신호상/민혜인 가정', 2, 0),
+                ('2026-07-23', '이재한/이리라 가정', 3, 0),
+                ('2026-07-24', '김정휘/방지안 가정', 4, 0),
+                ('2026-07-25', '이준구/고은선 가정', 5, 0),
+                ('2026-07-26', '최중근/송경민 가정', 6, 0),
+                ('2026-07-27', '박우성/송혜린 가정', 7, 0),
+                ('2026-07-28', '서재영/장인경 가정', 8, 0),
+                ('2026-07-29', '김진석/민은숙 가정', 5, 0),
+                ('2026-07-30', '정다운/김도희 가정', 6, 0),
+                ('2026-07-31', '염대한/김금년 가정', 7, 0),
+                ('2026-08-01', '허무길/천지연 가정', 8, 0),
+                ('2026-08-02', '김민웅/김혜영 가정', 1, 0),
+                ('2026-08-03', '조성필/천예연 가정', 2, 0),
+                ('2026-08-04', '김종대/민슬기 가정', 3, 0),
+                ('2026-08-05', '권경숙 가정', 4, 0),
+                ('2026-08-06', '허슬기/전현주 가정', 5, 0),
+                ('2026-08-07', '신호상/민혜인 가정', 6, 0),
+                ('2026-08-08', '이재한/이리라 가정', 7, 0),
+                ('2026-08-09', '김정휘/방지안 가정', 8, 0),
+                ('2026-08-10', '이준구/고은선 가정', 1, 0),
+                ('2026-08-11', '최중근/송경민 가정', 2, 0),
+                ('2026-08-12', '박우성/송혜린 가정', 3, 0),
+                ('2026-08-13', '서재영/장인경 가정', 4, 0),
+                ('2026-08-14', '이현민 목사님', None, 0),
+                ('2026-08-15', '여름선교', None, 1),
+                ('2026-08-16', '여름선교', None, 1),
+            ]
+            cursor.executemany("""
+                INSERT INTO prayer_relay (prayer_date, assigned_family, topic_number, is_special)
+                VALUES (?, ?, ?, ?)
+            """, prayer_relay_seed)
+            print(f"Successfully seeded {len(prayer_relay_seed)} days into prayer_relay table.")
+
+        # 10. Prayer relay amens (기도제목에 대한 '아멘' 반응)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prayer_amens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prayer_date TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(prayer_date, user_id)
         )
         """)
 
@@ -277,6 +367,17 @@ def check_login():
     if request.endpoint not in allowed_routes and not is_zone_page and 'user_id' not in session:
         return redirect(url_for('login'))
 
+# Remember each user's last visited page, so their next login can resume there
+TRACKABLE_ENDPOINTS = {
+    'dashboard', 'family_edit', 'gallery', 'intro', 'shared_schedule',
+    'target_children', 'game', 'praise_dance', 'team_boards',
+}
+
+@app.before_request
+def track_last_page():
+    if request.method == 'GET' and request.endpoint in TRACKABLE_ENDPOINTS and 'user_id' in session:
+        execute_db("UPDATE users SET last_page = ? WHERE id = ?", (request.path, session['user_id']))
+
 # Serving presentation slides
 @app.route('/slides/<filename>')
 def serve_slide(filename):
@@ -358,6 +459,13 @@ def generate_local_ai_text(name, one_liner, motivation, prayers, specialties, ch
 둔포 아이들 사역을 섬기는 모든 팀원들을 축복합니다. 현장에서 주님의 사랑으로 기쁘게 동역하길 원합니다. 함께해주셔서 감사합니다! 😊"""
     return intro
 
+def resolve_user_landing_page(user):
+    """일반 사용자의 로그인 후 이동 페이지: 마지막 열람 페이지가 있으면 그곳으로,
+    없으면 준비 일정표(기도 릴레이 보기)로 안내한다."""
+    if user['last_page']:
+        return redirect(user['last_page'])
+    return redirect(url_for('shared_schedule') + '#prayer-relay')
+
 # Routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -365,15 +473,9 @@ def login():
         if session.get('role') == 'admin':
             return redirect(url_for('dashboard'))
         else:
-            try:
-                profile = query_db(
-                    "SELECT id FROM family_profiles WHERE user_id = ?",
-                    (session['user_id'],), one=True
-                )
-                return redirect(url_for('gallery') if profile else url_for('family_edit'))
-            except Exception:
-                return redirect(url_for('family_edit'))
-        
+            user = query_db("SELECT * FROM users WHERE id = ?", (session['user_id'],), one=True)
+            return resolve_user_landing_page(user)
+
     error = None
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -400,21 +502,11 @@ def login():
 
             # 리다이렉트 결정:
             # 관리자 → 참가 가정 명단(대시보드)
-            # 일반 사용자 → 소개 미완료면 우리가족 소개하기, 완료면 가족 갤러리
+            # 일반 사용자 → 마지막 열람 페이지, 없으면 준비 일정표(기도 릴레이 보기)
             if user['role'] == 'admin':
                 return redirect(url_for('dashboard'))
             else:
-                try:
-                    profile = query_db(
-                        "SELECT id FROM family_profiles WHERE user_id = ?",
-                        (user['id'],), one=True
-                    )
-                    if profile:
-                        return redirect(url_for('gallery'))
-                    else:
-                        return redirect(url_for('family_edit'))
-                except Exception:
-                    return redirect(url_for('family_edit'))
+                return resolve_user_landing_page(user)
         else:
             error = "이름 또는 비밀번호(전화번호 뒤 4자리)가 일치하지 않습니다."
             
@@ -648,31 +740,31 @@ def family_comment(id):
     
     if content:
         execute_db("INSERT INTO comments (profile_id, author_name, content) VALUES (?, ?, ?)", (id, author_name, content))
-        
-    return redirect(url_for('gallery'))
+
+    return redirect(url_for('gallery') + f'#family-{id}')
 
 @app.route('/family/<int:id>/comment/delete/<int:comment_id>', methods=['POST'])
 def delete_comment(id, comment_id):
     # Ensure current user is authorized (admin, comment author, or family profile owner)
     comment = query_db("SELECT * FROM comments WHERE id = ?", (comment_id,), one=True)
     if not comment:
-        return redirect(url_for('gallery'))
-        
+        return redirect(url_for('gallery') + f'#family-{id}')
+
     user_id = session['user_id']
     user = query_db("SELECT * FROM users WHERE id = ?", (user_id,), one=True)
-    
+
     # Authorized names
     authorized_names = [user['adult1_name'], user['adult2_name']] if user else []
-    
+
     # Owner of profile
     is_profile_owner = (user_id == id)
     is_comment_author = (comment['author_name'] in authorized_names)
     is_admin = (session.get('role') == 'admin')
-    
+
     if is_profile_owner or is_comment_author or is_admin:
         execute_db("DELETE FROM comments WHERE id = ?", (comment_id,))
-        
-    return redirect(url_for('gallery'))
+
+    return redirect(url_for('gallery') + f'#family-{id}')
 
 # Target Children routes
 @app.route('/target-children')
@@ -954,23 +1046,74 @@ def shared_schedule():
         return redirect(url_for('shared_schedule'))
         
     schedules = query_db("""
-        SELECT * FROM shared_schedules 
+        SELECT * FROM shared_schedules
         ORDER BY due_date IS NULL, due_date ASC, created_at ASC
     """)
     schedules_list = [dict(s) for s in schedules]
-    
+
     # Calculate progress metrics
     total_tasks = len(schedules_list)
     completed_tasks = sum(1 for s in schedules_list if s['is_completed'])
     progress_percentage = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
-    
+
+    prayer_days = query_db("SELECT * FROM prayer_relay ORDER BY prayer_date ASC")
+    amen_counts = {row['prayer_date']: row['cnt'] for row in query_db(
+        "SELECT prayer_date, COUNT(*) as cnt FROM prayer_amens GROUP BY prayer_date")}
+    user_amened_dates = {row['prayer_date'] for row in query_db(
+        "SELECT prayer_date FROM prayer_amens WHERE user_id = ?", (session['user_id'],))}
+
+    prayer_days_list = []
+    for p in prayer_days:
+        p_dict = dict(p)
+        p_dict['amen_count'] = amen_counts.get(p['prayer_date'], 0)
+        p_dict['user_amened'] = p['prayer_date'] in user_amened_dates
+        prayer_days_list.append(p_dict)
+
+    today_str = datetime.now().strftime('%Y-%m-%d')
+
     return render_template('shared_schedule.html',
                            schedules=schedules_list,
                            total_tasks=total_tasks,
                            completed_tasks=completed_tasks,
                            progress_percentage=progress_percentage,
+                           prayer_topics=PRAYER_TOPICS,
+                           prayer_days=prayer_days_list,
+                           today_prayer_date=today_str,
                            is_admin=(session.get('role') == 'admin'),
                            current_name=session.get('name'))
+
+@app.route('/prayer-relay/submit', methods=['POST'])
+def prayer_relay_submit():
+    prayer_date = request.form.get('prayer_date', '').strip()
+    content = request.form.get('content', '').strip()
+
+    if prayer_date and content:
+        execute_db("""
+            UPDATE prayer_relay
+            SET prayer_content = ?, posted_by = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE prayer_date = ?
+        """, (content, session.get('name'), prayer_date))
+
+    return redirect(url_for('shared_schedule') + '#prayer-relay')
+
+@app.route('/prayer-relay/amen/<prayer_date>', methods=['POST'])
+def prayer_relay_amen(prayer_date):
+    user_id = session['user_id']
+    existing = query_db(
+        "SELECT id FROM prayer_amens WHERE prayer_date = ? AND user_id = ?",
+        (prayer_date, user_id), one=True)
+
+    if existing:
+        execute_db("DELETE FROM prayer_amens WHERE id = ?", (existing['id'],))
+        amened = False
+    else:
+        execute_db("INSERT INTO prayer_amens (prayer_date, user_id) VALUES (?, ?)", (prayer_date, user_id))
+        amened = True
+
+    amen_count = query_db(
+        "SELECT COUNT(*) as cnt FROM prayer_amens WHERE prayer_date = ?",
+        (prayer_date,), one=True)['cnt']
+    return jsonify({'amened': amened, 'amen_count': amen_count})
 
 @app.route('/shared-schedule/toggle/<int:id>', methods=['POST'])
 def toggle_schedule(id):

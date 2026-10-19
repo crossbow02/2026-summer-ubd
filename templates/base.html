@@ -11,7 +11,8 @@
     <!-- FontAwesome icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style Sheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.5">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <!-- Inline Theme Checker Script -->
     <script>
         (function() {
@@ -32,7 +33,7 @@
         <!-- Top Row: Logo & Profile Actions -->
         <div class="nav-top-row">
             <a href="{{ url_for('dashboard') }}" class="nav-logo">
-                <span class="emoji-spin">⛪</span> <span>2026 유바디 2마을 여름 아웃리치</span>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="유아GOOD" class="nav-logo-img"> <span>2026 유바디 2마을 여름 아웃리치</span>
             </a>
             
             <div class="nav-right-actions">
@@ -69,9 +70,6 @@
                 <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <i class="fa-solid fa-users-viewfinder"></i> <span>참가 가정 명단</span>
                 </a>
-                <a href="{{ url_for('family_edit') }}" class="nav-item {% if request.endpoint == 'family_edit' %}active{% endif %}">
-                    <i class="fa-solid fa-house-chimney-user"></i> <span>우리가족 소개하기</span>
-                </a>
                 <a href="{{ url_for('gallery') }}" class="nav-item {% if request.endpoint == 'gallery' %}active{% endif %}">
                     <i class="fa-solid fa-images"></i> <span>가족 갤러리</span>
                 </a>
@@ -79,7 +77,7 @@
                     <i class="fa-solid fa-photo-film"></i> <span>사역 소개</span>
                 </a>
                 <a href="{{ url_for('shared_schedule') }}" class="nav-item {% if request.endpoint == 'shared_schedule' %}active{% endif %}">
-                    <i class="fa-solid fa-calendar-check"></i> <span>준비 일정표</span>
+                    <i class="fa-solid fa-calendar-check"></i> <span>준비 일정표 · 기도릴레이</span>
                 </a>
                 <a href="{{ url_for('target_children') }}" class="nav-item {% if request.endpoint == 'target_children' %}active{% endif %}">
                     <i class="fa-solid fa-children"></i> <span>만날 아이들</span>
@@ -90,11 +88,9 @@
                 <a href="{{ url_for('praise_dance') }}" class="nav-item {% if request.endpoint == 'praise_dance' %}active{% endif %}">
                     <i class="fa-solid fa-music"></i> <span>찬양 율동 배우기</span>
                 </a>
-                {#
                 <a href="{{ url_for('team_boards') }}" class="nav-item {% if request.endpoint == 'team_boards' %}active{% endif %}">
                     <i class="fa-solid fa-comments"></i> <span>팀별 소통방</span>
                 </a>
-                #}
             </nav>
             <div class="user-badge-nav mobile-only">
                 <span class="user-name-tag">

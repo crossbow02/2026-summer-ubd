@@ -73,7 +73,7 @@
                     <div class="child-meta-header">
                         <span class="child-name">{{ child.name }}</span>
                         {% if child.grade %}
-                        <span class="child-age-badge" style="background: rgba(99, 102, 241, 0.15); color: var(--color-indigo); border: 1px solid rgba(99, 102, 241, 0.2); font-size: 0.82rem; padding: 3px 8px;">{{ child.grade }}</span>
+                        <span class="child-age-badge" style="background: rgba(46, 125, 192, 0.15); color: var(--color-indigo); border: 1px solid rgba(46, 125, 192, 0.2); font-size: 0.82rem; padding: 3px 8px;">{{ child.grade }}</span>
                         {% endif %}
                     </div>
 
@@ -93,10 +93,10 @@
                     {% if child.nationality or child.korean_level %}
                     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; font-size: 0.8rem;">
                         {% if child.nationality %}
-                        <span style="background: rgba(99, 102, 241, 0.15); color: var(--color-indigo); padding: 3px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-globe"></i> {{ child.nationality }}</span>
+                        <span style="background: rgba(46, 125, 192, 0.15); color: var(--color-indigo); padding: 3px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-globe"></i> {{ child.nationality }}</span>
                         {% endif %}
                         {% if child.korean_level %}
-                        <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 3px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-language"></i> 한국어: {{ child.korean_level }}</span>
+                        <span style="background: rgba(111, 168, 60, 0.15); color: #6FA83C; padding: 3px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-language"></i> 한국어: {{ child.korean_level }}</span>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -372,7 +372,7 @@
                 
                 <!-- 기존 사진 삭제 버튼 -->
                 <div id="edit_photo_delete_container" style="margin-top: 10px; display: none; text-align: left;">
-                    <button type="button" class="btn btn-secondary" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="deleteCurrentChildPhoto()">
+                    <button type="button" class="btn btn-secondary" style="background: linear-gradient(135deg, #E8A83D, #B8801F); color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="deleteCurrentChildPhoto()">
                         <i class="fa-solid fa-image-slash"></i> 기존 사진 삭제
                     </button>
                 </div>
@@ -625,7 +625,7 @@
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(compressed);
                     input.files = dataTransfer.files;
-                    helpText.innerHTML = '<span style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> 최적화 완료!</span>';
+                    helpText.innerHTML = '<span style="color: #6FA83C;"><i class="fa-solid fa-circle-check"></i> 최적화 완료!</span>';
                 } catch (e) {
                     console.error('Image compression failed:', e);
                     helpText.innerHTML = originalText;
