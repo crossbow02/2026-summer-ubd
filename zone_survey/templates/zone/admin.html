@@ -1,0 +1,77 @@
+{% extends 'zone/base.html' %}
+{% block title %}관리 · {{ year }} 구역편성 기초자료{% endblock %}
+{% block head %}
+<style>
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.summary .card { padding: 14px; }
+.summary b { font-size: 22px; display: block; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.table th { font-size: 12px; color: var(--muted); font-weight: 500; }
+.table tr:last-child td { border-bottom: none; }
+.mini { width: 90px; }
+.zones { overflow-x: auto; }
+@media (max-width: 640px) { .hide-sm { display: none; } }
+</style>
+{% endblock %}
+{% block body %}
+<header class="top"><div class="wrap wide">
+  <div class="eyebrow">유바디 2마을 · 관리자</div>
+  <h1>{{ year }} 구역편성 기초자료 현황</h1>
+  <div class="muted small">각 구역장님께 링크를 카톡으로 보내주세요. 링크를 아는 사람만 접근할 수 있습니다.</div>
+</div></header>
+
+<div class="wrap wide">
+  {% set total = zones|sum(attribute='total') %}{% set done = zones|sum(attribute='done') %}
+  <div class="summary">
+    <div class="card"><span class="muted small">전체 가정</span><b>{{ total }}</b></div>
+    <div class="card"><span class="muted small">작성 완료</span><b>{{ done }}</b></div>
+    <div class="card"><span class="muted small">제출한 구역</span><b>{{ zones|selectattr('submitted_at')|list|length }} / {{ zones|length }}</b></div>
+  </div>
+
+  <div class="toolbar">
+    <a class="btn primary" href="{{ url_for('zone.admin_export') }}">엑셀 내려받기</a>
+    <button class="btn" id="copyAll">전체 카톡 메시지 복사</button>
+  </div>
+
+  <div class="card zones">
+    <table class="table">
+      <thead><tr><th>구역</th><th class="hide-sm">구역장</th><th>진행</th><th>제출</th><th>링크</th></tr></thead>
+      <tbody>
+      {% for z in zones %}
+      <tr>
+        <td><a href="{{ url_for('zone.admin_zone', zone_id=z.id) }}"><b>{{ z.name }}</b></a></td>
+        <td class="hide-sm">{{ z.leader_names }}</td>
+        <td><div class="progress mini"><i style="width:{{ (z.done / z.total * 100) if z.total else 0 }}%"></i></div>
+          <span class="small muted">{{ z.done }}/{{ z.total }}</span></td>
+        <td>{% if z.submitted_at %}<span class="badge ok">제출 {{ z.submitted_at[5:] }}</span>{% else %}<span class="badge">미제출</span>{% endif %}</td>
+        <td><button class="btn sm copy" data-msg="{{ z.name }}|{{ z.leader_names }}|{{ z.link }}">메시지 복사</button>
+          <a class="btn sm ghost" href="{{ z.link }}" target="_blank">열기</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function message(raw) {
+  const [zone, leaders, link] = raw.split('|');
+  const who = zone === '임원' ? '임원' : `${zone} 구역장`;
+  return `[{{ year }} 구역편성 기초자료 요청]\n${leaders} ${who}님, 한 해 동안 구역을 섬겨주셔서 감사합니다 🙏\n\n내년 구역편성을 위해 구역 가정들의 정보 확인, 최근 2년 출석률(A~D), 동정·특이사항 작성을 부탁드립니다.\n아래 링크는 ${zone} 전용 링크이니 다른 분께 공유하지 말아주세요.\n\n${link}`;
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  toast('복사했어요');
+}
+document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => copy(message(b.dataset.msg))));
+document.getElementById('copyAll').addEventListener('click', () =>
+  copy([...document.querySelectorAll('.copy')].map(b => message(b.dataset.msg)).join('\n\n──────────\n\n')));
+</script>
+{% endblock %}

@@ -17,3 +17,6 @@ static/uploads/family_*
 .idea/
 venv/
 .env
+
+# 구역편성 기초자료 DB (개인정보)
+zone_survey.db

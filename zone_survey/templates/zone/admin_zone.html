@@ -1,0 +1,50 @@
+{% extends 'zone/base.html' %}
+{% block title %}{{ zone.name }} · 관리{% endblock %}
+{% block head %}
+<style>
+.fam { padding: 16px; margin-top: 12px; }
+.fam .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.fam .head h2 { flex: 1; min-width: 0; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; font-size: 14px; }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+.label { font-size: 12px; color: var(--muted); }
+.note { white-space: pre-wrap; background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-top: 4px; font-size: 14px; }
+.memo { white-space: pre-wrap; font-size: 13px; color: var(--muted); margin-top: 4px; }
+</style>
+{% endblock %}
+{% block body %}
+<header class="top"><div class="wrap">
+  <a href="{{ url_for('zone.admin') }}" class="small muted">← 전체 현황</a>
+  <h1>{{ zone.name }} <span class="muted" style="font-weight:400;font-size:16px">{{ zone.leader_names }}</span></h1>
+  <div class="small">{% if zone.submitted_at %}<span class="badge ok">제출 {{ zone.submitted_at }}</span>{% else %}<span class="badge">미제출</span>{% endif %}
+    <a href="{{ link }}" target="_blank" class="small">구역장 화면 열기 ↗</a></div>
+</div></header>
+<div class="wrap">
+  {% for f in families %}
+  <div class="card fam">
+    <div class="head">
+      <h2>{{ f.title }}</h2>
+      <span class="badge">{{ f.role_prev }}</span>
+      {% if f.attendance %}<span class="grade {{ f.attendance }}">{{ f.attendance }}</span>{% endif %}
+      {% if f.next_status %}<span class="badge blue">{{ f.next_status }}</span>{% endif %}
+      {% if not f.complete %}<span class="badge warn">미완료</span>{% endif %}
+    </div>
+    <div class="grid">
+      <div>
+        <div class="label">형제</div>{{ f.husband_name or '-' }} {{ f.husband_birth }} <span class="muted">{{ f.husband_phone }}</span>
+        <div class="label" style="margin-top:6px">자매</div>{{ f.wife_name or '-' }} {{ f.wife_birth }} <span class="muted">{{ f.wife_phone }}</span>
+      </div>
+      <div>
+        <div class="label">자녀</div>
+        {% for c in f.children %}{{ c.name }}{% if c.year or c.gender %}({{ [c.year, c.gender]|select|join(',') }}){% endif %}{% if c.note %} {{ c.note }}{% endif %}{{ ', ' if not loop.last }}{% else %}-{% endfor %}
+        {% if f.changed %}<div class="label" style="margin-top:6px">구역장이 수정한 항목</div><span class="badge warn">{{ f.changed|join(', ') }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="label" style="margin-top:10px">동정 · 특이사항 {% if f.updated_at %}({{ f.updated_at }}){% endif %}</div>
+    <div class="note">{{ f.note or '아직 작성되지 않았습니다.' }}</div>
+    {% if f.sheet_memo %}<div class="label" style="margin-top:10px">기존 시트 메모</div><div class="memo">{{ f.sheet_memo }}</div>{% endif %}
+    {% if f.ref_att_m or f.ref_att_f %}<div class="memo">기존 출석: 형제 {{ f.ref_att_m or '-' }} / 자매 {{ f.ref_att_f or '-' }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -6,9 +6,11 @@ import urllib.parse
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, g, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
+from zone_survey import bp as zone_bp
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+app.register_blueprint(zone_bp)
 
 # Paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -270,7 +272,9 @@ def execute_db(query, args=()):
 def check_login():
     # Allow login, static files, slide service, and git webhooks without login
     allowed_routes = ['login', 'static', 'serve_slide', 'github_webhook']
-    if request.endpoint not in allowed_routes and 'user_id' not in session:
+    # 구역편성 기초자료 페이지는 구역장 링크 토큰 / 자체 관리자 인증을 사용
+    is_zone_page = (request.endpoint or '').startswith('zone.')
+    if request.endpoint not in allowed_routes and not is_zone_page and 'user_id' not in session:
         return redirect(url_for('login'))
 
 # Serving presentation slides

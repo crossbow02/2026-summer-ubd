@@ -1,0 +1,312 @@
+{% extends 'zone/base.html' %}
+{% block title %}{{ zone.name }} · {{ year }} 구역편성 기초자료{% endblock %}
+{% block head %}
+<style>
+.intro { margin-top: 16px; padding: 16px; }
+.intro ol { margin: 8px 0 0; padding-left: 20px; }
+.intro li { margin: 2px 0; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 12px; font-size: 13px; }
+.legend div { display: flex; gap: 8px; align-items: center; }
+.sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 0 10px; }
+.sticky .row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.family { margin-top: 12px; overflow: hidden; scroll-margin-top: 64px; }
+.family > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.family > summary::-webkit-details-marker { display: none; }
+.family > summary .name { font-weight: 700; font-size: 16px; flex: 1; min-width: 0; }
+.family > summary .name .sub { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.family > summary .chev { color: var(--muted); transition: transform .2s; }
+.family[open] > summary .chev { transform: rotate(90deg); }
+.family[open] > summary { border-bottom: 1px solid var(--line); }
+.fbody { padding: 4px 16px 16px; }
+.section { padding-top: 16px; }
+.section h3 { font-size: 14px; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+.section h3 .num { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff;
+  font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.person { display: grid; grid-template-columns: 52px 1fr 92px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.person .who { font-size: 13px; color: var(--muted); }
+.person .phone { grid-column: 2 / 4; }
+@media (min-width: 560px) {
+  .person { grid-template-columns: 52px 1fr 96px 150px; }
+  .person .phone { grid-column: auto; }
+}
+.child { display: grid; grid-template-columns: 1fr 64px 70px 36px; gap: 6px; margin-bottom: 6px; }
+.child .del { border: none; background: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+.hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+.confirm { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px; border-radius: 10px;
+  background: var(--accent-soft); cursor: pointer; font-size: 14px; }
+.confirm input { width: 20px; height: 20px; margin: 1px 0 0; flex-shrink: 0; accent-color: var(--accent); }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.grades label { border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 4px; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); }
+.grades label b { font-size: 20px; color: var(--text); }
+.grades input { display: none; }
+{% for g, _, _ in levels %}
+.grades input[value={{ g }}]:checked + label { border-color: var(--{{ g }}); background: color-mix(in srgb, var(--{{ g }}) 10%, white); }
+.grades input[value={{ g }}]:checked + label b { color: var(--{{ g }}); }
+{% endfor %}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips input { display: none; }
+.chips label { border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-size: 13px; cursor: pointer; background: #fff; }
+.chips input:checked + label { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ref { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.actions { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+.actions .state { flex: 1; font-size: 13px; color: var(--muted); }
+.bottom { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+.submitted { padding: 14px 16px; background: var(--ok-soft); color: var(--ok); border-radius: var(--radius); font-weight: 500; margin-top: 16px; }
+</style>
+{% endblock %}
+
+{% block body %}
+<header class="top">
+  <div class="wrap" style="padding-bottom:16px">
+    <div class="eyebrow">유바디 2마을 · {{ year }} 구역편성 기초자료</div>
+    <h1>{{ zone.name }} 가정 동정 작성</h1>
+    <div class="muted small">{{ zone.leader_names }} {% if zone.name != '임원' %}구역장님{% endif %}, 섬겨주셔서 감사합니다 🙏</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card intro">
+    <b>작성 방법</b>
+    <ol class="small">
+      <li>가정을 눌러 <b>기본정보·자녀정보</b>가 맞는지 확인하고, 틀린 부분은 바로 고쳐주세요.</li>
+      <li>최근 <b>2년간 구역모임 출석</b> 정도를 A~D 중에서 골라주세요.</li>
+      <li>내년 편성에 참고할 <b>동정·특이사항</b>을 자유롭게 적고 <b>저장</b>을 눌러주세요.</li>
+      <li>모든 가정을 마치면 맨 아래 <b>최종 제출</b>을 눌러주세요. 제출 후에도 수정할 수 있어요.</li>
+    </ol>
+    <div class="legend">
+      {% for g, label, desc in levels %}
+      <div><span class="grade {{ g }}">{{ g }}</span><span><b>{{ label }}</b><br><span class="muted">{{ desc }}</span></span></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if zone.submitted_at %}
+  <div class="submitted">✓ {{ zone.submitted_at }}에 제출되었습니다. 수정하면 자동으로 반영돼요.</div>
+  {% endif %}
+
+  <div class="sticky">
+    <div class="row"><span><b id="doneCount">0</b> / <span id="totalCount">{{ families|length }}</span> 가정 작성 완료</span>
+      <a href="#bottom" class="muted">제출하기 ↓</a></div>
+    <div class="progress"><i id="progressBar" style="width:0"></i></div>
+  </div>
+
+  <div id="families">
+  {% for f in families %}
+    <details class="card family" data-id="{{ f.id }}" data-added="{{ f.added_by_leader }}">
+      <summary>
+        <span class="name"><span class="title">{{ f.title }}</span>
+          <span class="sub">{{ f.role_prev or '' }}{% if f.children %} · 자녀 {{ f.children|length }}명{% endif %}</span></span>
+        <span class="status badge {{ 'ok' if f.complete else '' }}">{{ '작성 완료' if f.complete else '미작성' }}</span>
+        <span class="chev">›</span>
+      </summary>
+      <form class="fbody" autocomplete="off" onsubmit="return false">
+        <div class="section">
+          <h3><span class="num">1</span>기본정보</h3>
+          {% for key, who in (('husband', '형제'), ('wife', '자매')) %}
+          <div class="person">
+            <span class="who">{{ who }}</span>
+            <input type="text" name="{{ key }}_name" value="{{ f[key ~ '_name'] or '' }}" placeholder="이름">
+            <input type="text" name="{{ key }}_birth" value="{{ f[key ~ '_birth'] or '' }}" placeholder="생년" inputmode="numeric">
+            <input type="tel" class="phone" name="{{ key }}_phone" value="{{ f[key ~ '_phone'] or '' }}" placeholder="010-0000-0000">
+          </div>
+          {% endfor %}
+          <p class="hint">한 분만 출석하시는 가정은 다른 칸을 비워두셔도 됩니다. 생년월일을 아시면 1986.03.03 처럼 적어주세요.</p>
+        </div>
+
+        <div class="section">
+          <h3><span class="num">2</span>자녀정보</h3>
+          <div class="kids">
+            {% for c in f.children %}
+            <div class="child">
+              <input type="text" data-k="name" value="{{ c.name }}" placeholder="이름">
+              <input type="text" data-k="year" value="{{ c.year }}" placeholder="출생년" inputmode="numeric">
+              <select data-k="gender"><option value="">성별</option>
+                <option {{ 'selected' if c.gender == '남' }}>남</option><option {{ 'selected' if c.gender == '여' }}>여</option></select>
+              <button type="button" class="del" title="삭제" aria-label="자녀 삭제">×</button>
+              <input type="hidden" data-k="note" value="{{ c.note }}">
+            </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn sm add-kid">+ 자녀 추가</button>
+          <p class="hint">출생년은 두 자리로 적어주세요 (예: 2017년생 → 17).</p>
+          <label class="confirm"><input type="checkbox" name="info_confirmed" {{ 'checked' if f.info_confirmed }}>
+            <span>위 <b>기본정보와 자녀정보</b>를 확인했습니다.</span></label>
+        </div>
+
+        <div class="section">
+          <h3><span class="num">3</span>최근 2년 출석률</h3>
+          <div class="grades">
+            {% for g, label, desc in levels %}
+            <input type="radio" name="attendance" value="{{ g }}" id="att{{ f.id }}{{ g }}" {{ 'checked' if f.attendance == g }}>
+            <label for="att{{ f.id }}{{ g }}"><b>{{ g }}</b>{{ label }}</label>
+            {% endfor %}
+          </div>
+          {% if f.ref_att_m or f.ref_att_f %}
+          <div class="ref">참고 · 기존 출석 기록: {% if f.ref_att_m %}형제 {{ f.ref_att_m }}{% endif %}{% if f.ref_att_m and f.ref_att_f %} / {% endif %}{% if f.ref_att_f %}자매 {{ f.ref_att_f }}{% endif %}</div>
+          {% endif %}
+        </div>
+
+        <div class="section">
+          <h3><span class="num">4</span>내년 구역 배정 의견 <span class="muted small" style="font-weight:400">(선택)</span></h3>
+          <div class="chips">
+            {% for s in next_status %}
+            <input type="radio" name="next_status" value="{{ s }}" id="ns{{ f.id }}{{ loop.index }}" {{ 'checked' if f.next_status == s }}>
+            <label for="ns{{ f.id }}{{ loop.index }}">{{ s }}</label>
+            {% endfor %}
+          </div>
+          <p class="hint">사랑구역: 소속은 유지하되 모임 참석이 어려운 가정 · 편성 제외: 이사/타교회 이동 등</p>
+        </div>
+
+        <div class="section">
+          <h3><span class="num">5</span>동정 · 특이사항</h3>
+          <textarea name="note" placeholder="예) 구역모임에 성실히 참석하시고 나눔도 적극적이세요. 권찰 가정으로 추천합니다.&#10;예) 형제님은 비신자이시고 자매님만 자녀와 출석하세요.&#10;예) OO 가정과 친해서 같은 구역이면 잘 나오실 것 같아요. 12월 이사 예정.">{{ f.note or '' }}</textarea>
+          <p class="hint">모임 참여 정도, 신앙 상황, 직분 추천, 함께 편성되면 좋을 가정, 이사·직장 등 편성에 참고할 내용을 적어주세요.</p>
+        </div>
+
+        <div class="actions">
+          {% if f.added_by_leader %}<button type="button" class="btn ghost sm remove-family">가정 삭제</button>{% endif %}
+          <span class="state">{% if f.updated_at %}마지막 저장 {{ f.updated_at }}{% endif %}</span>
+          <button type="button" class="btn primary save">저장</button>
+        </div>
+      </form>
+    </details>
+  {% endfor %}
+  </div>
+
+  <div class="bottom" id="bottom">
+    <button type="button" class="btn" id="addFamily">+ 명단에 없는 가정 추가</button>
+    <button type="button" class="btn primary" id="submitZone">최종 제출</button>
+    <p class="hint" style="text-align:center">입력하신 내용은 마을 임원진만 확인하며 구역편성 목적으로만 사용됩니다.</p>
+  </div>
+</div>
+
+<template id="kidTpl">
+  <div class="child">
+    <input type="text" data-k="name" placeholder="이름">
+    <input type="text" data-k="year" placeholder="출생년" inputmode="numeric">
+    <select data-k="gender"><option value="">성별</option><option>남</option><option>여</option></select>
+    <button type="button" class="del" title="삭제" aria-label="자녀 삭제">×</button>
+    <input type="hidden" data-k="note" value="">
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const BASE = {{ url_for('zone.leader', token=zone.token)|tojson }};
+const dirty = new Set();
+
+function collect(card) {
+  const form = card.querySelector('form');
+  const val = n => (form.elements[n] && form.elements[n].value) || '';
+  const checked = n => { const el = form.querySelector(`input[name="${n}"]:checked`); return el ? el.value : null; };
+  return {
+    husband_name: val('husband_name'), husband_birth: val('husband_birth'), husband_phone: val('husband_phone'),
+    wife_name: val('wife_name'), wife_birth: val('wife_birth'), wife_phone: val('wife_phone'),
+    children: [...card.querySelectorAll('.child')].map(row => {
+      const o = {}; row.querySelectorAll('[data-k]').forEach(el => o[el.dataset.k] = el.value.trim()); return o;
+    }).filter(c => c.name),
+    info_confirmed: form.elements['info_confirmed'].checked,
+    attendance: checked('attendance'),
+    next_status: checked('next_status'),
+    note: val('note'),
+  };
+}
+
+function updateProgress() {
+  const cards = [...document.querySelectorAll('.family')];
+  const done = cards.filter(c => c.querySelector('.status').classList.contains('ok')).length;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('totalCount').textContent = cards.length;
+  document.getElementById('progressBar').style.width = (cards.length ? done / cards.length * 100 : 0) + '%';
+}
+
+async function save(card) {
+  const data = collect(card);
+  const btn = card.querySelector('.save');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  try {
+    const res = await fetch(`${BASE}/family/${card.dataset.id}`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+    if (!res.ok) throw new Error(res.status);
+    const {family} = await res.json();
+    dirty.delete(card.dataset.id);
+    const status = card.querySelector('.status');
+    status.classList.toggle('ok', family.complete);
+    status.textContent = family.complete ? '작성 완료' : '저장됨 (미완료)';
+    card.querySelector('.title').textContent = family.title;
+    card.querySelector('.state').textContent = '마지막 저장 ' + family.updated_at;
+    updateProgress();
+    if (!family.complete) {
+      toast(!family.info_confirmed ? '저장했어요. 정보 확인 체크를 해주세요.' : '저장했어요. 출석률을 선택해주세요.');
+    } else {
+      toast('저장했어요 ✓');
+      card.open = false;
+      const next = card.nextElementSibling;
+      if (next && !next.querySelector('.status').classList.contains('ok')) {
+        next.open = true; next.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+    }
+  } catch (e) {
+    toast('저장에 실패했어요. 인터넷 연결을 확인해주세요.');
+  } finally {
+    btn.disabled = false; btn.textContent = '저장';
+  }
+}
+
+document.getElementById('families').addEventListener('click', async e => {
+  const card = e.target.closest('.family');
+  if (!card) return;
+  if (e.target.classList.contains('save')) save(card);
+  if (e.target.classList.contains('add-kid')) {
+    card.querySelector('.kids').appendChild(document.getElementById('kidTpl').content.cloneNode(true));
+    card.querySelector('.kids .child:last-child input').focus();
+    dirty.add(card.dataset.id);
+  }
+  if (e.target.classList.contains('del')) { e.target.closest('.child').remove(); dirty.add(card.dataset.id); }
+  if (e.target.classList.contains('remove-family')) {
+    if (!confirm('이 가정을 삭제할까요?')) return;
+    await fetch(`${BASE}/family/${card.dataset.id}/delete`, {method: 'POST'});
+    dirty.delete(card.dataset.id); card.remove(); updateProgress();
+  }
+});
+document.getElementById('families').addEventListener('input', e => {
+  const card = e.target.closest('.family');
+  if (card) dirty.add(card.dataset.id);
+});
+
+document.getElementById('addFamily').addEventListener('click', async () => {
+  const res = await fetch(`${BASE}/family/new`, {method: 'POST'});
+  if (!res.ok) return toast('추가에 실패했어요.');
+  sessionStorage.setItem('zoneOpen', (await res.json()).id);
+  location.reload();
+});
+
+document.getElementById('submitZone').addEventListener('click', async () => {
+  if (dirty.size) return toast('저장하지 않은 가정이 있어요. 먼저 저장해주세요.');
+  const cards = [...document.querySelectorAll('.family')];
+  const left = cards.filter(c => !c.querySelector('.status').classList.contains('ok'));
+  if (left.length && !confirm(`아직 작성하지 않은 가정이 ${left.length}곳 있어요.\n그래도 제출할까요?`)) {
+    left[0].open = true; left[0].scrollIntoView({behavior: 'smooth'}); return;
+  }
+  const res = await fetch(`${BASE}/submit`, {method: 'POST'});
+  if (res.ok) { alert('제출되었습니다. 수고 많으셨어요! 🙏'); location.reload(); }
+  else toast('제출에 실패했어요.');
+});
+
+window.addEventListener('beforeunload', e => { if (dirty.size) { e.preventDefault(); e.returnValue = ''; } });
+
+(function () {
+  try {
+    const id = sessionStorage.getItem('zoneOpen');
+    if (id) {
+      sessionStorage.removeItem('zoneOpen');
+      const card = document.querySelector(`.family[data-id="${id}"]`);
+      if (card) { card.open = true; card.scrollIntoView(); }
+    }
+  } catch (e) {}
+})();
+updateProgress();
+</script>
+{% endblock %}
