@@ -26,6 +26,18 @@ var ATTENDANCE_LEVELS = [
 ];
 var NEXT_STATUS = ['구역 배정', '사랑구역', '편성 제외'];
 
+// 구역장에게 보낼 카톡 메시지. 이 글 바로 아래에 구역별 링크가 붙는다.
+var KAKAO_MESSAGE = [
+  '구역장님, 안녕하세요^^',
+  '늘 귀하게 섬겨주셔서 진심으로 감사드립니다.',
+  '',
+  '내년에 3마을로 올라가시는 가정이 많이 계시기도 하고 새롭게 시작될 구역 편성에 참고하기 위해서 구역장님들께 구역별 모든 가정 현황에 대해 여쭙고자 합니다.',
+  '',
+  '그리고 구역장님께서 내년 구역장으로 추천하실 가정도 꼭 적어서 보내주시면 감사하겠습니다.',
+  '',
+  '아래 양식을 보내드리니 이번주 금요일까지 보내주시면 감사드리겠습니다 :)'
+].join('\n');
+
 // 구역편성_가정 시트의 열 (순서 = 시트 열 순서)
 var FAMILY_FIELDS = [
   ['id', 'ID'], ['zone', '구역'], ['role', '구분'],
@@ -77,6 +89,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('구역편성 설문')
     .addItem('1. 명단 불러오기 (최초 1회)', 'setupFromSource')
     .addItem('2. 구역장 링크·카톡 메시지 만들기', 'buildLinks')
+    .addItem('카톡 메시지 복사하기', 'showMessages')
     .addSeparator()
     .addItem('3. 결과 시트 만들기 (1마을 형식)', 'buildResult')
     .addToUi();
@@ -140,8 +153,14 @@ function setupFromSource() {
   var moving = zones.reduce(function (sum, z) {
     return sum + z.families.filter(function (f) { return f.move_up; }).length;
   }, 0);
-  ui.alert('완료: ' + zones.length + '개 구역, ' + n + '가정을 불러왔습니다. (3마을 이동 대상 ' + moving + '가정)\n\n' +
-    '다음 단계: [배포 > 새 배포 > 웹 앱]으로 배포한 뒤, 메뉴 [2. 구역장 링크·카톡 메시지 만들기]를 눌러주세요.');
+  var done = '완료: ' + zones.length + '개 구역, ' + n + '가정을 불러왔습니다. (3마을 이동 대상 ' + moving + '가정)\n\n';
+  var url = webappUrl_();
+  if (url) {
+    writeLinks_(zoneSheet, url);
+    ui.alert(done + '구역별 링크와 카톡 메시지도 만들었습니다. 메뉴 [카톡 메시지 복사하기]에서 구역별로 복사해 보내주세요.');
+  } else {
+    ui.alert(done + '다음 단계: [배포 > 새 배포 > 웹 앱]으로 배포한 뒤, 메뉴 [2. 구역장 링크·카톡 메시지 만들기]를 눌러주세요.');
+  }
 }
 
 function newToken_() {
@@ -203,33 +222,58 @@ function buildLinks() {
   var sh = sheet_(CONFIG.ZONE_SHEET);
   if (!sh || sh.getLastRow() < 2) return ui.alert('먼저 [1. 명단 불러오기]를 실행해주세요.');
 
-  var props = PropertiesService.getScriptProperties();
-  var current = props.getProperty('WEBAPP_URL') || ScriptApp.getService().getUrl() || '';
-  var res = ui.prompt('웹앱 주소',
-    '[배포 > 배포 관리]에 있는 웹 앱 URL(…/exec)을 붙여넣어 주세요.' + (current ? '\n현재: ' + current : ''),
-    ui.ButtonSet.OK_CANCEL);
-  if (res.getSelectedButton() !== ui.Button.OK) return;
-  var url = res.getResponseText().trim() || current;
-  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
-    return ui.alert('주소가 올바르지 않습니다. https://script.google.com/…/exec 형태여야 합니다.');
+  var url = webappUrl_();
+  if (!url) {
+    var res = ui.prompt('웹앱 주소', '[배포 > 배포 관리]에 있는 웹 앱 URL(…/exec)을 붙여넣어 주세요.', ui.ButtonSet.OK_CANCEL);
+    if (res.getSelectedButton() !== ui.Button.OK) return;
+    url = res.getResponseText().trim();
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
+      return ui.alert('주소가 올바르지 않습니다. https://script.google.com/…/exec 형태여야 합니다.');
+    }
+    PropertiesService.getScriptProperties().setProperty('WEBAPP_URL', url);
   }
-  props.setProperty('WEBAPP_URL', url);
+  writeLinks_(sh, url);
+  showMessages();
+}
 
+/** deploy.sh가 Deployment.gs에 적어 둔 주소 → 직접 입력한 주소 순으로 쓴다. */
+function webappUrl_() {
+  if (typeof DEPLOYED_WEBAPP_URL !== 'undefined' && DEPLOYED_WEBAPP_URL) return DEPLOYED_WEBAPP_URL;
+  return PropertiesService.getScriptProperties().getProperty('WEBAPP_URL') || '';
+}
+
+function writeLinks_(sh, url) {
   var n = sh.getLastRow() - 1;
   var data = sh.getRange(2, 1, n, ZONE_FIELDS.length).getValues();
   var out = data.map(function (r) {
-    var name = r[col_(ZONE_FIELDS, 'name')], leaders = r[col_(ZONE_FIELDS, 'leader_names')];
     var link = url + '?z=' + r[col_(ZONE_FIELDS, 'token')];
-    var who = name === '임원' ? '임원' : (leaders ? leaders.split(' · ')[0] + ' 구역장' : name + ' 구역장');
-    var message = '[' + CONFIG.VILLAGE + '] ' + CONFIG.TARGET_YEAR + ' 구역편성 기초자료 요청\n\n' +
-      who + '님, 한 해 동안 구역을 섬겨주셔서 감사합니다 🙏\n' +
-      '내년 구역편성을 위해 ' + name + ' 가정들의 정보 확인과 출석률(A~D), 동정을 아래 링크에서 작성 부탁드립니다.\n\n' +
-      link + '\n\n로그인 없이 바로 열리고, 중간에 저장 후 이어서 작성하셔도 됩니다.';
-    return [link, message];
+    return [link, KAKAO_MESSAGE + '\n\n' + link];
   });
   sh.getRange(2, col_(ZONE_FIELDS, 'link') + 1, n, 1).setValues(out.map(function (o) { return [o[0]]; }));
-  sh.getRange(2, col_(ZONE_FIELDS, 'message') + 1, n, 1).setValues(out.map(function (o) { return [o[1]]; }));
-  ui.alert('링크와 카톡 메시지를 만들었습니다. [' + CONFIG.ZONE_SHEET + '] 시트에서 메시지 칸을 복사해 보내주세요.');
+  sh.getRange(2, col_(ZONE_FIELDS, 'message') + 1, n, 1).setValues(out.map(function (o) { return [o[1]]; }))
+    .setWrap(true).setVerticalAlignment('top');
+}
+
+/**
+ * 구역별 카톡 메시지를 복사 버튼과 함께 보여준다.
+ * (시트 칸을 그대로 복사하면 줄바꿈 때문에 메시지 앞뒤에 따옴표가 붙어서 따로 창을 띄운다)
+ */
+function showMessages() {
+  var ui = requireSheetUi_();
+  var sh = sheet_(CONFIG.ZONE_SHEET);
+  if (!sh || sh.getLastRow() < 2) return ui.alert('먼저 [1. 명단 불러오기]를 실행해주세요.');
+  var zones = sh.getRange(2, 1, sh.getLastRow() - 1, ZONE_FIELDS.length).getValues().map(function (r) {
+    return {
+      name: String(r[col_(ZONE_FIELDS, 'name')]), leaders: String(r[col_(ZONE_FIELDS, 'leader_names')]),
+      message: String(r[col_(ZONE_FIELDS, 'message')])
+    };
+  });
+  if (!zones.some(function (z) { return z.message; })) {
+    return ui.alert('아직 링크가 없습니다. 메뉴 [2. 구역장 링크·카톡 메시지 만들기]를 먼저 눌러주세요.');
+  }
+  var t = HtmlService.createTemplateFromFile('Messages');
+  t.payload = JSON.stringify(zones).replace(/</g, '\\u003c');
+  ui.showModalDialog(t.evaluate().setWidth(560).setHeight(640), '구역별 카톡 메시지');
 }
 
 /** '1마을 올라오는 가정 정리'와 같은 형식(가정당 2줄, 병합)으로 결과 시트를 만든다. */

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<style>
+body { margin: 0; background: #fff; font-family: -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-size: 14px; color: #1d2228; }
+.top { position: sticky; top: 0; background: #fff; padding: 4px 2px 10px; border-bottom: 1px solid #e3e6ea; font-size: 13px; color: #6b7480; }
+.zone { border: 1px solid #e3e6ea; border-radius: 10px; padding: 10px 12px; margin: 10px 2px; }
+.zone.done { background: #f3faf6; border-color: #bfe5cf; }
+.head { display: flex; align-items: center; gap: 8px; }
+.head b { font-size: 15px; }
+.head .who { flex: 1; color: #6b7480; font-size: 13px; }
+button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 7px 14px; background: #fee500; color: #191919; cursor: pointer; }
+.zone.done button { background: #1f9d55; color: #fff; }
+textarea { width: 100%; box-sizing: border-box; margin-top: 8px; height: 64px; font: inherit; font-size: 12px; color: #6b7480;
+  border: 1px solid #e3e6ea; border-radius: 8px; padding: 6px 8px; resize: vertical; }
+</style>
+</head>
+<body>
+<div class="top">[복사]를 누르고 카톡 대화방에 붙여넣으세요. 메시지 전문과 그 구역 링크가 함께 복사됩니다.</div>
+<div id="list"></div>
+<script>
+const ZONES = <?!= payload ?>;
+const list = document.getElementById('list');
+ZONES.forEach(z => {
+  if (!z.message) return;
+  const el = document.createElement('div');
+  el.className = 'zone';
+  el.innerHTML = '<div class="head"><b></b><span class="who"></span><button type="button">복사</button></div><textarea readonly></textarea>';
+  el.querySelector('b').textContent = z.name;
+  el.querySelector('.who').textContent = z.leaders;
+  const ta = el.querySelector('textarea');
+  ta.value = z.message;
+  const btn = el.querySelector('button');
+  btn.addEventListener('click', async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(z.message); ok = true; } catch (e) {}
+    if (!ok) { ta.focus(); ta.select(); try { ok = document.execCommand('copy'); } catch (e) {} }
+    if (ok) { el.classList.add('done'); btn.textContent = '복사됨 ✓'; }
+    else { ta.focus(); ta.select(); btn.textContent = '⌘C / Ctrl+C로 복사'; }
+  });
+  list.appendChild(el);
+});
+</script>
+</body>
+</html>
