@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root {
+  --bg: #f4f5f7; --card: #ffffff; --line: #e3e6ea; --text: #1d2228; --muted: #6b7480;
+  --accent: #2f6fdb; --accent-soft: #e9f0fc; --ok: #1f9d55; --ok-soft: #e6f6ec;
+  --A: #1f9d55; --B: #3a7bd5; --C: #d08a10; --D: #c93c3c;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 120px; }
+header.top { background: var(--card); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-top: 20px; padding-bottom: 16px; }
+.eyebrow { font-size: 13px; color: var(--accent); font-weight: 700; }
+h1 { font-size: 22px; margin: 4px 0 6px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line);
+  background: var(--card); color: var(--text); border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 500;
+  cursor: pointer; min-height: 44px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.sm { min-height: 34px; padding: 6px 10px; font-size: 13px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 99px;
+  background: #eef0f3; color: var(--muted); white-space: nowrap; }
+.badge.ok { background: var(--ok-soft); color: var(--ok); }
+.grade { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.grade.A { background: var(--A); } .grade.B { background: var(--B); } .grade.C { background: var(--C); } .grade.D { background: var(--D); }
+input[type=text], input[type=tel], select, textarea {
+  width: 100%; font: inherit; font-size: 16px; color: var(--text); background: #fff; border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 11px; min-height: 42px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+.progress { height: 8px; background: #e7eaee; border-radius: 99px; overflow: hidden; }
+.progress > i { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width .3s; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0; max-width: 90vw;
+  background: #1d2228; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; transition: .25s;
+  pointer-events: none; z-index: 50; text-align: center; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.intro { margin-top: 16px; padding: 16px; }
+.intro ol { margin: 8px 0 0; padding-left: 20px; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 12px; font-size: 13px; }
+.legend div { display: flex; gap: 8px; align-items: flex-start; }
+.sticky { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 0 10px; }
+.sticky .row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.family { margin-top: 12px; overflow: hidden; scroll-margin-top: 64px; }
+.family > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.family > summary::-webkit-details-marker { display: none; }
+.family .name { font-weight: 700; font-size: 16px; flex: 1; min-width: 0; }
+.family .name .sub { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.family .chev { color: var(--muted); transition: transform .2s; }
+.family[open] .chev { transform: rotate(90deg); }
+.family[open] > summary { border-bottom: 1px solid var(--line); }
+.fbody { padding: 4px 16px 16px; }
+.section { padding-top: 16px; }
+.section h3 { font-size: 14px; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+.section h3 .num { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff;
+  font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.person { display: grid; grid-template-columns: 44px 1fr 92px; gap: 6px; align-items: center; margin-bottom: 8px; }
+.person .who { font-size: 13px; color: var(--muted); }
+.person .phone { grid-column: 2 / 4; }
+@media (min-width: 560px) {
+  .person { grid-template-columns: 44px 1fr 96px 150px; }
+  .person .phone { grid-column: auto; }
+}
+.child { display: grid; grid-template-columns: 1fr 64px 72px 32px; gap: 6px; margin-bottom: 6px; }
+.child .del { border: none; background: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 0; }
+.hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+.confirm { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px; border-radius: 10px;
+  background: var(--accent-soft); cursor: pointer; font-size: 14px; }
+.confirm input { width: 20px; height: 20px; margin: 1px 0 0; flex-shrink: 0; accent-color: var(--accent); }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.grades label { border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 2px; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); }
+.grades label b { font-size: 20px; color: var(--text); }
+.grades input, .chips input { position: absolute; opacity: 0; pointer-events: none; }
+.grades input[value=A]:checked + label { border-color: var(--A); background: #e9f6ee; } .grades input[value=A]:checked + label b { color: var(--A); }
+.grades input[value=B]:checked + label { border-color: var(--B); background: #ebf1fb; } .grades input[value=B]:checked + label b { color: var(--B); }
+.grades input[value=C]:checked + label { border-color: var(--C); background: #fbf3e7; } .grades input[value=C]:checked + label b { color: var(--C); }
+.grades input[value=D]:checked + label { border-color: var(--D); background: #f9ebeb; } .grades input[value=D]:checked + label b { color: var(--D); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips label { border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-size: 13px; cursor: pointer; background: #fff; }
+.chips input:checked + label { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ref { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.actions { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+.actions .state { flex: 1; font-size: 13px; color: var(--muted); }
+.bottom { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+.submitted { padding: 14px 16px; background: var(--ok-soft); color: var(--ok); border-radius: var(--radius); font-weight: 500; margin-top: 16px; }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="eyebrow" id="eyebrow"></div>
+  <h1 id="title"></h1>
+  <div class="muted small" id="greeting"></div>
+</div></header>
+
+<div class="wrap">
+  <div class="card intro">
+    <b>작성 방법</b>
+    <ol class="small">
+      <li>가정을 눌러 <b>기본정보·자녀정보</b>가 맞는지 확인하고, 틀린 부분은 바로 고쳐주세요.</li>
+      <li>최근 <b>2년간 구역모임 출석</b> 정도를 A~D 중에서 골라주세요.</li>
+      <li>내년 편성에 참고할 <b>동정·특이사항</b>을 적고 <b>저장</b>을 눌러주세요.</li>
+      <li>모든 가정을 마치면 맨 아래 <b>최종 제출</b>을 눌러주세요. 제출 후에도 수정할 수 있어요.</li>
+    </ol>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="submitted" id="submitted" hidden></div>
+
+  <div class="sticky">
+    <div class="row"><span><b id="doneCount">0</b> / <span id="totalCount">0</span> 가정 작성 완료</span>
+      <a href="#bottom" class="muted">제출하기 ↓</a></div>
+    <div class="progress"><i id="progressBar" style="width:0"></i></div>
+  </div>
+
+  <div id="families"></div>
+
+  <div class="bottom" id="bottom">
+    <button type="button" class="btn" id="addFamily">+ 명단에 없는 가정 추가</button>
+    <button type="button" class="btn primary" id="submitZone">최종 제출</button>
+    <p class="hint" style="text-align:center">입력하신 내용은 마을 임원진만 확인하며 구역편성 목적으로만 사용됩니다.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = <?!= payload ?>;
+const dirty = new Set();
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2500);
+}
+function call(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args);
+  });
+}
+const isComplete = f => !!(f.info_confirmed && f.attendance);
+const titleOf = f => [f.husband_name, f.wife_name].filter(Boolean).join(' · ') || '(이름을 입력해주세요)';
+const subOf = f => [f.role, f.children.length ? `자녀 ${f.children.length}명` : ''].filter(Boolean).join(' · ');
+
+function kidRow(c) {
+  c = c || {name: '', year: '', gender: '', note: ''};
+  return `<div class="child">
+    <input type="text" data-k="name" value="${esc(c.name)}" placeholder="이름">
+    <input type="text" data-k="year" value="${esc(c.year)}" placeholder="출생년" inputmode="numeric">
+    <select data-k="gender"><option value="">성별</option>
+      <option ${c.gender === '남' ? 'selected' : ''}>남</option><option ${c.gender === '여' ? 'selected' : ''}>여</option></select>
+    <button type="button" class="del" aria-label="자녀 삭제">×</button>
+    <input type="hidden" data-k="note" value="${esc(c.note)}">
+  </div>`;
+}
+
+function familyCard(f) {
+  const id = esc(f.id);
+  const person = (key, who) => `<div class="person">
+      <span class="who">${who}</span>
+      <input type="text" name="${key}_name" value="${esc(f[key + '_name'])}" placeholder="이름">
+      <input type="text" name="${key}_birth" value="${esc(f[key + '_birth'])}" placeholder="생년" inputmode="numeric">
+      <input type="tel" class="phone" name="${key}_phone" value="${esc(f[key + '_phone'])}" placeholder="010-0000-0000">
+    </div>`;
+  const ref = [f.ref_att_m && `형제 ${esc(f.ref_att_m)}`, f.ref_att_f && `자매 ${esc(f.ref_att_f)}`].filter(Boolean).join(' / ');
+  const done = isComplete(f);
+  const el = document.createElement('details');
+  el.className = 'card family';
+  el.dataset.id = f.id;
+  el.innerHTML = `
+    <summary>
+      <span class="name"><span class="title">${esc(titleOf(f))}</span><span class="sub">${esc(subOf(f))}</span></span>
+      <span class="status badge ${done ? 'ok' : ''}">${done ? '작성 완료' : '미작성'}</span>
+      <span class="chev">›</span>
+    </summary>
+    <form class="fbody" autocomplete="off" onsubmit="return false">
+      <div class="section">
+        <h3><span class="num">1</span>기본정보</h3>
+        ${person('husband', '형제')}${person('wife', '자매')}
+        <p class="hint">한 분만 출석하시는 가정은 다른 칸을 비워두셔도 됩니다. 생년월일을 아시면 1986.03.03 처럼 적어주세요.</p>
+      </div>
+      <div class="section">
+        <h3><span class="num">2</span>자녀정보</h3>
+        <div class="kids">${f.children.map(kidRow).join('')}</div>
+        <button type="button" class="btn sm add-kid">+ 자녀 추가</button>
+        <p class="hint">출생년은 두 자리로 적어주세요 (예: 2017년생 → 17).</p>
+        <label class="confirm"><input type="checkbox" name="info_confirmed" ${f.info_confirmed ? 'checked' : ''}>
+          <span>위 <b>기본정보와 자녀정보</b>를 확인했습니다.</span></label>
+      </div>
+      <div class="section">
+        <h3><span class="num">3</span>최근 2년 출석률</h3>
+        <div class="grades">${DATA.levels.map(([g, label]) => `
+          <input type="radio" name="attendance" value="${g}" id="att${id}${g}" ${f.attendance === g ? 'checked' : ''}>
+          <label for="att${id}${g}"><b>${g}</b>${esc(label)}</label>`).join('')}
+        </div>
+        ${ref ? `<div class="ref">참고 · 기존 출석 기록: ${ref}</div>` : ''}
+      </div>
+      <div class="section">
+        <h3><span class="num">4</span>내년 구역 배정 의견 <span class="muted small" style="font-weight:400">(선택)</span></h3>
+        <div class="chips">${DATA.next_status.map((s, i) => `
+          <input type="radio" name="next_status" value="${esc(s)}" id="ns${id}${i}" ${f.next_status === s ? 'checked' : ''}>
+          <label for="ns${id}${i}">${esc(s)}</label>`).join('')}
+        </div>
+        <p class="hint">사랑구역: 소속은 유지하되 모임 참석이 어려운 가정 · 편성 제외: 이사/타교회 이동 등 (한 번 더 누르면 선택 해제)</p>
+      </div>
+      <div class="section">
+        <h3><span class="num">5</span>동정 · 특이사항</h3>
+        <textarea name="note" placeholder="예) 구역모임에 성실히 참석하시고 나눔도 적극적이세요. 권찰 가정으로 추천합니다.&#10;예) 형제님은 비신자이시고 자매님만 자녀와 출석하세요.&#10;예) OO 가정과 친해서 같은 구역이면 잘 나오실 것 같아요. 12월 이사 예정.">${esc(f.note)}</textarea>
+        <p class="hint">모임 참여 정도, 신앙 상황, 직분 추천, 함께 편성되면 좋을 가정, 이사·직장 등 편성에 참고할 내용을 적어주세요.</p>
+      </div>
+      <div class="actions">
+        ${f.added ? '<button type="button" class="btn ghost sm remove-family">가정 삭제</button>' : ''}
+        <span class="state">${f.updated_at ? '마지막 저장 ' + esc(f.updated_at) : ''}</span>
+        <button type="button" class="btn primary save">저장</button>
+      </div>
+    </form>`;
+  return el;
+}
+
+function collect(card) {
+  const form = card.querySelector('form');
+  const val = n => form.elements[n].value || '';
+  const checked = n => { const el = form.querySelector(`input[name="${n}"]:checked`); return el ? el.value : ''; };
+  return {
+    husband_name: val('husband_name'), husband_birth: val('husband_birth'), husband_phone: val('husband_phone'),
+    wife_name: val('wife_name'), wife_birth: val('wife_birth'), wife_phone: val('wife_phone'),
+    children: [...card.querySelectorAll('.child')].map(row => {
+      const o = {}; row.querySelectorAll('[data-k]').forEach(el => o[el.dataset.k] = el.value.trim()); return o;
+    }).filter(c => c.name),
+    info_confirmed: form.elements.info_confirmed.checked,
+    attendance: checked('attendance'),
+    next_status: checked('next_status'),
+    note: val('note'),
+  };
+}
+
+function updateProgress() {
+  const cards = [...document.querySelectorAll('.family')];
+  const done = cards.filter(c => c.querySelector('.status').classList.contains('ok')).length;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('totalCount').textContent = cards.length;
+  document.getElementById('progressBar').style.width = (cards.length ? done / cards.length * 100 : 0) + '%';
+}
+
+async function save(card) {
+  const btn = card.querySelector('.save');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  try {
+    const f = await call('apiSaveFamily', DATA.token, card.dataset.id, collect(card));
+    dirty.delete(card.dataset.id);
+    const done = isComplete(f);
+    const status = card.querySelector('.status');
+    status.classList.toggle('ok', done);
+    status.textContent = done ? '작성 완료' : '저장됨 (미완료)';
+    card.querySelector('.title').textContent = titleOf(f);
+    card.querySelector('.sub').textContent = subOf(f);
+    card.querySelector('.state').textContent = '마지막 저장 ' + f.updated_at;
+    updateProgress();
+    if (!done) {
+      toast(!f.info_confirmed ? '저장했어요. 정보 확인 체크를 해주세요.' : '저장했어요. 출석률을 선택해주세요.');
+      return;
+    }
+    toast('저장했어요 ✓');
+    card.open = false;
+    const next = card.nextElementSibling;
+    if (next && !next.querySelector('.status').classList.contains('ok')) {
+      next.open = true; next.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  } catch (e) {
+    toast((e && e.message) || '저장에 실패했어요. 인터넷 연결을 확인해주세요.');
+  } finally {
+    btn.disabled = false; btn.textContent = '저장';
+  }
+}
+
+const list = document.getElementById('families');
+
+list.addEventListener('click', async e => {
+  const card = e.target.closest('.family');
+  if (!card) return;
+  const t = e.target;
+  if (t.classList.contains('save')) save(card);
+  if (t.classList.contains('add-kid')) {
+    card.querySelector('.kids').insertAdjacentHTML('beforeend', kidRow());
+    card.querySelector('.kids .child:last-child input').focus();
+    dirty.add(card.dataset.id);
+  }
+  if (t.classList.contains('del')) { t.closest('.child').remove(); dirty.add(card.dataset.id); }
+  if (t.classList.contains('remove-family')) {
+    if (!confirm('이 가정을 삭제할까요?')) return;
+    try {
+      await call('apiDeleteFamily', DATA.token, card.dataset.id);
+      dirty.delete(card.dataset.id); card.remove(); updateProgress();
+    } catch (err) { toast(err.message || '삭제에 실패했어요.'); }
+  }
+  // 내년 배정 의견: 이미 선택된 칩을 다시 누르면 선택 해제
+  if (t.tagName === 'LABEL' && t.closest('.chips')) {
+    const input = document.getElementById(t.htmlFor);
+    if (input && input.checked) { e.preventDefault(); input.checked = false; dirty.add(card.dataset.id); }
+  }
+});
+list.addEventListener('input', e => { const c = e.target.closest('.family'); if (c) dirty.add(c.dataset.id); });
+list.addEventListener('change', e => { const c = e.target.closest('.family'); if (c) dirty.add(c.dataset.id); });
+
+document.getElementById('addFamily').addEventListener('click', async e => {
+  e.target.disabled = true;
+  try {
+    const f = await call('apiAddFamily', DATA.token);
+    const card = familyCard(f);
+    list.appendChild(card);
+    card.open = true; card.scrollIntoView({behavior: 'smooth', block: 'start'});
+    card.querySelector('input').focus();
+    updateProgress();
+  } catch (err) { toast('추가에 실패했어요.'); }
+  e.target.disabled = false;
+});
+
+document.getElementById('submitZone').addEventListener('click', async e => {
+  if (dirty.size) return toast('저장하지 않은 가정이 있어요. 먼저 저장해주세요.');
+  const left = [...document.querySelectorAll('.family')].filter(c => !c.querySelector('.status').classList.contains('ok'));
+  if (left.length && !confirm(`아직 작성하지 않은 가정이 ${left.length}곳 있어요.\n그래도 제출할까요?`)) {
+    left[0].open = true; left[0].scrollIntoView({behavior: 'smooth'}); return;
+  }
+  e.target.disabled = true;
+  try {
+    showSubmitted(await call('apiSubmit', DATA.token));
+    alert('제출되었습니다. 수고 많으셨어요! 🙏');
+  } catch (err) { toast('제출에 실패했어요.'); }
+  e.target.disabled = false;
+});
+
+function showSubmitted(at) {
+  const el = document.getElementById('submitted');
+  el.hidden = !at;
+  el.textContent = `✓ ${at}에 제출되었습니다. 수정하면 자동으로 반영돼요.`;
+}
+
+window.addEventListener('beforeunload', e => { if (dirty.size) { e.preventDefault(); e.returnValue = ''; } });
+
+// 첫 화면 그리기
+document.getElementById('eyebrow').textContent = `${DATA.village} · ${DATA.year} 구역편성 기초자료`;
+document.getElementById('title').textContent = `${DATA.zone} 가정 동정 작성`;
+document.getElementById('greeting').textContent =
+  `${DATA.leader_names}${DATA.zone === '임원' ? '' : ' 구역장님'}, 섬겨주셔서 감사합니다 🙏`;
+document.getElementById('legend').innerHTML = DATA.levels.map(([g, label, desc]) =>
+  `<div><span class="grade ${g}">${g}</span><span><b>${esc(label)}</b><br><span class="muted">${esc(desc)}</span></span></div>`).join('');
+DATA.families.forEach(f => list.appendChild(familyCard(f)));
+showSubmitted(DATA.submitted_at);
+updateProgress();
+</script>
+</body>
+</html>
