@@ -195,7 +195,7 @@ function familyCard(f) {
       <input type="text" name="${key}_birth" value="${esc(f[key + '_birth'])}" placeholder="생년" inputmode="numeric">
       <input type="tel" class="phone" name="${key}_phone" value="${esc(f[key + '_phone'])}" placeholder="010-0000-0000">
     </div>`;
-  const ref = [['2025년 상반기', f.att_2025], ['2026년', f.att_2026]].filter(r => r[1])
+  const ref = [['2025년', f.att_2025], ['2026년', f.att_2026]].filter(r => r[1])
     .map(([y, t]) => `<div class="ref-row"><span class="ref-year">${y}</span><span>${esc(t)}</span></div>`).join('');
   const done = isComplete(f);
   const el = document.createElement('details');
