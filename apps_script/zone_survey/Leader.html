@@ -94,6 +94,12 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .chips label { border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-size: 13px; cursor: pointer; background: #fff; }
 .chips input:checked + label { background: var(--accent); border-color: var(--accent); color: #fff; }
 .ref { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.confirm.lead { background: #f1f3f6; margin-top: 10px; }
+.confirm.move { background: #fff8c5; border: 1px solid #f0d64a; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 4px;
+  vertical-align: 1px; }
+.tag.move { background: #fff1a8; color: #8a6d00; }
+.tag.lead { background: var(--accent-soft); color: var(--accent); }
 .actions { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
 .actions .state { flex: 1; font-size: 13px; color: var(--muted); }
 .bottom { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
@@ -113,6 +119,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
     <ol class="small">
       <li>가정을 눌러 <b>기본정보·자녀정보</b>가 맞는지 확인하고, 틀린 부분은 바로 고쳐주세요.</li>
       <li>최근 <b>2년간 구역모임 출석</b> 정도를 A~D 중에서 골라주세요.</li>
+      <li><b>내년 구역장</b>으로 추천할 가정을 체크하고, <span style="background:#fff1a8">3마을 이동</span> 표시가 있는 가정은 맞는지 확인해주세요.</li>
       <li>내년 편성에 참고할 <b>동정·특이사항</b>을 적고 <b>저장</b>을 눌러주세요.</li>
       <li>모든 가정을 마치면 맨 아래 <b>최종 제출</b>을 눌러주세요. 제출 후에도 수정할 수 있어요.</li>
     </ol>
@@ -131,6 +138,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
   <div class="bottom" id="bottom">
     <button type="button" class="btn" id="addFamily">+ 명단에 없는 가정 추가</button>
+    <p class="card small" id="recommended" style="margin:0;padding:12px 16px"></p>
     <button type="button" class="btn primary" id="submitZone">최종 제출</button>
     <p class="hint" style="text-align:center">입력하신 내용은 마을 임원진만 확인하며 구역편성 목적으로만 사용됩니다.</p>
   </div>
@@ -158,6 +166,8 @@ function call(fn, ...args) {
 const isComplete = f => !!(f.info_confirmed && f.attendance);
 const titleOf = f => [f.husband_name, f.wife_name].filter(Boolean).join(' · ') || '(이름을 입력해주세요)';
 const subOf = f => [f.role, f.children.length ? `자녀 ${f.children.length}명` : ''].filter(Boolean).join(' · ');
+const tagsOf = f => (f.move_up ? '<span class="tag move">3마을 이동</span>' : '') +
+  (f.recommend_leader ? '<span class="tag lead">구역장 추천</span>' : '');
 
 function kidRow(c) {
   c = c || {name: '', year: '', gender: '', note: ''};
@@ -186,7 +196,7 @@ function familyCard(f) {
   el.dataset.id = f.id;
   el.innerHTML = `
     <summary>
-      <span class="name"><span class="title">${esc(titleOf(f))}</span><span class="sub">${esc(subOf(f))}</span></span>
+      <span class="name"><span class="title">${esc(titleOf(f))}</span><span class="sub"><span class="subtext">${esc(subOf(f))}</span><span class="tags">${tagsOf(f)}</span></span></span>
       <span class="status badge ${done ? 'ok' : ''}">${done ? '작성 완료' : '미작성'}</span>
       <span class="chev">›</span>
     </summary>
@@ -213,7 +223,12 @@ function familyCard(f) {
         ${ref ? `<div class="ref">참고 · 기존 출석 기록: ${ref}</div>` : ''}
       </div>
       <div class="section">
-        <h3><span class="num">4</span>내년 구역 배정 의견 <span class="muted small" style="font-weight:400">(선택)</span></h3>
+        <h3><span class="num">4</span>내년 구역 배정 의견</h3>
+        ${f.move_up_target ? `<label class="confirm move"><input type="checkbox" name="move_up" ${f.move_up ? 'checked' : ''}>
+          <span><b>내년에 3마을로 올라가는 가정</b>이에요.<br><span class="small muted">자녀 나이 기준으로 미리 체크해 두었어요. 아니라면 체크를 해제해주세요.</span></span></label>` : ''}
+        <label class="confirm lead"><input type="checkbox" name="recommend_leader" ${f.recommend_leader ? 'checked' : ''}>
+          <span>이 가정을 <b>내년 구역장</b>으로 추천합니다.</span></label>
+        <p class="hint" style="margin:12px 0 6px">편성 의견 (선택)</p>
         <div class="chips">${DATA.next_status.map((s, i) => `
           <input type="radio" name="next_status" value="${esc(s)}" id="ns${id}${i}" ${f.next_status === s ? 'checked' : ''}>
           <label for="ns${id}${i}">${esc(s)}</label>`).join('')}
@@ -247,6 +262,8 @@ function collect(card) {
     info_confirmed: form.elements.info_confirmed.checked,
     attendance: checked('attendance'),
     next_status: checked('next_status'),
+    recommend_leader: form.elements.recommend_leader.checked,
+    move_up: !!(form.elements.move_up && form.elements.move_up.checked),
     note: val('note'),
   };
 }
@@ -270,7 +287,9 @@ async function save(card) {
     status.classList.toggle('ok', done);
     status.textContent = done ? '작성 완료' : '저장됨 (미완료)';
     card.querySelector('.title').textContent = titleOf(f);
-    card.querySelector('.sub').textContent = subOf(f);
+    card.querySelector('.subtext').textContent = subOf(f);
+    card.querySelector('.tags').innerHTML = tagsOf(f);
+    updateRecommended();
     card.querySelector('.state').textContent = '마지막 저장 ' + f.updated_at;
     updateProgress();
     if (!done) {
@@ -346,6 +365,13 @@ document.getElementById('submitZone').addEventListener('click', async e => {
   e.target.disabled = false;
 });
 
+function updateRecommended() {
+  const names = [...document.querySelectorAll('.family')]
+    .filter(c => c.querySelector('.tag.lead')).map(c => c.querySelector('.title').textContent);
+  document.getElementById('recommended').textContent = names.length
+    ? `내년 구역장 추천: ${names.join(', ')}` : '내년 구역장으로 추천할 가정이 있다면 해당 가정의 4번에서 체크해주세요.';
+}
+
 function showSubmitted(at) {
   const el = document.getElementById('submitted');
   el.hidden = !at;
@@ -363,6 +389,7 @@ document.getElementById('legend').innerHTML = DATA.levels.map(([g, label, desc])
   `<div><span class="grade ${g}">${g}</span><span><b>${esc(label)}</b><br><span class="muted">${esc(desc)}</span></span></div>`).join('');
 DATA.families.forEach(f => list.appendChild(familyCard(f)));
 showSubmitted(DATA.submitted_at);
+updateRecommended();
 updateProgress();
 </script>
 </body>

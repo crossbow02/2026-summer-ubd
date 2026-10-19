@@ -9,6 +9,12 @@ var PERSON_RE_ = /^\s*([가-힣A-Za-z]+[A-Z]?)\s*(?:\((\d{2})\))?\s*$/;
 var CHILD_RE_ = /([가-힣A-Za-z]+)\s*\(([^)]*)\)/g;
 var GRADE_RE_ = /^\s*([A-D])\s*$/;
 var POSITIONAL_ = ['이름', '전화번호', '이름', '전화번호', '자녀'];
+// 자녀 칸이 이 색이면 내년에 3마을로 올라가는 가정 (연한 노랑은 구역장 줄 표시라 제외)
+var MOVE_UP_COLORS_ = ['#ffff00'];
+
+function isMoveUpColor_(bg) {
+  return MOVE_UP_COLORS_.indexOf(String(bg || '').toLowerCase()) >= 0;
+}
 
 function s_(v) {
   if (v === null || v === undefined) return '';
@@ -109,17 +115,20 @@ function readBlocks_(rows) {
       blocks.push(cur);
     }
     if (cur === null) continue;
-    cur.rows.push([label.replace(/ /g, ''), row]);
+    cur.rows.push([label.replace(/ /g, ''), row, r]);
   }
   return { zoneCols: zoneCols, blocks: blocks };
 }
 
-function buildFamily_(role, block, col) {
+function buildFamily_(role, block, col, backgrounds) {
   var attM = [], attF = [], memo = [], childrenText = '';
+  var moveUp = false;
+  var bgOf = function (item) { return backgrounds && backgrounds[item[2]] ? backgrounds[item[2]][col] : ''; };
   var nameI = 0, phoneI = 0;
   var raw = ['', '', '', ''];  // 형제 이름, 형제 번호, 자매 이름, 자매 번호
   block.forEach(function (item) {
     var label = item[0], v = item[1][col], s = s_(v);
+    if (s && isMoveUpColor_(bgOf(item)) && (label === '자녀' || looksLikeChildren_(s))) moveUp = true;
     if (label === '이름') {
       if (nameI < 2) raw[nameI * 2] = s;
       nameI++;
@@ -167,7 +176,8 @@ function buildFamily_(role, block, col) {
     children: parseChildren_(text),
     ref_att_m: attM[0] || '',
     ref_att_f: attF[0] || '',
-    sheet_memo: memo.join('\n')
+    sheet_memo: memo.join('\n'),
+    move_up: moveUp
   };
   ['husband', 'wife'].forEach(function (key, i) {
     var nameV = persons[i][0], phoneV = persons[i][1];
@@ -183,14 +193,16 @@ function buildFamily_(role, block, col) {
   return out;
 }
 
-/** 시트 값(getValues 결과) -> [{name, leader_names, families: [...]}] */
-function parseSourceRows_(rows) {
+/**
+ * 시트 값(getValues 결과)과 배경색(getBackgrounds 결과) -> [{name, leader_names, families: [...]}]
+ */
+function parseSourceRows_(rows, backgrounds) {
   var parsed = readBlocks_(rows);
   return parsed.zoneCols.map(function (zc) {
     var col = zc[0], zoneLabel = zc[1];
     var families = [], leaders = [];
     parsed.blocks.forEach(function (b) {
-      var fam = buildFamily_(b.role, b.rows, col);
+      var fam = buildFamily_(b.role, b.rows, col, backgrounds);
       if (!fam) return;
       if (zoneLabel === '임원') fam.role = '임원';
       families.push(fam);

@@ -33,12 +33,13 @@ var FAMILY_FIELDS = [
   ['wife_name', '자매 이름'], ['wife_birth', '자매 생년'], ['wife_phone', '자매 연락처'],
   ['children', '자녀'], ['ref_att_m', '기존 출석(형제)'], ['ref_att_f', '기존 출석(자매)'],
   ['sheet_memo', '기존 메모'], ['info_confirmed', '정보 확인'], ['attendance', '출석률(2년)'],
-  ['next_status', '내년 배정 의견'], ['note', '동정·특이사항'], ['changed', '수정된 항목'],
+  ['next_status', '내년 배정 의견'], ['recommend_leader', '구역장 추천'],
+  ['move_up_target', '3마을 대상(노란색)'], ['move_up', '3마을 이동'], ['note', '동정·특이사항'], ['changed', '수정된 항목'],
   ['updated_at', '작성일시'], ['added', '신규 추가'], ['original', '원본(수정 금지)']
 ];
 var ZONE_FIELDS = [
   ['name', '구역'], ['leader_names', '구역장'], ['link', '링크'], ['total', '가정 수'],
-  ['done', '작성 완료'], ['submitted_at', '최종 제출'], ['message', '카톡 메시지'], ['token', '토큰(수정 금지)']
+  ['done', '작성 완료'], ['recommended', '구역장 추천 가정'], ['submitted_at', '최종 제출'], ['message', '카톡 메시지'], ['token', '토큰(수정 금지)']
 ];
 var PERSON_LABELS = {
   husband_name: '형제 이름', husband_birth: '형제 생년', husband_phone: '형제 연락처',
@@ -105,7 +106,8 @@ function setupFromSource() {
     if (ui.alert('명단 다시 불러오기', msg, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
   }
 
-  var zones = parseSourceRows_(source.getDataRange().getValues());
+  var range = source.getDataRange();
+  var zones = parseSourceRows_(range.getValues(), range.getBackgrounds());
 
   var famRows = [], zoneRows = [], n = 0;
   zones.forEach(function (z) {
@@ -118,7 +120,8 @@ function setupFromSource() {
       };
       var rec = {
         id: 'F' + ('000' + n).slice(-4), zone: z.name, role: f.role,
-        children: original.children, original: JSON.stringify(original), added: ''
+        children: original.children, original: JSON.stringify(original), added: '',
+        move_up_target: f.move_up ? 'Y' : '', move_up: f.move_up ? '✓' : ''
       };
       ['husband_name', 'husband_birth', 'husband_phone', 'wife_name', 'wife_birth', 'wife_phone',
         'ref_att_m', 'ref_att_f', 'sheet_memo'].forEach(function (k) { rec[k] = f[k]; });
@@ -134,7 +137,10 @@ function setupFromSource() {
   var zoneSheet = resetSheet_(CONFIG.ZONE_SHEET, ZONE_FIELDS);
   writeZoneRows_(zoneSheet, zoneRows);
 
-  ui.alert('완료: ' + zones.length + '개 구역, ' + n + '가정을 불러왔습니다.\n\n' +
+  var moving = zones.reduce(function (sum, z) {
+    return sum + z.families.filter(function (f) { return f.move_up; }).length;
+  }, 0);
+  ui.alert('완료: ' + zones.length + '개 구역, ' + n + '가정을 불러왔습니다. (3마을 이동 대상 ' + moving + '가정)\n\n' +
     '다음 단계: [배포 > 새 배포 > 웹 앱]으로 배포한 뒤, 메뉴 [2. 구역장 링크·카톡 메시지 만들기]를 눌러주세요.');
 }
 
@@ -165,6 +171,9 @@ function writeZoneRows_(sh, zoneRows) {
   var fz = colLetter_(col_(FAMILY_FIELDS, 'zone'));
   var fc = colLetter_(col_(FAMILY_FIELDS, 'info_confirmed'));
   var fa = colLetter_(col_(FAMILY_FIELDS, 'attendance'));
+  var fr = colLetter_(col_(FAMILY_FIELDS, 'recommend_leader'));
+  var fh = colLetter_(col_(FAMILY_FIELDS, 'husband_name'));
+  var fw = colLetter_(col_(FAMILY_FIELDS, 'wife_name'));
   var ref = "'" + CONFIG.FAMILY_SHEET + "'!";
   var rows = zoneRows.map(function (z, i) {
     var r = i + 2;
@@ -172,14 +181,17 @@ function writeZoneRows_(sh, zoneRows) {
       name: z.name, leader_names: z.leader_names, link: '', submitted_at: '', message: '', token: z.token,
       total: '=COUNTIF(' + ref + fz + ':' + fz + ',A' + r + ')',
       done: '=COUNTIFS(' + ref + fz + ':' + fz + ',A' + r + ',' + ref + fc + ':' + fc + ',"✓",' +
-        ref + fa + ':' + fa + ',"?*")'
+        ref + fa + ':' + fa + ',"?*")',
+      recommended: '=IFERROR(TEXTJOIN(", ",TRUE,ARRAYFORMULA(REGEXREPLACE(FILTER(' +
+        ref + fh + ':' + fh + '&" · "&' + ref + fw + ':' + fw + ',' + ref + fz + ':' + fz + '=A' + r + ',' +
+        ref + fr + ':' + fr + '="✓"),"^ · | · $",""))),"")'
     };
     return ZONE_FIELDS.map(function (f) { return rec[f[0]]; });
   });
   if (!rows.length) return;
   // 일반 텍스트(@) 서식 칸에 넣으면 수식이 글자로 저장되므로 서식을 먼저 바꾼다
-  ['total', 'done'].forEach(function (k) {
-    sh.getRange(2, col_(ZONE_FIELDS, k) + 1, rows.length, 1).setNumberFormat('0');
+  ['total', 'done', 'recommended'].forEach(function (k) {
+    sh.getRange(2, col_(ZONE_FIELDS, k) + 1, rows.length, 1).setNumberFormat(k === 'recommended' ? 'General' : '0');
   });
   sh.getRange(2, 1, rows.length, ZONE_FIELDS.length).setValues(rows);
   sh.setColumnWidth(col_(ZONE_FIELDS, 'link') + 1, 320);
@@ -226,7 +238,8 @@ function buildResult() {
   var families = readFamilies_();
   if (!families.length) return ui.alert('먼저 [1. 명단 불러오기]를 실행해주세요.');
 
-  var headers = ['NO', '현재 구역', '이름', '생년월일', '자녀', '출석률', '동정', '내년 배정 의견', '정보 수정', '구분'];
+  var headers = ['NO', '현재 구역', '이름', '생년월일', '자녀', '출석률', '동정', '내년 배정 의견', '구역장 추천',
+    '3마을 이동', '정보 수정', '구분'];
   var ss = SpreadsheetApp.getActive();
   var sh = ss.getSheetByName(CONFIG.RESULT_SHEET);
   if (sh) { sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart(); sh.clear(); }
@@ -240,8 +253,9 @@ function buildResult() {
     if (!people.length) people = [['', '']];
     people.forEach(function (p, j) {
       rows.push(j === 0
-        ? [i + 1, f.zone, p[0], p[1], f.children, f.attendance, f.note, f.next_status, f.changed, f.role]
-        : ['', '', p[0], p[1], '', '', '', '', '', '']);
+        ? [i + 1, f.zone, p[0], p[1], f.children, f.attendance, f.note, f.next_status, f.recommend_leader,
+          f.move_up, f.changed, f.role]
+        : ['', '', p[0], p[1], '', '', '', '', '', '', '', '']);
     });
     if (people.length > 1) merges.push(start);
   });
@@ -254,12 +268,13 @@ function buildResult() {
   body.setBorder(true, true, true, true, true, true, '#d0d4da', SpreadsheetApp.BorderStyle.SOLID);
   sh.getRange(2, 2, 1, headers.length).setBorder(true, true, true, true, true, true);
   merges.forEach(function (r) {
-    [1, 2, 5, 6, 7, 8, 9, 10].forEach(function (c) { sh.getRange(r, c + 1, 2, 1).merge(); });
+    [1, 2, 5, 6, 7, 8, 9, 10, 11, 12].forEach(function (c) { sh.getRange(r, c + 1, 2, 1).merge(); });
   });
-  [40, 70, 70, 90, 200, 60, 420, 100, 120, 70].forEach(function (w, i) { sh.setColumnWidth(i + 2, w); });
+  [40, 70, 70, 90, 200, 60, 420, 100, 80, 80, 120, 70].forEach(function (w, i) { sh.setColumnWidth(i + 2, w); });
   sh.setColumnWidth(1, 20);
   sh.getRange(3, 2, rows.length, 2).setHorizontalAlignment('center');
   sh.getRange(3, 7, rows.length, 1).setHorizontalAlignment('center');
+  sh.getRange(3, 10, rows.length, 2).setHorizontalAlignment('center');
   sh.setFrozenRows(2);
   ss.setActiveSheet(sh);
   ui.alert('결과 시트를 만들었습니다: ' + families.length + '가정');
@@ -321,6 +336,7 @@ function familyView_(f) {
     wife_name: f.wife_name, wife_birth: f.wife_birth, wife_phone: f.wife_phone,
     children: parseChildren_(f.children), ref_att_m: f.ref_att_m, ref_att_f: f.ref_att_f,
     info_confirmed: f.info_confirmed === '✓', attendance: f.attendance, next_status: f.next_status,
+    recommend_leader: f.recommend_leader === '✓', move_up_target: f.move_up_target === 'Y', move_up: f.move_up === '✓',
     note: f.note, updated_at: f.updated_at
   };
 }
@@ -395,6 +411,8 @@ function apiSaveFamily(token, id, data) {
     f.info_confirmed = data.info_confirmed ? '✓' : '';
     f.attendance = ['A', 'B', 'C', 'D'].indexOf(data.attendance) >= 0 ? data.attendance : '';
     f.next_status = NEXT_STATUS.indexOf(data.next_status) >= 0 ? data.next_status : '';
+    f.recommend_leader = data.recommend_leader ? '✓' : '';
+    f.move_up = f.move_up_target === 'Y' && data.move_up ? '✓' : '';
     f.note = clip_(data.note, 3000);
     f.changed = f.added === 'Y' ? '신규 추가' : changedFields_(f, f.original);
     f.updated_at = now_();
