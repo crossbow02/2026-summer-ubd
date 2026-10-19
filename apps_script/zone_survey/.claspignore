@@ -1,6 +1,7 @@
 **/**
 !Code.gs
 !Parser.gs
+!Attendance.gs
 !Deployment.gs
 !Leader.html
 !Messages.html

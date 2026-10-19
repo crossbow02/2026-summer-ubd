@@ -96,7 +96,10 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chips label { border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; font-size: 13px; cursor: pointer; background: #fff; }
 .chips input:checked + label { background: var(--accent); border-color: var(--accent); color: #fff; }
-.ref { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.ref { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+.ref-title { font-weight: 600; margin-bottom: 2px; }
+.ref-row { display: flex; gap: 8px; }
+.ref-year { flex: none; width: 84px; }
 .confirm.lead { background: #f1f3f6; margin-top: 10px; }
 .confirm.move { background: #fff8c5; border: 1px solid #f0d64a; }
 .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 4px;
@@ -192,7 +195,8 @@ function familyCard(f) {
       <input type="text" name="${key}_birth" value="${esc(f[key + '_birth'])}" placeholder="생년" inputmode="numeric">
       <input type="tel" class="phone" name="${key}_phone" value="${esc(f[key + '_phone'])}" placeholder="010-0000-0000">
     </div>`;
-  const ref = [f.ref_att_m && `형제 ${esc(f.ref_att_m)}`, f.ref_att_f && `자매 ${esc(f.ref_att_f)}`].filter(Boolean).join(' / ');
+  const ref = [['2025년 상반기', f.att_2025], ['2026년', f.att_2026]].filter(r => r[1])
+    .map(([y, t]) => `<div class="ref-row"><span class="ref-year">${y}</span><span>${esc(t)}</span></div>`).join('');
   const done = isComplete(f);
   const el = document.createElement('details');
   el.className = 'card family';
@@ -224,7 +228,7 @@ function familyCard(f) {
           <input type="radio" name="attendance" value="${g}" id="att${id}${g}" ${f.attendance === g ? 'checked' : ''}>
           <label for="att${id}${g}"><b>${g}</b>${esc(label)}</label>`).join('')}
         </div>
-        ${ref ? `<div class="ref">참고 · 기존 출석 기록: ${ref}</div>` : ''}
+        ${ref ? `<div class="ref"><div class="ref-title">참고 · 기존 출석 기록 (구역모임 기준)</div>${ref}</div>` : ''}
       </div>
       <div class="section">
         <h3><span class="num">4</span>내년 구역 배정 의견</h3>

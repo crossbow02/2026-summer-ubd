@@ -44,7 +44,7 @@ var FAMILY_FIELDS = [
   ['husband_name', '형제 이름'], ['husband_birth', '형제 생년'], ['husband_phone', '형제 연락처'],
   ['wife_name', '자매 이름'], ['wife_birth', '자매 생년'], ['wife_phone', '자매 연락처'],
   ['children', '자녀'], ['ref_att_m', '기존 출석(형제)'], ['ref_att_f', '기존 출석(자매)'],
-  ['sheet_memo', '기존 메모'], ['info_confirmed', '정보 확인'], ['attendance', '출석률(2년)'],
+  ['att_2025', '25년 출석률'], ['att_2026', '26년 출석률'], ['sheet_memo', '기존 메모'], ['info_confirmed', '정보 확인'], ['attendance', '출석률(2년)'],
   ['next_status', '내년 배정 의견'], ['recommend_leader', '구역장 추천'],
   ['move_up_target', '3마을 대상(노란색)'], ['move_up', '3마을 이동'], ['note', '동정·특이사항'], ['changed', '수정된 항목'],
   ['updated_at', '작성일시'], ['added', '신규 추가'], ['original', '원본(수정 금지)']
@@ -90,6 +90,7 @@ function onOpen() {
     .addItem('1. 명단 불러오기 (최초 1회)', 'setupFromSource')
     .addItem('2. 구역장 링크·카톡 메시지 만들기', 'buildLinks')
     .addItem('카톡 메시지 복사하기', 'showMessages')
+    .addItem('출석 기록 불러오기 (25·26년)', 'importAttendance')
     .addSeparator()
     .addItem('3. 결과 시트 만들기 (1마을 형식)', 'buildResult')
     .addToUi();
@@ -150,10 +151,15 @@ function setupFromSource() {
   var zoneSheet = resetSheet_(CONFIG.ZONE_SHEET, ZONE_FIELDS);
   writeZoneRows_(zoneSheet, zoneRows);
 
+  var attNote = '';
+  try { fillAttendanceHistory_(); } catch (e) {
+    attNote = '\n(25·26년 출석 기록은 불러오지 못했습니다: ' + e.message + ' → 메뉴 [출석 기록 불러오기]로 다시 시도)';
+  }
+
   var moving = zones.reduce(function (sum, z) {
     return sum + z.families.filter(function (f) { return f.move_up; }).length;
   }, 0);
-  var done = '완료: ' + zones.length + '개 구역, ' + n + '가정을 불러왔습니다. (3마을 이동 대상 ' + moving + '가정)\n\n';
+  var done = '완료: ' + zones.length + '개 구역, ' + n + '가정을 불러왔습니다. (3마을 이동 대상 ' + moving + '가정)' + attNote + '\n\n';
   var url = webappUrl_();
   if (url) {
     writeLinks_(zoneSheet, url);
@@ -178,8 +184,30 @@ function resetSheet_(name, fields) {
   return sh;
 }
 
+/**
+ * 25·26년 출석률 열이 생기기 전에 만든 가정 시트면 '기존 출석(자매)' 뒤에 두 열을 끼워 넣는다.
+ * (열을 끼워 넣으면 구역편성_링크 시트의 수식도 시트가 알아서 고쳐준다)
+ */
+function ensureFamilyColumns_() {
+  var sh = sheet_(CONFIG.FAMILY_SHEET);
+  if (!sh || sh.getLastColumn() < 1) return;
+  var c25 = col_(FAMILY_FIELDS, 'att_2025');
+  var label = function () { return String(sh.getRange(1, c25 + 1).getValue()); };
+  if (label() === FAMILY_FIELDS[c25][1]) return;
+  withLock_(function () {
+    if (label() === FAMILY_FIELDS[c25][1]) return;
+    var prev = FAMILY_FIELDS[c25 - 1][1];
+    if (String(sh.getRange(1, c25).getValue()) !== prev) throw new Error("가정 시트 머리글이 예상과 다릅니다 ('" + prev + "' 열을 찾지 못함).");
+    sh.insertColumnsAfter(c25, 2);
+    sh.getRange(1, c25 + 1, sh.getMaxRows(), 2).setNumberFormat('@');
+    sh.getRange(1, c25 + 1, 1, 2).setValues([[FAMILY_FIELDS[c25][1], FAMILY_FIELDS[c25 + 1][1]]])
+      .setFontWeight('bold').setBackground('#e8eef7');
+    sh.setColumnWidths(c25 + 1, 2, 200);
+  });
+}
+
 function formatFamilySheet_(sh) {
-  var widths = { id: 60, zone: 60, role: 60, children: 220, sheet_memo: 200, note: 360, changed: 120, original: 80 };
+  var widths = { id: 60, zone: 60, role: 60, children: 220, att_2025: 200, att_2026: 200, sheet_memo: 200, note: 360, changed: 120, original: 80 };
   FAMILY_FIELDS.forEach(function (f, i) { if (widths[f[0]]) sh.setColumnWidth(i + 1, widths[f[0]]); });
   sh.setFrozenColumns(3);
   sh.getRange(2, col_(FAMILY_FIELDS, 'note') + 1, sh.getMaxRows() - 1, 1).setWrap(true);
@@ -279,6 +307,7 @@ function showMessages() {
 /** '1마을 올라오는 가정 정리'와 같은 형식(가정당 2줄, 병합)으로 결과 시트를 만든다. */
 function buildResult() {
   var ui = requireSheetUi_();
+  ensureFamilyColumns_();
   var families = readFamilies_();
   if (!families.length) return ui.alert('먼저 [1. 명단 불러오기]를 실행해주세요.');
 
@@ -378,7 +407,7 @@ function familyView_(f) {
     id: f.id, role: f.role, added: f.added === 'Y',
     husband_name: f.husband_name, husband_birth: f.husband_birth, husband_phone: f.husband_phone,
     wife_name: f.wife_name, wife_birth: f.wife_birth, wife_phone: f.wife_phone,
-    children: parseChildren_(f.children), ref_att_m: f.ref_att_m, ref_att_f: f.ref_att_f,
+    children: parseChildren_(f.children), att_2025: f.att_2025, att_2026: f.att_2026,
     info_confirmed: f.info_confirmed === '✓', attendance: f.attendance, next_status: f.next_status,
     recommend_leader: f.recommend_leader === '✓', move_up_target: f.move_up_target === 'Y', move_up: f.move_up === '✓',
     note: f.note, updated_at: f.updated_at
@@ -418,6 +447,7 @@ function doGet(e) {
       '<div style="font-family:sans-serif;padding:40px 20px;text-align:center;color:#555">' +
       '링크가 올바르지 않습니다.<br>카톡으로 받은 주소 전체를 다시 눌러주세요.</div>');
   } else {
+    ensureFamilyColumns_();
     var t = HtmlService.createTemplateFromFile('Leader');
     t.payload = JSON.stringify(getZonePayload_(zone, token)).replace(/</g, '\\u003c');
     out = t.evaluate();
@@ -437,6 +467,7 @@ function getZonePayload_(zone, token) {
 
 function apiSaveFamily(token, id, data) {
   var zone = requireZone_(token);
+  ensureFamilyColumns_();
   data = data || {};
   return withLock_(function () {
     var row = findFamilyRow_(zone.name, id);
@@ -468,6 +499,7 @@ function apiSaveFamily(token, id, data) {
 
 function apiAddFamily(token) {
   var zone = requireZone_(token);
+  ensureFamilyColumns_();
   return withLock_(function () {
     var sh = sheet_(CONFIG.FAMILY_SHEET);
     var ids = sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 1).getValues();
@@ -482,6 +514,7 @@ function apiAddFamily(token) {
 /** 구역장이 직접 추가한 가정만 지울 수 있다. 명단의 가정은 '편성 제외'로 표시한다. */
 function apiDeleteFamily(token, id) {
   var zone = requireZone_(token);
+  ensureFamilyColumns_();
   return withLock_(function () {
     var row = findFamilyRow_(zone.name, id);
     if (!row) return true;
