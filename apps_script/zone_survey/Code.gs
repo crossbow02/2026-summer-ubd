@@ -25,6 +25,8 @@ var ATTENDANCE_LEVELS = [
   ['D', '거의 불참', '거의 나오지 못함 (25% 미만)']
 ];
 var NEXT_STATUS = ['구역 배정', '사랑구역', '편성 제외'];
+// 원본 시트 '사랑구역' 줄 아래 가정: 구역과 상관없이 나열된 명단이라 구역장 화면과 구역별 집계에서 뺀다
+var LOVE_ZONE_ROLE = '사랑구역';
 
 // 구역장에게 보낼 카톡 메시지. 이 글 바로 아래에 구역별 링크가 붙는다.
 var KAKAO_MESSAGE = [
@@ -86,6 +88,7 @@ function sheet_(name) {
 // ------------------------------------------------------------------ 관리자 메뉴
 
 function onOpen() {
+  try { refreshZoneFormulas_(); } catch (e) {}
   SpreadsheetApp.getUi().createMenu('구역편성 설문')
     .addItem('1. 명단 불러오기 (최초 1회)', 'setupFromSource')
     .addItem('2. 구역장 링크·카톡 메시지 만들기', 'buildLinks')
@@ -215,34 +218,45 @@ function formatFamilySheet_(sh) {
 
 /** 구역 행 쓰기. 가정 수·작성 완료는 가정 시트를 세는 수식이라 실시간으로 바뀐다. */
 function writeZoneRows_(sh, zoneRows) {
-  var fz = colLetter_(col_(FAMILY_FIELDS, 'zone'));
-  var fc = colLetter_(col_(FAMILY_FIELDS, 'info_confirmed'));
-  var fa = colLetter_(col_(FAMILY_FIELDS, 'attendance'));
-  var fr = colLetter_(col_(FAMILY_FIELDS, 'recommend_leader'));
-  var fh = colLetter_(col_(FAMILY_FIELDS, 'husband_name'));
-  var fw = colLetter_(col_(FAMILY_FIELDS, 'wife_name'));
-  var ref = "'" + CONFIG.FAMILY_SHEET + "'!";
-  var rows = zoneRows.map(function (z, i) {
-    var r = i + 2;
-    var rec = {
-      name: z.name, leader_names: z.leader_names, link: '', submitted_at: '', message: '', token: z.token,
-      total: '=COUNTIF(' + ref + fz + ':' + fz + ',A' + r + ')',
-      done: '=COUNTIFS(' + ref + fz + ':' + fz + ',A' + r + ',' + ref + fc + ':' + fc + ',"✓",' +
-        ref + fa + ':' + fa + ',"?*")',
-      recommended: '=IFERROR(TEXTJOIN(", ",TRUE,ARRAYFORMULA(REGEXREPLACE(FILTER(' +
-        ref + fh + ':' + fh + '&" · "&' + ref + fw + ':' + fw + ',' + ref + fz + ':' + fz + '=A' + r + ',' +
-        ref + fr + ':' + fr + '="✓"),"^ · | · $",""))),"")'
-    };
-    return ZONE_FIELDS.map(function (f) { return rec[f[0]]; });
+  var rows = zoneRows.map(function (z) {
+    var rec = { name: z.name, leader_names: z.leader_names, link: '', submitted_at: '', message: '', token: z.token };
+    return ZONE_FIELDS.map(function (f) { return rec[f[0]] === undefined ? '' : rec[f[0]]; });
   });
   if (!rows.length) return;
-  // 일반 텍스트(@) 서식 칸에 넣으면 수식이 글자로 저장되므로 서식을 먼저 바꾼다
-  ['total', 'done', 'recommended'].forEach(function (k) {
-    sh.getRange(2, col_(ZONE_FIELDS, k) + 1, rows.length, 1).setNumberFormat(k === 'recommended' ? 'General' : '0');
-  });
   sh.getRange(2, 1, rows.length, ZONE_FIELDS.length).setValues(rows);
+  writeZoneFormulas_(sh, rows.length);
   sh.setColumnWidth(col_(ZONE_FIELDS, 'link') + 1, 320);
   sh.setColumnWidth(col_(ZONE_FIELDS, 'message') + 1, 360);
+}
+
+/** 가정 수·작성 완료·구역장 추천 수식 (사랑구역 가정은 세지 않는다) */
+function writeZoneFormulas_(sh, n) {
+  var L = function (k) { return colLetter_(col_(FAMILY_FIELDS, k)); };
+  var ref = "'" + CONFIG.FAMILY_SHEET + "'!";
+  var rg = function (k) { return ref + L(k) + ':' + L(k); };
+  var notLove = rg('role') + ',"<>' + LOVE_ZONE_ROLE + '"';
+  var formulas = { total: [], done: [], recommended: [] };
+  for (var r = 2; r < n + 2; r++) {
+    formulas.total.push(['=COUNTIFS(' + rg('zone') + ',A' + r + ',' + notLove + ')']);
+    formulas.done.push(['=COUNTIFS(' + rg('zone') + ',A' + r + ',' + notLove + ',' + rg('info_confirmed') + ',"✓",' +
+      rg('attendance') + ',"?*")']);
+    formulas.recommended.push(['=IFERROR(TEXTJOIN(", ",TRUE,ARRAYFORMULA(REGEXREPLACE(FILTER(' +
+      rg('husband_name') + '&" · "&' + rg('wife_name') + ',' + rg('zone') + '=A' + r + ',' +
+      rg('recommend_leader') + '="✓",' + rg('role') + '<>"' + LOVE_ZONE_ROLE + '"),"^ · | · $",""))),"")']);
+  }
+  // 일반 텍스트(@) 서식 칸에 넣으면 수식이 글자로 저장되므로 서식을 먼저 바꾼다
+  Object.keys(formulas).forEach(function (k) {
+    sh.getRange(2, col_(ZONE_FIELDS, k) + 1, n, 1).setNumberFormat(k === 'recommended' ? 'General' : '0')
+      .setFormulas(formulas[k]);
+  });
+}
+
+/** 사랑구역을 빼기 전에 만든 구역 시트면 수식을 새로 쓴다. */
+function refreshZoneFormulas_() {
+  var sh = sheet_(CONFIG.ZONE_SHEET);
+  if (!sh || sh.getLastRow() < 2) return;
+  if (String(sh.getRange(2, col_(ZONE_FIELDS, 'total') + 1).getFormula()).indexOf(LOVE_ZONE_ROLE) >= 0) return;
+  writeZoneFormulas_(sh, sh.getLastRow() - 1);
 }
 
 function buildLinks() {
@@ -398,7 +412,8 @@ function findFamilyRow_(zoneName, id) {
   if (!cell) return null;
   var row = cell.getRow();
   var zone = sh.getRange(row, col_(FAMILY_FIELDS, 'zone') + 1).getValue();
-  return String(zone) === zoneName ? row : null;
+  var role = sh.getRange(row, col_(FAMILY_FIELDS, 'role') + 1).getValue();
+  return String(zone) === zoneName && String(role) !== LOVE_ZONE_ROLE ? row : null;
 }
 
 /** 화면에 보낼 가정 정보 */
@@ -448,6 +463,7 @@ function doGet(e) {
       '링크가 올바르지 않습니다.<br>카톡으로 받은 주소 전체를 다시 눌러주세요.</div>');
   } else {
     ensureFamilyColumns_();
+    refreshZoneFormulas_();
     var t = HtmlService.createTemplateFromFile('Leader');
     t.payload = JSON.stringify(getZonePayload_(zone, token)).replace(/</g, '\\u003c');
     out = t.evaluate();
@@ -457,7 +473,9 @@ function doGet(e) {
 }
 
 function getZonePayload_(zone, token) {
-  var families = readFamilies_().filter(function (f) { return f.zone === zone.name; }).map(familyView_);
+  var families = readFamilies_().filter(function (f) {
+    return f.zone === zone.name && f.role !== LOVE_ZONE_ROLE;
+  }).map(familyView_);
   return {
     token: token, zone: zone.name, leader_names: zone.leader_names, submitted_at: zone.submitted_at,
     year: CONFIG.TARGET_YEAR, village: CONFIG.VILLAGE,
