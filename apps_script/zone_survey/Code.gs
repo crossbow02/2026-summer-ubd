@@ -322,7 +322,7 @@ function showMessages() {
 function buildResult() {
   var ui = requireSheetUi_();
   ensureFamilyColumns_();
-  var families = readFamilies_();
+  var families = readFamilies_().filter(function (f) { return f.role !== LOVE_ZONE_ROLE; });
   if (!families.length) return ui.alert('먼저 [1. 명단 불러오기]를 실행해주세요.');
 
   var headers = ['NO', '현재 구역', '이름', '생년월일', '자녀', '출석률', '동정', '내년 배정 의견', '구역장 추천',
