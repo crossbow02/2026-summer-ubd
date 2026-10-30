@@ -325,46 +325,124 @@ function buildResult() {
   var families = readFamilies_().filter(function (f) { return f.role !== LOVE_ZONE_ROLE; });
   if (!families.length) return ui.alert('먼저 [1. 명단 불러오기]를 실행해주세요.');
 
-  var headers = ['NO', '현재 구역', '이름', '생년월일', '자녀', '출석률', '동정', '내년 배정 의견', '구역장 추천',
-    '3마을 이동', '정보 수정', '구분'];
+  // 머리글 순서 = 열 순서. merge: 가정 단위(두 사람이 함께 쓰는) 칸
+  var cols = [
+    ['NO', 40, true], ['현재 구역', 70, true], ['이름', 70, false], ['생년월일', 90, false], ['자녀', 200, true],
+    ['출석률', 60, true], [PREV_NOTE_HEADER, 320, true], ['동정', 420, true], ['내년 배정 의견', 100, true],
+    ['구역장 추천', 80, true], ['3마을 이동', 80, true], ['정보 수정', 120, true], ['구분', 70, true],
+    [RESULT_ID_HEADER, 60, true]
+  ];
+  var headers = cols.map(function (c) { return c[0]; });
+  var ci = function (h) { return headers.indexOf(h); };
+
   var ss = SpreadsheetApp.getActive();
   var sh = ss.getSheetByName(CONFIG.RESULT_SHEET);
+  var prev = sh ? readPreviousNotes_(sh) : null;
   if (sh) { sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart(); sh.clear(); }
   else sh = ss.insertSheet(CONFIG.RESULT_SHEET);
 
-  var rows = [], merges = [];
+  var rows = [], merges = [], changed = [];
   families.forEach(function (f, i) {
     var start = rows.length + 3;  // 1행 비움, 2행 머리글 (원본 시트와 같은 위치)
     var people = [[f.husband_name, f.husband_birth], [f.wife_name, f.wife_birth]]
       .filter(function (p) { return p[0]; });
     if (!people.length) people = [['', '']];
+    var kept = prev ? keptNote_(prev, f, f.note) : '';
     people.forEach(function (p, j) {
-      rows.push(j === 0
-        ? [i + 1, f.zone, p[0], p[1], f.children, f.attendance, f.note, f.next_status, f.recommend_leader,
-          f.move_up, f.changed, f.role]
-        : ['', '', p[0], p[1], '', '', '', '', '', '', '', '']);
+      var row = headers.map(function () { return ''; });
+      row[ci('이름')] = p[0];
+      row[ci('생년월일')] = p[1];
+      if (j === 0) {
+        row[ci('NO')] = i + 1;
+        row[ci('현재 구역')] = f.zone;
+        row[ci('자녀')] = f.children;
+        row[ci('출석률')] = f.attendance;
+        row[ci(PREV_NOTE_HEADER)] = kept;
+        row[ci('동정')] = f.note;
+        row[ci('내년 배정 의견')] = f.next_status;
+        row[ci('구역장 추천')] = f.recommend_leader;
+        row[ci('3마을 이동')] = f.move_up;
+        row[ci('정보 수정')] = f.changed;
+        row[ci('구분')] = f.role;
+        row[ci(RESULT_ID_HEADER)] = f.id;
+      }
+      rows.push(row);
     });
     if (people.length > 1) merges.push(start);
+    if (kept && kept !== f.note) changed.push(start);
   });
 
-  sh.getRange(2, 2, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#e8eef7')
+  var C0 = 2;  // B열부터 (원본 시트와 같은 위치)
+  sh.getRange(2, C0, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#e8eef7')
     .setHorizontalAlignment('center');
-  var body = sh.getRange(3, 2, rows.length, headers.length);
+  var body = sh.getRange(3, C0, rows.length, headers.length);
   body.setNumberFormat('@').setValues(rows.map(function (r) { return r.map(safe_); }))
     .setVerticalAlignment('middle').setWrap(true);
   body.setBorder(true, true, true, true, true, true, '#d0d4da', SpreadsheetApp.BorderStyle.SOLID);
-  sh.getRange(2, 2, 1, headers.length).setBorder(true, true, true, true, true, true);
+  sh.getRange(2, C0, 1, headers.length).setBorder(true, true, true, true, true, true);
   merges.forEach(function (r) {
-    [1, 2, 5, 6, 7, 8, 9, 10, 11, 12].forEach(function (c) { sh.getRange(r, c + 1, 2, 1).merge(); });
+    cols.forEach(function (c, k) { if (c[2]) sh.getRange(r, C0 + k, 2, 1).merge(); });
   });
-  [40, 70, 70, 90, 200, 60, 420, 100, 80, 80, 120, 70].forEach(function (w, i) { sh.setColumnWidth(i + 2, w); });
+  cols.forEach(function (c, k) { sh.setColumnWidth(C0 + k, c[1]); });
   sh.setColumnWidth(1, 20);
-  sh.getRange(3, 2, rows.length, 2).setHorizontalAlignment('center');
-  sh.getRange(3, 7, rows.length, 1).setHorizontalAlignment('center');
-  sh.getRange(3, 10, rows.length, 2).setHorizontalAlignment('center');
+  ['NO', '현재 구역', '출석률', '구역장 추천', '3마을 이동'].forEach(function (h) {
+    sh.getRange(3, C0 + ci(h), rows.length, 1).setHorizontalAlignment('center');
+  });
+  // 기존 입력 내용은 회색 글씨, 기존과 달라진 동정은 옅은 주황 배경
+  sh.getRange(3, C0 + ci(PREV_NOTE_HEADER), rows.length, 1).setFontColor('#6b7480');
+  changed.forEach(function (r) { sh.getRange(r, C0 + ci('동정')).setBackground('#fff1dc'); });
+  sh.hideColumns(C0 + ci(RESULT_ID_HEADER));
   sh.setFrozenRows(2);
   ss.setActiveSheet(sh);
-  ui.alert('결과 시트를 만들었습니다: ' + families.length + '가정');
+  ui.alert('결과 시트를 만들었습니다: ' + families.length + '가정' +
+    (prev ? '\n\n이전 결과 시트의 동정은 [' + PREV_NOTE_HEADER + '] 열에 남겨두었습니다. ' +
+      '최신 동정이 이전과 다른 ' + changed.length + '가정은 동정 칸을 주황색으로 표시했습니다.' : ''));
+}
+
+var PREV_NOTE_HEADER = '기존 입력 내용';
+var RESULT_ID_HEADER = 'ID';
+
+/**
+ * 다시 만들기 전 결과 시트에서 가정별 '동정'과 '기존 입력 내용'을 읽는다.
+ * 숨긴 ID 열이 있으면 ID로, 없으면(예전 형식) 구역 + 이름으로 가정을 찾는다.
+ */
+function readPreviousNotes_(sh) {
+  var lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
+  if (lastRow < 3 || lastCol < 2) return null;
+  var values = sh.getRange(1, 1, lastRow, lastCol).getValues();
+  var head = values[1].map(function (v) { return String(v).trim(); });
+  var col = function (h) { return head.indexOf(h); };
+  var cNo = col('NO'), cZone = col('현재 구역'), cName = col('이름'), cNote = col('동정');
+  var cKept = col(PREV_NOTE_HEADER), cId = col(RESULT_ID_HEADER);
+  if (cNo < 0 || cNote < 0) return null;
+
+  var byId = {}, byName = {}, cur = null;
+  for (var r = 2; r < values.length; r++) {
+    var row = values[r];
+    if (String(row[cNo]).trim()) {
+      cur = {
+        note: String(row[cNote] || ''), kept: cKept >= 0 ? String(row[cKept] || '') : '',
+        zone: cZone >= 0 ? String(row[cZone]).trim() : ''
+      };
+      if (cId >= 0 && String(row[cId]).trim()) byId[String(row[cId]).trim()] = cur;
+    }
+    if (cur && cName >= 0 && String(row[cName]).trim()) {
+      byName[cur.zone + '|' + String(row[cName]).trim()] = cur;
+    }
+  }
+  return { byId: byId, byName: byName };
+}
+
+/**
+ * 가정의 '기존 입력 내용'을 정한다.
+ * - 이전 동정이 최신 동정과 다르면(직접 고쳤거나 구역장이 다시 입력함) 이전 동정을 남긴다.
+ * - 같으면 이전에 남겨둔 기존 입력 내용을 그대로 두고, 그것도 없으면 이전 동정을 남긴다.
+ */
+function keptNote_(prev, f, latest) {
+  var p = prev.byId[f.id] || prev.byName[f.zone + '|' + f.husband_name] || prev.byName[f.zone + '|' + f.wife_name];
+  if (!p) return '';
+  if (p.note && p.note !== latest) return p.note;
+  return p.kept || p.note;
 }
 
 // ------------------------------------------------------------------ 데이터 읽기/쓰기
