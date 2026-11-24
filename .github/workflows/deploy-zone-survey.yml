@@ -1,0 +1,57 @@
+name: Deploy zone survey to Apps Script
+
+# main에 구역편성 설문 코드가 바뀌어 올라오면 Apps Script로 업로드 + 웹앱 재배포 (구역장 링크 주소는 그대로)
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps_script/zone_survey/*.gs
+      - apps_script/zone_survey/*.html
+      - apps_script/zone_survey/appsscript.json
+      - apps_script/zone_survey/.claspignore
+  workflow_dispatch:
+
+concurrency:
+  group: zone-survey-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check configuration
+        id: cfg
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ]; then
+            echo "::warning::CLASPRC_JSON 시크릿이 없어 배포를 건너뜁니다."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.ready == 'true'
+        with:
+          node-version: 22
+
+      - name: Install clasp
+        if: steps.cfg.outputs.ready == 'true'
+        run: npm install -g @google/clasp@3.4.1
+
+      - name: Restore clasp credentials
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+
+      - name: Push and redeploy
+        if: steps.cfg.outputs.ready == 'true'
+        run: apps_script/zone_survey/deploy.sh
+
+      - name: Remove credentials
+        if: always()
+        run: rm -f ~/.clasprc.json
